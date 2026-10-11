@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { navigationHeld } from '../lib/browser'
 
 /** Returns the id of the section currently occupying the middle of the viewport. */
 export function useActiveSection(ids: readonly string[]): string {
@@ -35,7 +36,7 @@ export function useScrollState(threshold = 40) {
       setState((s) => {
         const next = {
           scrolled: y > threshold,
-          hidden: y > 480 ? (down ? true : up ? false : s.hidden) : false,
+          hidden: y > 480 && !navigationHeld() ? (down ? true : up ? false : s.hidden) : false,
         }
         return next.scrolled === s.scrolled && next.hidden === s.hidden ? s : next
       })

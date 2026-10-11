@@ -80,9 +80,18 @@ export function safeSessionSet(key: string, value: string): void {
   }
 }
 
+/**
+ * While the site itself scrolls the page (menu, nav links, buttons), the
+ * navigation stays visible instead of sliding away as it does when the guest
+ * scrolls down — so the menu is right there for the next jump.
+ */
+let navigationHoldUntil = 0
+export const navigationHeld = (): boolean => performance.now() < navigationHoldUntil
+
 export function scrollToSection(id: string, reduceMotion: boolean): void {
   const el = document.getElementById(id)
   if (!el) return
+  navigationHoldUntil = performance.now() + 2500
   el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
   // Move focus for keyboard and screen-reader users without a second jump.
   const heading = el.querySelector<HTMLElement>('h1, h2')
