@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { MotionProvider } from '../hooks/motion'
 import { safeSessionGet, safeSessionSet } from '../lib/browser'
 import { HASH_TO_DIRECTION } from '../lib/compass'
+import { useI18n } from '../i18n/useI18n'
 import { WeddingNavigation } from '../components/navigation/WeddingNavigation'
 import { CinematicIntro } from '../components/sections/CinematicIntro'
 import { WeddingHero } from '../components/sections/WeddingHero'
@@ -27,6 +28,7 @@ function shouldShowIntro() {
 
 export default function App() {
   const [introOpen, setIntroOpen] = useState(shouldShowIntro)
+  const { t } = useI18n()
 
   // Honour deep links such as /#venue — on first load and on later in-page hash changes.
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function App() {
           href="#invitation"
           className="sr-only z-[70] bg-ivory px-4 py-3 text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
         >
-          Skip to the invitation
+          {t('nav.skipToInvitation')}
         </a>
         {!stillMode && <WeddingNavigation />}
         <main id="main">

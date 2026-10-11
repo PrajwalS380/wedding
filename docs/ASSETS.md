@@ -70,6 +70,13 @@ photographer would allow a bigger presentation.
 Fonts: Cormorant Garamond, Pinyon Script and Manrope (SIL Open Font License),
 self-hosted via Fontsource.
 
+## 3. Soundtrack and fonts
+
+| Asset | Provenance |
+| --- | --- |
+| `public/audio/mangala-dhwani.mp3` | Original instrumental composed and synthesised for this site by `tools/compose_soundtrack.py` (raga Mohanam; additive / modal synthesis, no samples or recordings). Created for Darshan & Vathsala's invitation. |
+| Kannada / Devanagari fonts | Tiro Kannada, Tiro Devanagari Hindi, Noto Sans Kannada, Noto Sans Devanagari — SIL Open Font License 1.1, via Fontsource npm packages. |
+
 ## Family-provided content still needed
 
 Confirmed so far: the dates (**Sunday 15 & Monday 16 November 2026**), the

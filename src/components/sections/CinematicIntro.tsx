@@ -2,11 +2,13 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap } from '../../hooks/useReveal'
 import { useMotion } from '../../hooks/motion'
-import { wedding } from '../../data/wedding'
 import { getTimeline } from '../../lib/dates'
+import { useI18n } from '../../i18n/useI18n'
 import { MandapMotif } from '../ui/Ornaments'
 import { Monogram } from '../ui/Monogram'
 import { PetalField } from '../ui/Ambient'
+import { IntroMusicToggle } from '../ui/MusicControl'
+import { LanguageSelector } from '../ui/LanguageSelector'
 
 interface CinematicIntroProps {
   onEnter: () => void
@@ -23,7 +25,8 @@ export function CinematicIntro({ onEnter }: CinematicIntroProps) {
   const leaving = useRef(false)
   const { prefersReducedMotion } = useMotion()
   const [showPetals, setShowPetals] = useState(prefersReducedMotion)
-  const timeline = getTimeline()
+  const { t, lang } = useI18n()
+  const timeline = getTimeline(lang)
 
   const leave = () => {
     if (leaving.current) return
@@ -139,16 +142,16 @@ export function CinematicIntro({ onEnter }: CinematicIntroProps) {
 
       <div className="relative z-10 mt-[42vh] flex flex-col items-center px-6 text-center">
         <h2 id="intro-title" className="sr-only">
-          Welcome to the wedding of {wedding.couple.pairAnd}
+          {t('intro.welcome')}
         </h2>
         <div data-intro-monogram>
           <Monogram size="md" />
         </div>
         <p id="intro-desc" data-intro-copy className="eyebrow mt-5 text-gold-light/90">
-          {wedding.tagline}
+          {t('tagline.full')}
         </p>
         <p data-intro-copy className="mt-2 font-display text-lg italic text-ivory/75">
-          {timeline.daysLabel} · {wedding.venue.city}
+          {timeline.daysLabel} · {t('venue.city')}
         </p>
         <button
           type="button"
@@ -157,9 +160,15 @@ export function CinematicIntro({ onEnter }: CinematicIntroProps) {
           className="group mt-8 inline-flex min-h-12 items-center gap-3 border border-gold/60 px-8 py-3 font-sans text-button font-semibold uppercase tracking-[0.3em] text-gold-light transition-colors duration-300 hover:bg-gold/10 hover:text-ivory focus-visible:opacity-100"
         >
           <span className="h-px w-6 bg-gold/70 transition-all duration-500 group-hover:w-10" aria-hidden="true" />
-          Enter the Wedding
+          {t('intro.enter')}
           <span className="h-px w-6 bg-gold/70 transition-all duration-500 group-hover:w-10" aria-hidden="true" />
         </button>
+      </div>
+
+      {/* music and language can be chosen before entering; neither starts by itself */}
+      <div className="absolute left-[calc(0.75rem+env(safe-area-inset-left,0px))] top-[calc(0.75rem+var(--safe-top))] z-20 flex items-start gap-2">
+        <IntroMusicToggle />
+        <LanguageSelector variant="intro" align="left" />
       </div>
 
       <button
@@ -167,7 +176,7 @@ export function CinematicIntro({ onEnter }: CinematicIntroProps) {
         onClick={leave}
         className="absolute right-[calc(1rem+env(safe-area-inset-right,0px))] top-[calc(1rem+var(--safe-top))] z-20 inline-flex min-h-11 items-center px-4 text-label font-semibold uppercase tracking-[0.26em] text-ivory/70 underline-offset-4 transition-colors hover:text-ivory hover:underline"
       >
-        Skip intro
+        {t('intro.skip')}
       </button>
     </div>
   )

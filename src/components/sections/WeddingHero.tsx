@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useGSAP } from '@gsap/react'
 import { wedding } from '../../data/wedding'
-import { dayOfMonth, getTimeline, ordinalSuffix } from '../../lib/dates'
+import { dateJoiner, dayOfMonth, getTimeline, ordinalSuffix } from '../../lib/dates'
+import { useI18n } from '../../i18n/useI18n'
 import { getDeviceTier, hasWebGL, scrollToSection } from '../../lib/browser'
 import { useInView } from '../../hooks/useInView'
 import { useMotion } from '../../hooks/motion'
@@ -102,8 +103,12 @@ export function WeddingHero({ introActive }: { introActive: boolean }) {
   // WebGL support is probed lazily (creating a context is costly), right before the scene would mount.
   const [status, setStatus] = useState<SceneStatus>('loading')
   const quality = useMemo(() => getDeviceTier(), [])
-  const timeline = getTimeline()
+  const { t, lang } = useI18n()
+  const timeline = getTimeline(lang)
   const [first, second] = wedding.days
+  // stable callbacks, so a language change never re-renders the 3D scene
+  const onSceneReady = useCallback(() => setStatus((s) => (s === 'loading' ? 'ready' : s)), [])
+  const onSceneFail = useCallback(() => setStatus('failed'), [])
 
   // The poster (a render of this very scene) is shown first. The heavy 3D
   // chunk is mounted only once the intro has closed and the title animation
@@ -143,7 +148,7 @@ export function WeddingHero({ introActive }: { introActive: boolean }) {
     { scope: content, dependencies: [introActive, prefersReducedMotion] },
   )
 
-  const sceneFallback = <span className="sr-only">3D scene unavailable; showing still image.</span>
+  const sceneFallback = <span className="sr-only">{t('hero.sceneUnavailable')}</span>
 
   return (
     <section
@@ -168,8 +173,8 @@ export function WeddingHero({ introActive }: { introActive: boolean }) {
                 animate={ambientMotion}
                 quality={quality}
                 anchor={STILL_MODE ? PORTRAIT_ANCHOR : layout.anchor}
-                onReady={() => setStatus((s) => (s === 'loading' ? 'ready' : s))}
-                onFail={() => setStatus('failed')}
+                onReady={onSceneReady}
+                onFail={onSceneFail}
               />
             </Suspense>
           </ErrorBoundary>
@@ -191,41 +196,36 @@ export function WeddingHero({ introActive }: { introActive: boolean }) {
         className="relative z-10 flex flex-1 flex-col items-center justify-center px-[var(--gutter)] pb-6 pt-[calc(11.5rem+var(--safe-top))] text-center sm:pb-14 sm:pt-[calc(6.5rem+var(--safe-top))]"
       >
         <p data-hero="eyebrow" className="eyebrow text-gold-light drop-shadow-[0_1px_6px_rgba(0,0,0,.95)]">
-          {wedding.copy.heroEyebrow}
+          {t('hero.eyebrow')}
         </p>
         <h1 ref={title} id="hero-title" tabIndex={-1} className="mt-3 flex flex-col items-center font-display font-medium leading-[0.86] sm:mt-5">
           <span
             data-hero="name"
             className="text-gold-gradient block text-[length:var(--step-names)] tracking-[-0.015em] portrait:text-[length:clamp(2.2rem,10.6vw,5.4rem)] [filter:drop-shadow(0_6px_26px_rgba(0,0,0,.7))] md:landscape:-translate-x-[0.32em]"
           >
-            {wedding.couple.displayNames[0]}
+            {t('couple.first')}
           </span>
           <span data-hero="and" className="script my-0.5 block text-[clamp(1.8rem,min(1.2rem+3.4vw,6svh),4rem)] text-ivory/90 sm:my-1 portrait:text-[clamp(1.25rem,5.6vw,2.6rem)] drop-shadow-[0_2px_10px_rgba(0,0,0,.85)]">
-            and
+            {t('couple.and')}
           </span>
           <span
             data-hero="name"
             className="text-gold-gradient block text-[length:var(--step-names)] tracking-[-0.015em] portrait:text-[length:clamp(2.2rem,10.6vw,5.4rem)] [filter:drop-shadow(0_6px_26px_rgba(0,0,0,.7))] md:landscape:translate-x-[0.32em]"
           >
-            {wedding.couple.displayNames[1]}
+            {t('couple.second')}
           </span>
         </h1>
 
         <LotusDivider data-hero="rest" className="mt-4 h-5 w-48 sm:mt-5 sm:w-56 text-gold drop-shadow-[0_1px_4px_rgba(0,0,0,.8)]" />
         <p data-hero="rest" className="mt-3 font-display text-[1.3rem] italic leading-snug text-ivory drop-shadow-[0_2px_10px_rgba(0,0,0,.9)] sm:text-[length:var(--step-2)]">
           {/* phones: one sentence per line, so the tagline stays within the mandap */}
-          {wedding.tagline.split(/(?<=\.)\s+/).map((part, i) => (
-            <span key={i} className="max-sm:block">
-              {i > 0 && ' '}
-              {part}
-            </span>
-          ))}
+          <span className="max-sm:block">{t('tagline.first')}</span> <span className="max-sm:block">{t('tagline.second')}</span>
         </p>
         <p data-hero="rest" className="mt-3 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 text-ivory drop-shadow-[0_2px_8px_rgba(0,0,0,.9)]">
           <span className="font-display text-[length:var(--step-2)] tracking-wide">
             {dayOfMonth(first)}
-            <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(first))}</sup> &amp; {dayOfMonth(second)}
-            <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(second))}</sup>
+            <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(first), lang)}</sup> {dateJoiner(lang)} {dayOfMonth(second)}
+            <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(second), lang)}</sup>
           </span>
           <span className="eyebrow text-gold-light">{timeline.monthYearLabel}</span>
         </p>
@@ -237,7 +237,7 @@ export function WeddingHero({ introActive }: { introActive: boolean }) {
             className="group relative inline-flex min-h-12 items-center gap-3 whitespace-nowrap border border-gold/70 bg-[rgba(10,6,4,.45)] px-5 text-button font-semibold uppercase tracking-[0.2em] xs:gap-4 xs:px-7 xs:tracking-[0.3em] text-gold-light shadow-[0_0_40px_-12px_rgba(213,176,109,.6)] backdrop-blur-[3px] transition-[background-color,color,box-shadow] duration-500 hover:bg-gold/15 hover:text-ivory hover:shadow-[0_0_50px_-10px_rgba(213,176,109,.85)] active:scale-[0.98]"
           >
             <span className="h-1.5 w-1.5 rotate-45 bg-gold transition-transform duration-500 group-hover:-translate-x-1" aria-hidden="true" />
-            Open the Invitation
+            {t('hero.open')}
             <span className="h-1.5 w-1.5 rotate-45 bg-gold transition-transform duration-500 group-hover:translate-x-1" aria-hidden="true" />
           </button>
         </div>
@@ -253,7 +253,7 @@ export function WeddingHero({ introActive }: { introActive: boolean }) {
           <span className="relative block h-10 w-px overflow-hidden bg-gold/25" aria-hidden="true">
             <span className="ambient absolute inset-0 bg-gold" style={{ animation: 'scroll-cue 2.6s var(--ease-curtain) infinite' }} />
           </span>
-          <span className="sr-only">Scroll to the invitation</span>
+          <span className="sr-only">{t('hero.scrollCue')}</span>
         </button>
         <div className="flex justify-end">
           <MotionToggle className="hidden sm:inline-flex" />

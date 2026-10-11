@@ -6,6 +6,9 @@ import { useMotion } from '../../hooks/motion'
 import { scrollToSection } from '../../lib/browser'
 import { Monogram } from '../ui/Monogram'
 import { MobileMenu } from './MobileMenu'
+import { useI18n } from '../../i18n/useI18n'
+import { LanguageSelector } from '../ui/LanguageSelector'
+import { MusicControl } from '../ui/MusicControl'
 
 const IDS = NAV_ITEMS.map((n) => n.id)
 
@@ -14,6 +17,7 @@ export function WeddingNavigation() {
   const { scrolled, hidden } = useScrollState()
   const { prefersReducedMotion } = useMotion()
   const [menuOpen, setMenuOpen] = useState(false)
+  const { t } = useI18n()
   const menuButton = useRef<HTMLButtonElement>(null)
 
   const go = useCallback(
@@ -48,9 +52,9 @@ export function WeddingNavigation() {
             className="flex items-center"
           >
             <Monogram size="sm" bare />
-            <span className="sr-only">Vathsala and Darshan — back to top</span>
+            <span className="sr-only">{t('nav.backToTop')}</span>
           </a>
-          <nav aria-label="Primary">
+          <nav aria-label={t('nav.primary')}>
             <ul className="flex items-center gap-1 xl:gap-2">
               {NAV_ITEMS.map((item) => (
                 <li key={item.id}>
@@ -67,29 +71,41 @@ export function WeddingNavigation() {
                         : 'text-ivory/75 after:scale-x-0 hover:text-ivory hover:after:scale-x-50'
                     } ${item.id === 'rsvp' ? 'ml-2 border border-gold/50 !px-5 after:hidden hover:bg-gold/10' : ''}`}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </a>
                 </li>
               ))}
             </ul>
           </nav>
+          <div className="flex items-center gap-2">
+            <MusicControl variant="header" />
+            <LanguageSelector variant="header" />
+          </div>
         </div>
       </header>
 
-      {/* Mobile: a single compact button, never a full sticky header */}
-      <button
-        ref={menuButton}
-        type="button"
-        onClick={() => setMenuOpen(true)}
-        aria-expanded={menuOpen}
-        aria-controls="mobile-menu"
-        className={`fixed right-[calc(0.9rem+env(safe-area-inset-right,0px))] top-[calc(0.9rem+var(--safe-top))] z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-gold/45 bg-night/65 text-gold-light shadow-[0_8px_30px_-10px_rgba(0,0,0,.8)] backdrop-blur-md transition-[transform,opacity] duration-500 ease-[var(--ease-silk)] lg:hidden ${
+      {/* Phones: one compact capsule — music, language and menu — never a full sticky header */}
+      <div
+        className={`fixed right-[calc(0.75rem+env(safe-area-inset-right,0px))] top-[calc(0.75rem+var(--safe-top))] z-40 flex items-center gap-0.5 rounded-full border border-gold/45 bg-night/70 p-0.5 shadow-[0_8px_30px_-10px_rgba(0,0,0,.8)] backdrop-blur-md transition-[transform,opacity] duration-500 ease-[var(--ease-silk)] lg:hidden ${
           hidden && !menuOpen ? 'pointer-events-none -translate-y-20 opacity-0' : 'translate-y-0 opacity-100'
         }`}
       >
-        <Menu className="h-5 w-5" aria-hidden="true" />
-        <span className="sr-only">Open menu</span>
-      </button>
+        <MusicControl variant="capsule" />
+        <span className="h-5 w-px bg-gold/25" aria-hidden="true" />
+        <LanguageSelector variant="capsule" />
+        <span className="h-5 w-px bg-gold/25" aria-hidden="true" />
+        <button
+          ref={menuButton}
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gold-light transition-colors hover:text-ivory"
+        >
+          <Menu className="h-5 w-5" aria-hidden="true" />
+          <span className="sr-only">{t('nav.openMenu')}</span>
+        </button>
+      </div>
 
       <MobileMenu open={menuOpen} active={active} onClose={closeMenu} onNavigate={go} />
     </>

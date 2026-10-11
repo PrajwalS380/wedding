@@ -4,12 +4,14 @@ import { useMotion } from '../../hooks/motion'
 import { useReveal } from '../../hooks/useReveal'
 import { CompassRose } from '../ui/CompassRose'
 import { InvitationPanel, SchedulePanel, ServicesPanel, VenuePanel, WelcomePanel } from '../compass/CompassPanels'
+import { useI18n } from '../../i18n/useI18n'
+import type { TranslationKey } from '../../i18n/translate'
 
-const DIRECTIONS: { id: Direction; cardinal: string; title: string; hint: string; area: string }[] = [
-  { id: 'north', cardinal: 'North', title: 'The Invitation', hint: 'Names, dates & venue', area: '[grid-area:n]' },
-  { id: 'east', cardinal: 'East', title: 'The Schedule', hint: 'The two wedding days', area: '[grid-area:e]' },
-  { id: 'south', cardinal: 'South', title: 'The Venue', hint: 'Address & directions', area: '[grid-area:s]' },
-  { id: 'west', cardinal: 'West', title: 'Guest Services', hint: 'RSVP, share & calendar', area: '[grid-area:w]' },
+const DIRECTIONS: { id: Direction; cardinal: TranslationKey; title: TranslationKey; hint: TranslationKey; area: string }[] = [
+  { id: 'north', cardinal: 'compass.north', title: 'compass.invitation', hint: 'compass.hintInvitation', area: '[grid-area:n]' },
+  { id: 'east', cardinal: 'compass.east', title: 'compass.schedule', hint: 'compass.hintSchedule', area: '[grid-area:e]' },
+  { id: 'south', cardinal: 'compass.south', title: 'compass.venue', hint: 'compass.hintVenue', area: '[grid-area:s]' },
+  { id: 'west', cardinal: 'compass.west', title: 'compass.services', hint: 'compass.hintServices', area: '[grid-area:w]' },
 ]
 
 const ARROW_TO_DIRECTION: Record<string, Direction> = { ArrowUp: 'north', ArrowRight: 'east', ArrowDown: 'south', ArrowLeft: 'west' }
@@ -22,6 +24,7 @@ export function WeddingCompass() {
   const [direction, setDirection] = useState<Direction | null>(() => HASH_TO_DIRECTION[decodeURIComponent(window.location.hash.slice(1))] ?? null)
   const lastDirection = useRef<Direction | null>(direction)
   const { prefersReducedMotion, ambientMotion } = useMotion()
+  const { t } = useI18n()
   useReveal(section)
 
   const select = useCallback((d: Direction) => {
@@ -96,13 +99,13 @@ export function WeddingCompass() {
       <div className="container-wide relative">
         <header className="mx-auto max-w-2xl text-center">
           <p className="eyebrow text-gold" data-reveal="fade">
-            Guest Information
+            {t('compass.eyebrow')}
           </p>
           <h2 id="compass-title" tabIndex={-1} className="mt-4 text-[length:var(--step-4)] text-ivory" data-reveal="up">
-            The Wedding <span className="script text-[1.1em] text-gold-light">Compass</span>
+            {t('compass.titlePre')} <span className="script text-[1.1em] text-gold-light">{t('compass.titleScript')}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-md text-[1rem] leading-relaxed text-ivory/75" data-reveal="fade">
-            Choose a direction to explore your wedding details.
+            {t('compass.intro')}
           </p>
         </header>
 
@@ -111,7 +114,7 @@ export function WeddingCompass() {
           <div
             className="mx-auto grid w-full max-w-[26rem] grid-cols-2 gap-3 [grid-template-areas:'rose_rose'_'n_e'_'w_s'] lg:max-w-[44rem] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-4 lg:[grid-template-areas:'._n_.'_'w_rose_e'_'._s_.']"
             role="group"
-            aria-label="Compass directions"
+            aria-label={t('compass.group')}
           >
             <div className="mx-auto w-[min(56vw,13rem)] [grid-area:rose] lg:w-full" data-reveal="scale">
               <CompassRose direction={direction} className="h-auto w-full drop-shadow-[0_24px_40px_rgba(0,0,0,.6)]" />
@@ -133,10 +136,10 @@ export function WeddingCompass() {
                 >
                   <span className="flex items-center gap-2 text-label font-semibold uppercase tracking-[0.3em] text-gold">
                     <span className={`h-1.5 w-1.5 rotate-45 transition-colors ${isActive ? 'bg-gold' : 'border border-gold/70'}`} aria-hidden="true" />
-                    {d.cardinal}
+                    {t(d.cardinal)}
                   </span>
-                  <span className={`mt-1 font-display text-[1.15rem] leading-tight ${isActive ? 'text-ivory' : 'text-ivory/85'}`}>{d.title}</span>
-                  <span className="mt-0.5 hidden text-caption text-ivory/60 lg:block">{d.hint}</span>
+                  <span className={`mt-1 font-display text-[1.15rem] leading-tight ${isActive ? 'text-ivory' : 'text-ivory/85'}`}>{t(d.title)}</span>
+                  <span className="mt-0.5 hidden text-caption text-ivory/60 lg:block">{t(d.hint)}</span>
                 </button>
               )
             })}
@@ -147,7 +150,7 @@ export function WeddingCompass() {
             <span className="pointer-events-none absolute -left-px -top-px h-6 w-6 border-l border-t border-gold/60" aria-hidden="true" />
             <span className="pointer-events-none absolute -bottom-px -right-px h-6 w-6 border-b border-r border-gold/60" aria-hidden="true" />
             <p className="sr-only" role="status" aria-live="polite">
-              {active ? `Showing ${active.cardinal}: ${active.title}` : ''}
+              {active ? t('compass.showing', { cardinal: t(active.cardinal), title: t(active.title) }) : ''}
             </p>
             <div key={direction ?? 'welcome'} className={ambientMotion ? 'animate-[caption-in_.7s_var(--ease-silk)_both]' : ''}>
               {direction === 'north' && <InvitationPanel onBack={back} />}

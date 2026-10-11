@@ -1,9 +1,9 @@
 export const NAV_ITEMS = [
-  { id: 'home', label: 'Home' },
-  { id: 'invitation', label: 'Invitation' },
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'compass', label: 'Compass' },
-  { id: 'rsvp', label: 'RSVP' },
+  { id: 'home', labelKey: 'nav.home' },
+  { id: 'invitation', labelKey: 'nav.invitation' },
+  { id: 'calendar', labelKey: 'nav.calendar' },
+  { id: 'compass', labelKey: 'nav.compass' },
+  { id: 'rsvp', labelKey: 'nav.rsvp' },
 ] as const
 
 export type SectionId = (typeof NAV_ITEMS)[number]['id']

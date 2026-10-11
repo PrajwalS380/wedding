@@ -24,9 +24,10 @@
   --color-marigold: #e39a32;
   --color-rose: #a8323f;
 
-  --font-display: 'Cormorant Garamond', 'Cormorant Fallback', 'Cormorant', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Manrope Variable', 'Manrope Fallback', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-script: 'Pinyon Script', 'Pinyon Fallback', 'Snell Roundhand', 'Brush Script MT', cursive;
+  /* Latin faces first; Kannada / Devanagari letters fall through to the matching Indic face (see indic-fonts.css). */
+  --font-display: 'Cormorant Garamond', 'Wedding Kannada Serif', 'Wedding Devanagari Serif', 'Cormorant Fallback', 'Cormorant', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Manrope Variable', 'Wedding Kannada Sans', 'Wedding Devanagari Sans', 'Manrope Fallback', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-script: 'Pinyon Script', 'Wedding Kannada Serif', 'Wedding Devanagari Serif', 'Pinyon Fallback', 'Snell Roundhand', 'Brush Script MT', cursive;
 
   /* Small-text scale — every label, CTA and note routes through these, so
      nothing renders below 11px (tags) / 12px (labels) on any screen. */
@@ -168,6 +169,68 @@
   button:disabled {
     cursor: not-allowed;
   }
+}
+
+/* ------------------------------------------------------------------
+   Kannada & Hindi typography (html.indic / html.lang-hi, set by I18nProvider)
+   - Hindi pages list the Devanagari faces first (shared marks such as the
+     danda then come from the right script).
+   - Letter-spacing is removed: tracking pulls conjuncts and the Devanagari
+     headline (shirorekha) apart.
+   - Tight decorative line-heights are relaxed so vowel signs above and below
+     the letters are never clipped.
+   Every selector ends in a class or tag on purpose: universal (`*`) or
+   `[class*=…]` selectors here are tested against every element on every
+   restyle and measurably slowed the page on phones. A new `tracking-*` or
+   tight `leading-*` class used on translated text belongs in these lists.
+------------------------------------------------------------------- */
+html.lang-hi {
+  --font-display: 'Cormorant Garamond', 'Wedding Devanagari Serif', 'Wedding Kannada Serif', 'Cormorant Fallback', Georgia, serif;
+  --font-sans: 'Manrope Variable', 'Wedding Devanagari Sans', 'Wedding Kannada Sans', 'Manrope Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-script: 'Pinyon Script', 'Wedding Devanagari Serif', 'Wedding Kannada Serif', 'Pinyon Fallback', cursive;
+}
+/* Kannada and Devanagari need more size than Latin capitals to stay legible at
+   label sizes (stacked vowel signs), so the small-text scale steps up. */
+html.indic {
+  --text-tag: 0.8rem;
+  --text-label: 0.86rem;
+  --text-button: 0.88rem;
+  --text-caption: 0.88rem;
+}
+.indic .eyebrow,
+.indic .tracking-wide,
+.indic .tracking-\[-0\.015em\],
+.indic .tracking-\[0\.16em\],
+.indic .tracking-\[0\.18em\],
+.indic .tracking-\[0\.2em\],
+.indic .tracking-\[0\.22em\],
+.indic .tracking-\[0\.24em\],
+.indic .tracking-\[0\.26em\],
+.indic .tracking-\[0\.28em\],
+.indic .tracking-\[0\.3em\],
+.indic .tracking-\[0\.34em\],
+.indic .xs\:tracking-\[0\.22em\],
+.indic .xs\:tracking-\[0\.3em\],
+.indic .sm\:tracking-\[0\.26em\] {
+  letter-spacing: normal;
+}
+.indic .eyebrow {
+  font-size: calc(var(--step--1) * 1.08);
+}
+.indic .indic-boost {
+  font-size: 0.84rem !important;
+}
+.indic h1,
+.indic h2,
+.indic h3,
+.indic .script,
+.indic .leading-none,
+.indic .leading-tight,
+.indic .leading-\[0\.8\],
+.indic .leading-\[0\.86\],
+.indic .leading-\[0\.9\],
+.indic .leading-\[0\.95\] {
+  line-height: 1.32 !important;
 }
 
 /* `?still` capture mode — hides everything but the 3D stage */
@@ -368,6 +431,21 @@ html.is-locked body {
     opacity: 1;
     transform: none;
   }
+}
+
+/* music equalizer bars (paused with the other ambient motion) */
+@keyframes eq-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.eq-bar {
+  transform-origin: 50% 100%;
+  animation: eq-bar 1.1s ease-in-out infinite;
 }
 
 .ambient {

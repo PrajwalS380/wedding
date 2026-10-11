@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { memo, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AtmosphericLighting } from './AtmosphericLighting'
 import { FallingPetals, FloorPetals, GoldenDust } from './FloatingPetals'
 import { Garlands } from './Garlands'
@@ -228,7 +228,7 @@ function ReadySignal({ onReady }: { onReady?: () => void }) {
   return null
 }
 
-export default function MandapScene({ frameloop, animate, quality, anchor, onReady, onFail }: MandapSceneProps) {
+function MandapScene({ frameloop, animate, quality, anchor, onReady, onFail }: MandapSceneProps) {
   const [dpr, setDpr] = useState<number>(() => Math.min(window.devicePixelRatio || 1, QUALITY[quality].dpr[1]))
   const [compiled, setCompiled] = useState(false)
   const markCompiled = useCallback(() => setCompiled(true), [])
@@ -280,3 +280,6 @@ export default function MandapScene({ frameloop, animate, quality, anchor, onRea
     </Canvas>
   )
 }
+
+/** Memoized: changing the page language (or any unrelated hero state) never re-renders the 3D scene. */
+export default memo(MandapScene)

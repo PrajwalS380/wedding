@@ -5,6 +5,8 @@ import { wedding } from '../../data/wedding'
 import { getTimeline } from '../../lib/dates'
 import { Monogram } from '../ui/Monogram'
 import { LotusDivider } from '../ui/Ornaments'
+import { useI18n } from '../../i18n/useI18n'
+import { LanguageSelector } from '../ui/LanguageSelector'
 
 interface MobileMenuProps {
   open: boolean
@@ -17,7 +19,8 @@ interface MobileMenuProps {
 export function MobileMenu({ open, active, onClose, onNavigate }: MobileMenuProps) {
   const panel = useRef<HTMLDivElement>(null)
   const closeBtn = useRef<HTMLButtonElement>(null)
-  const timeline = getTimeline()
+  const { t, lang } = useI18n()
+  const timeline = getTimeline(lang)
 
   useEffect(() => {
     if (!open) return
@@ -57,7 +60,7 @@ export function MobileMenu({ open, active, onClose, onNavigate }: MobileMenuProp
       id="mobile-menu"
       role="dialog"
       aria-modal="true"
-      aria-label="Site navigation"
+      aria-label={t('nav.siteNavigation')}
       className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-night/97 px-[var(--gutter)] pb-[calc(2rem+var(--safe-bottom))] pt-[calc(1rem+var(--safe-top))] backdrop-blur-md lg:hidden"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_50%_at_50%_0%,rgba(213,176,109,.14),transparent_70%)]" />
@@ -70,11 +73,11 @@ export function MobileMenu({ open, active, onClose, onNavigate }: MobileMenuProp
           className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 text-gold-light transition-colors hover:border-gold hover:text-ivory"
         >
           <X className="h-5 w-5" aria-hidden="true" />
-          <span className="sr-only">Close menu</span>
+          <span className="sr-only">{t('nav.closeMenu')}</span>
         </button>
       </div>
 
-      <nav aria-label="Primary" className="relative mt-8 flex-1">
+      <nav aria-label={t('nav.primary')} className="relative mt-8 flex-1">
         <ul className="flex flex-col">
           {NAV_ITEMS.map((item, i) => (
             <li key={item.id} className="border-b border-gold/12">
@@ -92,17 +95,20 @@ export function MobileMenu({ open, active, onClose, onNavigate }: MobileMenuProp
                 <span className="w-7 font-sans text-tag font-semibold tracking-[0.2em] text-gold/70">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                {item.label}
+                {t(item.labelKey)}
               </a>
             </li>
           ))}
         </ul>
       </nav>
 
+      <div className="relative mt-6 flex justify-center">
+        <LanguageSelector variant="header" align="left" />
+      </div>
       <div className="relative mt-8 text-center">
         <LotusDivider className="mx-auto h-5 w-44 text-gold/80" />
         <p className="mt-4 font-display text-xl text-ivory">
-          {wedding.couple.pair}
+          {t('couple.pair')}
         </p>
         <p className="mt-1 text-sm text-ivory/70">
           {timeline.daysLabel}
@@ -115,8 +121,8 @@ export function MobileMenu({ open, active, onClose, onNavigate }: MobileMenuProp
           className="mt-4 inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.22em] text-gold-light underline-offset-4 hover:underline"
         >
           <MapPin className="h-4 w-4" aria-hidden="true" />
-          {wedding.venue.name}
-          <span className="sr-only"> — open in Google Maps (new tab)</span>
+          {t('venue.name')}
+          <span className="sr-only"> {t('nav.venueInMaps')}</span>
         </a>
       </div>
     </div>

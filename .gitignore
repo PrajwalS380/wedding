@@ -17,6 +17,9 @@ dist
 # metadata, and the site only needs the optimised copies in public/images.
 source-images/
 
+# lossless soundtrack renders (tools/compose_soundtrack.py --wav) — only the MP3 ships
+public/audio/*.wav
+
 # OS / editor / tool noise
 .DS_Store
 Thumbs.db

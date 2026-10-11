@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n'
 /**
  * CONCEPTUAL ARTWORK — an imagined, illuminated wedding hall in gold line-art.
  * It is deliberately stylised so it cannot be mistaken for a photograph of
@@ -13,9 +14,10 @@ const LIGHTS_ROOF = Array.from({ length: 28 }, (_, i) => i)
 
 export function VenueIllustration({ className = '' }: { className?: string }) {
   const gold = '#D5B06D'
+  const { t } = useI18n()
   return (
     <svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" className={className} role="img" aria-labelledby="venue-art-title">
-      <title id="venue-art-title">Conceptual illustration of an illuminated wedding hall at night (not a photograph of the venue)</title>
+      <title id="venue-art-title">{t('compass.venueArt')}</title>
       <defs>
         <linearGradient id="v-sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#030f0b" />

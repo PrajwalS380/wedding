@@ -5,7 +5,9 @@ A cinematic, mobile-first wedding invitation website for the celebrations on
 South Indian mandap, an unfurling invitation scroll, **The Living Wedding
 Calendar** (live countdowns for both days), **The Wedding Compass** (invitation,
 schedule, venue and guest services in one place), and an RSVP card that
-prepares each guest's reply as a WhatsApp message to the family.
+prepares each guest's reply as a WhatsApp message to the family. The whole
+invitation can be read in **English, ಕನ್ನಡ (Kannada) or हिन्दी (Hindi)**, and an
+optional original instrumental, *Mangala Dhwani*, can accompany it.
 
 Live: https://thedarshanandvathsala.vercel.app/
 
@@ -106,6 +108,71 @@ format, digits only, e.g. `919591420987`); the message text is built in
 
 ---
 
+## Languages (English · ಕನ್ನಡ · हिन्दी)
+
+Every guest-facing string — including screen-reader labels, validation
+messages, the WhatsApp RSVP message and the downloadable calendar file — comes
+from one dictionary per language in `src/i18n/dictionaries/` (`en.ts`, `kn.ts`,
+`hi.ts`), looked up by stable keys such as `rsvp.send` with `t('rsvp.send')`.
+
+- **Type-checked completeness:** `kn.ts` and `hi.ts` must have exactly the keys of
+  `en.ts`; the build fails if one is missing. At runtime a missing key falls back
+  to English (with a development warning) — a raw key is never shown.
+- **Selector:** in the desktop header, in the phone capsule (next to music and the
+  menu), inside the phone menu, and on the intro screen. The choice is kept in
+  `localStorage` (`wr:lang`); first-time visitors get English. `<html lang>`, the
+  page title and the description follow the language.
+- **Names and places:** the couple's names are written in the language's script
+  (ದರ್ಶನ್ / दर्शन …). The venue shows a localized name and address, and in
+  Kannada and Hindi also the **official** address exactly as Google Maps lists
+  it; "Get Directions", "Copy address" and the calendar file always use the
+  official address and the exact Maps link.
+- **Dates:** weekday and month names come from explicit tables in
+  `src/lib/dates.ts` (no ordinals in Kannada/Hindi; 0–9 numerals everywhere for
+  legibility). Only the display changes — the dates and countdown target are the
+  same in every language.
+- **Typography:** Kannada and Devanagari use Tiro Kannada / Tiro Devanagari Hindi
+  (serif) and Noto Sans Kannada / Devanagari (sans), loaded only when that script
+  is on screen; letter-spacing is removed and small text is set slightly larger
+  for those scripts (`src/styles/indic-fonts.css`, `src/styles/index.css`).
+- **Deliberately not translated:** the "D & V" monogram, the engraved English
+  inscription around the calendar dial and the N/E/S/W letters on the compass
+  rose (decorative, hidden from screen readers), the brand name in link previews
+  (Open Graph tags are static, so previews stay English), and the word "Send" in
+  the RSVP hint, which matches WhatsApp's button.
+
+**Adding a language (e.g. Telugu):** add it to `src/i18n/languages.ts` (with
+`indic: true`, which switches on the Indic spacing rules), copy `en.ts` to
+`te.ts` and translate every value (the types list anything missing), register it
+in `src/i18n/translate.ts`, add its weekday/month names to `LOCALE_DATES` in
+`src/lib/dates.ts`, and add a Telugu font face (like `indic-fonts.css`).
+
+---
+
+## Soundtrack — *Mangala Dhwani*
+
+An **original** instrumental in raga Mohanam (tanpura drone, bansuri-style
+flute, santoor-like melody, string pad and soft mridangam-style percussion),
+composed and synthesised for this invitation by `tools/compose_soundtrack.py` —
+no samples or third-party recordings, so there is no licence to clear. It is
+2 min 30 s, loops, and is `public/audio/mangala-dhwani.mp3` (128 kbps, 2.3 MB).
+
+- **Off by default and never autoplays.** Nothing is downloaded until a guest
+  presses Play (on the intro screen, in the header, or in the phone capsule).
+- One shared player for the whole page: it keeps playing while guests scroll,
+  change language or close the intro, and is never duplicated. Play / Pause,
+  Mute and Volume (iPhones use the device buttons — the page cannot set volume
+  there); loading, "blocked by the browser" and "could not be loaded" states are
+  shown honestly, and the rest of the site works if the audio fails.
+- Only the guest's volume / mute choice is remembered (`wr:music`), never playback.
+
+**Using different music:** place a properly licensed MP3 in `public/audio/` and
+point `SOUNDTRACK_SRC` in `src/data/site.ts` at it (update `music.trackTitle` in
+the dictionaries too). To regenerate or alter the original:
+`python tools/compose_soundtrack.py` (needs `numpy`, `scipy`, `lameenc`).
+
+---
+
 ## Deploying (Vercel)
 
 The site is fully static: `npm run build` writes it to `dist/`. It is set up for
@@ -138,7 +205,9 @@ Earlier deployments stay available in the Vercel dashboard for instant rollback.
 src/
   app/App.tsx                 page shell, intro gate, deep links (incl. Compass aliases)
   data/wedding.ts             ← all wedding facts & copy
-  data/site.ts                production URL + RSVP WhatsApp number
+  data/site.ts                production URL, RSVP WhatsApp number, soundtrack path
+  i18n/                       languages, dictionaries (en / kn / hi), provider, t()
+  audio/                      the single soundtrack player (provider + hook)
   data/navigation.ts
   components/
     navigation/               desktop bar + accessible mobile menu
@@ -149,7 +218,7 @@ src/
     three/                    MandapScene (Canvas, camera rig, foreground torana), stage (portrait
                               recomposition), TempleArchitecture, Garlands, OilLamps, FloatingPetals,
                               AtmosphericLighting, GlowField, geometry, textures, layout, quality
-    ui/                       Button, CalendarDial, CompassRose, Picture, Ornaments, Ambient,
+    ui/                       Button, CalendarDial, CompassRose, LanguageSelector, MusicControl, Picture, Ornaments, Ambient,
                               Monogram, Amp / withAmp, ErrorBoundary, LoadingState
   hooks/                      motion preferences, reveals, in-view, active section, useNow (live clock)
   lib/                        dates/timezone, rsvp (WhatsApp message + link), weddingClock (countdown/phase logic), calendar (.ics),

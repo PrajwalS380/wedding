@@ -7,6 +7,9 @@
  *
  * CONFIRMED: the celebrations take place on 15 and 16 November 2026.
  *
+ * Wording shown to guests (in English, Kannada and Hindi) lives in
+ * src/i18n/dictionaries — this file holds the facts.
+ *
  * WHEN TIMINGS ARE CONFIRMED: set `startTime` / `endTime` ('HH:mm', 24-hour,
  * in `timezone`) on a day, and add verified ceremonies to its `events` list.
  * The Living Calendar, the Compass schedule and the calendar export all read
@@ -14,35 +17,42 @@
  */
 
 import { PRODUCTION_URL, RSVP_WHATSAPP_NUMBER } from './site'
+import type { Lang } from '../i18n/languages'
 
 export type DayId = 'day-1' | 'day-2'
 
+/** Text given per language; English is required, other languages fall back to it. */
+export type LocalizedText = { en: string } & Partial<Record<Lang, string>>
+
+/** The text for `lang`, falling back to English. */
+export const localized = (text: LocalizedText | null, lang: Lang): string | null => (text ? (text[lang] ?? text.en) : null)
+
 /** A verified ceremony or function on one of the wedding days. */
 export interface ScheduledEvent {
-  name: string
+  /** e.g. { en: 'Muhurtham', kn: 'ಮುಹೂರ್ತ', hi: 'मुहूर्त' } — only once the family confirms it. */
+  name: LocalizedText
   /** 'HH:mm' (24h) in `wedding.timezone`, or null if not yet confirmed. */
   startTime: string | null
   endTime: string | null
-  description: string | null
+  description: LocalizedText | null
 }
 
 export interface CelebrationDay {
+  /** Its label ("Day One", "ಮೊದಲ ದಿನ", …) comes from the `days` dictionary entry. */
   id: DayId
-  /** Short neutral label, e.g. "Day One". */
-  label: string
   /** Confirmed calendar date, 'YYYY-MM-DD'. */
   date: string
   /**
    * Optional start / end of the day's celebrations ('HH:mm' in `timezone`).
    * While unset, countdowns are *date-based*: they count to the start of the
-   * calendar date in the visitor's local time and say so.
+   * calendar date in India Standard Time and say so.
    */
   startTime: string | null
   endTime: string | null
   /** Verified ceremonies only. Empty until the family confirms the schedule. */
   events: ScheduledEvent[]
-  dressCode: string | null
-  note: string | null
+  dressCode: LocalizedText | null
+  note: LocalizedText | null
 }
 
 export interface RsvpConfig {
@@ -89,8 +99,6 @@ export const wedding = {
     pairAnd,
   },
 
-  tagline: 'Two Families. One Beautiful Journey.',
-
   /** Explicitly chosen timezone for any confirmed times: the venue is in Karnataka, India (IST, UTC+05:30). */
   timezone: 'Asia/Kolkata',
   timezoneLabel: 'IST',
@@ -99,7 +107,6 @@ export const wedding = {
   days: [
     {
       id: 'day-1',
-      label: 'Day One',
       date: '2026-11-15',
       startTime: null, // set 'HH:mm' once the family confirms
       endTime: null,
@@ -109,7 +116,6 @@ export const wedding = {
     },
     {
       id: 'day-2',
-      label: 'Day Two',
       date: '2026-11-16',
       startTime: null,
       endTime: null,
@@ -119,19 +125,11 @@ export const wedding = {
     },
   ] satisfies CelebrationDay[] as CelebrationDay[],
 
-  copy: {
-    heroEyebrow: 'The Wedding of',
-    invitationHeading: 'You Are Cordially Invited',
-    invitationMessage: `With joyful hearts and the blessings of our families, we warmly invite you to join us as we celebrate the wedding of ${pairAnd}. Your presence will make our special days even more meaningful.`,
-    compassInvitation: 'With the blessings of our families, we warmly invite you to celebrate our wedding with us across two joyful days.',
-    calendarIntro: 'Our wedding celebrations unfold across two days.',
-    schedulePending: 'Event schedule to be announced',
-    schedulePendingNote: 'Ceremony details and timings will be shared here as soon as they are confirmed.',
-    closing:
-      'We would be delighted to celebrate these special moments with you. Your blessings, love, and presence will make our celebration complete.',
-    postEvent: 'With love and gratitude, thank you for celebrating with us.',
-  },
-
+  /**
+   * The venue's official name and address (as on Google Maps). Guests see a
+   * localized form from the dictionaries; maps, the copied address and the
+   * calendar file always use these official values.
+   */
   venue: {
     name: 'Bapuji Samudhaya Bhavan',
     addressLines: ['Shamanur Road, Siddaveerappa Layout', 'Shamanur, Davangere', 'Karnataka 577004, India'],
@@ -162,20 +160,9 @@ export const wedding = {
   /** Add-to-calendar export: all-day entries while timings are unconfirmed. */
   calendarExport: {
     fileName: 'darshan-vathsala-wedding',
-    title: `${pair}'s Wedding Celebrations`,
   },
-
-  /** Background music is off until the family supplies a licensed track. Never autoplays. */
-  music: {
-    enabled: false,
-    src: null as string | null,
-    title: null as string | null,
-  },
-
 
   share: {
-    title: `${pair} — You Are Invited`,
-    text: `You are warmly invited to celebrate the wedding of ${pair} on 15 & 16 November 2026 at Bapuji Samudhaya Bhavan, Davangere.`,
     /** The link guests share: VITE_SITE_URL when set at build time, otherwise the production site. */
     siteUrl: (import.meta.env.VITE_SITE_URL as string | undefined) || PRODUCTION_URL,
     ogImage: '/og/og-image.jpg',

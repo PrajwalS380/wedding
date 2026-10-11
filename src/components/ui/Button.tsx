@@ -1,4 +1,5 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
+import { useI18n } from '../../i18n/useI18n'
 
 type Variant = 'gold' | 'outline' | 'ink' | 'ghost'
 
@@ -55,6 +56,7 @@ export function LinkButton({
   external,
   ...rest
 }: CommonProps & AnchorHTMLAttributes<HTMLAnchorElement> & { external?: boolean }) {
+  const { t } = useI18n()
   return (
     <a
       className={`${base} ${variants[variant]} ${className}`}
@@ -64,7 +66,7 @@ export function LinkButton({
       {icon}
       <span>{children}</span>
       {iconAfter}
-      {external && <span className="sr-only"> (opens in a new tab)</span>}
+      {external && <span className="sr-only"> {t('common.newTab')}</span>}
     </a>
   )
 }

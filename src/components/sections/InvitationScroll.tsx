@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ChevronsUp, MailOpen } from 'lucide-react'
 import { wedding } from '../../data/wedding'
-import { dayOfMonth, getTimeline, ordinalSuffix } from '../../lib/dates'
+import { dateJoiner, dayOfMonth, getTimeline, ordinalSuffix } from '../../lib/dates'
+import { useI18n } from '../../i18n/useI18n'
 import { useMotion } from '../../hooks/motion'
 import { gsap, useReveal } from '../../hooks/useReveal'
 import { PetalField } from '../ui/Ambient'
 import { CornerFlourish, FloralCorner, LotusDivider, MandapMotif } from '../ui/Ornaments'
-import { Amp } from '../ui/Amp'
+import { NameJoiner } from '../ui/Amp'
 
 /** Visible height of parchment between the two rolls while the scroll is tied shut. */
 const COLLAPSED = 26
@@ -106,9 +107,9 @@ export function InvitationScroll() {
   const [animating, setAnimating] = useState(false)
   const tlRef = useRef<gsap.core.Timeline | null>(null)
   const deckle = useDeckleClip()
-  const timeline = getTimeline()
+  const { t, lang } = useI18n()
+  const timeline = getTimeline(lang)
   const [first, second] = wedding.days
-  const [nameA, nameB] = wedding.couple.displayNames
   useReveal(section)
 
   useEffect(() => () => void tlRef.current?.kill(), [])
@@ -186,14 +187,14 @@ export function InvitationScroll() {
         <div className="grid gap-x-14 gap-y-14 [grid-template-areas:'head'_'scroll'] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:[grid-template-areas:'head_scroll']">
           <header className="text-center [grid-area:head] lg:max-w-md lg:self-center lg:text-left">
             <p className="eyebrow text-gold" data-reveal="fade">
-              The Invitation
+              {t('invitation.eyebrow')}
             </p>
             <h2 id="invitation-title" className="mt-4 text-[length:var(--step-4)] text-ivory" data-reveal="up">
-              A letter, sealed
-              <span className="script block text-[1.05em] text-gold-light lg:-ml-1">with love</span>
+              {t('invitation.titleLine')}
+              <span className="script block text-[1.05em] text-gold-light lg:-ml-1">{t('invitation.titleScript')}</span>
             </h2>
             <p className="mx-auto mt-5 max-w-sm text-[0.98rem] leading-relaxed text-ivory/70 lg:mx-0">
-              Untie the ribbon and unroll the scroll to read our invitation.
+              {t('invitation.intro')}
             </p>
           </header>
 
@@ -244,7 +245,7 @@ export function InvitationScroll() {
 
                   <MandapMotif data-inv="item" className="mx-auto h-12 w-auto text-brass" />
                   <p data-inv="item" className="mt-5 text-label font-bold uppercase tracking-[0.3em] text-burgundy">
-                    With the blessings of our families
+                    {t('invitation.blessings')}
                   </p>
                   <h3
                     ref={heading}
@@ -252,39 +253,39 @@ export function InvitationScroll() {
                     data-inv="item"
                     className="mt-4 font-display text-[clamp(1.7rem,1.3rem+1.6vw,2.4rem)] font-medium leading-tight text-ink"
                   >
-                    {wedding.copy.invitationHeading}
+                    {t('invitation.heading')}
                   </h3>
                   <p data-inv="item" className="mt-2 font-display text-[1.05rem] italic text-ink-soft">
-                    to celebrate the wedding of
+                    {t('invitation.toCelebrate')}
                   </p>
                   <p data-inv="item" className="mt-4 font-display text-[clamp(2.5rem,1.8rem+3.6vw,4rem)] leading-[0.95] text-maroon">
-                    {nameA}
-                    <Amp className="block py-1 text-[0.55em] text-brass-deep" />
-                    {nameB}
+                    {t('couple.first')}
+                    <NameJoiner className="block py-1 text-[0.55em] text-brass-deep" wordClassName="text-[0.42em]" />
+                    {t('couple.second')}
                   </p>
                   <LotusDivider data-inv="item" className="mx-auto mt-6 h-5 w-44 text-brass" />
                   <p data-inv="item" className="mt-5 font-display text-[length:var(--step-2)] text-ink">
                     {dayOfMonth(first)}
-                    <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(first))}</sup> &amp; {dayOfMonth(second)}
-                    <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(second))}</sup>
+                    <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(first), lang)}</sup> {dateJoiner(lang)} {dayOfMonth(second)}
+                    <sup className="text-[0.55em]">{ordinalSuffix(dayOfMonth(second), lang)}</sup>
                     <span className="mt-1 block font-display text-[0.62em] italic text-ink-soft">
                       {timeline.monthYearLabel}
                     </span>
                   </p>
                   <p data-inv="item" className="mt-4 text-label font-bold uppercase tracking-[0.28em] text-burgundy">
-                    Two days of celebration
+                    {t('invitation.twoDays')}
                   </p>
                   <p data-inv="item" className="mt-6 font-display text-[length:var(--step-1)] font-medium text-ink">
-                    {wedding.venue.name}
+                    {t('venue.name')}
                     <span className="block text-[0.82em] font-normal text-ink-soft">
-                      {wedding.venue.addressLines[0]}, {wedding.venue.city}
+                      {t('venue.line1')}, {t('venue.city')}
                     </span>
                   </p>
                   <p data-inv="item" className="mx-auto mt-7 max-w-[26rem] font-display text-[length:var(--step-1)] italic leading-relaxed text-ink">
-                    {wedding.copy.invitationMessage}
+                    {t('invitation.message')}
                   </p>
                   <p data-inv="item" className="script mt-6 text-[length:var(--step-2)] text-burgundy">
-                    With love
+                    {t('invitation.signoff')}
                   </p>
                 </div>
               </div>
@@ -320,7 +321,7 @@ export function InvitationScroll() {
                   className="group mt-10 inline-flex min-h-12 items-center gap-3 whitespace-nowrap border border-gold/70 bg-gold/10 px-6 text-button font-semibold uppercase tracking-[0.18em] text-gold-light sm:px-8 sm:tracking-[0.26em] shadow-[0_0_40px_-10px_rgba(213,176,109,.55)] transition-[background-color,color,transform] duration-300 hover:bg-gold/20 hover:text-ivory active:scale-[0.97]"
                 >
                   <MailOpen className="h-4 w-4" aria-hidden="true" />
-                  Open Your Invitation
+                  {t('invitation.open')}
                 </button>
               ) : (
                 <button
@@ -332,7 +333,7 @@ export function InvitationScroll() {
                   className="inline-flex min-h-11 items-center gap-2 px-4 text-label font-semibold uppercase tracking-[0.26em] text-gold-light/80 underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
                 >
                   <ChevronsUp className="h-4 w-4" aria-hidden="true" />
-                  Roll up the invitation
+                  {t('invitation.rollUp')}
                 </button>
               )}
             </div>

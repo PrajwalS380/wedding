@@ -5,18 +5,22 @@ import { useMotion } from '../../hooks/motion'
 import { useReveal } from '../../hooks/useReveal'
 import { scrollToSection } from '../../lib/browser'
 import { getTimeline } from '../../lib/dates'
-import { ATTENDANCE_LABEL, buildRsvpMessage, whatsappRsvpUrl, type Attendance } from '../../lib/rsvp'
+import { buildRsvpMessage, whatsappRsvpUrl, type Attendance } from '../../lib/rsvp'
+import { useI18n } from '../../i18n/useI18n'
+import { Rich } from '../../i18n/Rich'
 import { FloralCorner, LotusDivider } from '../ui/Ornaments'
 import { PetalField } from '../ui/Ambient'
-import { Amp } from '../ui/Amp'
+import { NameJoiner } from '../ui/Amp'
+import { withAmp } from '../ui/withAmp'
 
 /** Sanity bound for the optional attendee count — a typo guard, not a guest limit. */
 const MAX_ATTENDEES = 50
 
+/** Validation results, kept as dictionary keys so the messages follow a language change. */
 interface Errors {
-  name?: string
-  attending?: string
-  guests?: string
+  name?: 'rsvp.nameError'
+  attending?: 'rsvp.attendError'
+  guests?: 'rsvp.guestsError'
 }
 
 /** "+91 95914 20987" for display (Indian numbers grouped 5 + 5; others shown as +digits). */
@@ -44,14 +48,15 @@ function RsvpForm() {
   /** The prefilled chat link once prepared; `blocked` when the browser stopped the new tab. */
   const [prepared, setPrepared] = useState<{ url: string; blocked: boolean } | null>(null)
   const recipient = displayNumber(wedding.rsvp.whatsappNumber)
+  const { t, lang } = useI18n()
 
   const validate = (): Errors => {
     const e: Errors = {}
-    if (name.trim().length < 2) e.name = 'Please enter your name.'
-    if (!attending) e.attending = 'Please let us know whether you can attend.'
+    if (name.trim().length < 2) e.name = 'rsvp.nameError'
+    if (!attending) e.attending = 'rsvp.attendError'
     if (attending === 'yes' && guests.trim()) {
       const n = Number(guests)
-      if (!Number.isInteger(n) || n < 1 || n > MAX_ATTENDEES) e.guests = `Please enter a whole number from 1 to ${MAX_ATTENDEES}, or leave it blank.`
+      if (!Number.isInteger(n) || n < 1 || n > MAX_ATTENDEES) e.guests = 'rsvp.guestsError'
     }
     return e
   }
@@ -69,7 +74,7 @@ function RsvpForm() {
       return
     }
     const url = whatsappRsvpUrl(
-      buildRsvpMessage({ name, attendance: attending as Attendance, guests: attending === 'yes' && guests.trim() ? Number(guests) : null }),
+      buildRsvpMessage({ name, attendance: attending as Attendance, guests: attending === 'yes' && guests.trim() ? Number(guests) : null }, lang),
     )
     opening.current = true
     setBusy(true)
@@ -90,21 +95,21 @@ function RsvpForm() {
     }, 1500)
   }
 
-  const errorList = Object.values(errors).filter(Boolean)
+  const errorText = (key: NonNullable<Errors[keyof Errors]>) => t(key, { max: MAX_ATTENDEES })
+  const errorList = Object.values(errors).filter((k): k is NonNullable<Errors[keyof Errors]> => Boolean(k)).map(errorText)
 
   return (
     <form ref={formRef} onSubmit={onSubmit} noValidate className="mt-8 text-left" aria-describedby={`${id}-how`}>
       <p id={`${id}-how`} className="mb-6 flex gap-3 rounded-[3px] border border-brass/40 bg-parchment/60 p-4 text-[0.9rem] leading-relaxed text-ink">
         <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-burgundy" aria-hidden="true" />
         <span>
-          Your reply goes to the family on <strong className="font-semibold">WhatsApp</strong> <span className="whitespace-nowrap">({recipient})</span>. It opens with your message
-          ready — just <strong className="font-semibold">tap Send there</strong> to confirm.
+          <Rich text={t('rsvp.how')} parts={{ number: <span className="whitespace-nowrap">({recipient})</span> }} />
         </span>
       </p>
 
       {errorList.length > 0 && (
         <div role="alert" className="mb-6 rounded-[3px] border border-rose/50 bg-rose/5 p-4 text-[0.9rem] text-ink">
-          <p className="font-semibold text-rose">Please check the form:</p>
+          <p className="font-semibold text-rose">{t('rsvp.checkForm')}</p>
           <ul className="mt-1 list-disc pl-5">
             {errorList.map((m) => (
               <li key={m}>{m}</li>
@@ -115,7 +120,7 @@ function RsvpForm() {
 
       <div>
         <label htmlFor={`${id}-name`} className="text-label font-bold uppercase tracking-[0.2em] text-burgundy">
-          Your name
+          {t('rsvp.name')}
         </label>
         <input
           id={`${id}-name`}
@@ -129,17 +134,17 @@ function RsvpForm() {
           aria-invalid={Boolean(errors.name)}
           aria-describedby={errors.name ? `${id}-name-err` : undefined}
           className={field}
-          placeholder="Full name"
+          placeholder={t('rsvp.namePlaceholder')}
         />
         {errors.name && (
           <p id={`${id}-name-err`} className="mt-1.5 text-[0.85rem] text-rose">
-            {errors.name}
+            {errorText(errors.name)}
           </p>
         )}
       </div>
 
       <fieldset className="mt-6" aria-describedby={errors.attending ? `${id}-att-err` : undefined}>
-        <legend className="text-label font-bold uppercase tracking-[0.2em] text-burgundy">Will you join us?</legend>
+        <legend className="text-label font-bold uppercase tracking-[0.2em] text-burgundy">{t('rsvp.attendLegend')}</legend>
         <div className="mt-2 grid gap-3 sm:grid-cols-2">
           {(['yes', 'no'] as const).map((v) => (
             <label
@@ -157,13 +162,13 @@ function RsvpForm() {
                 aria-invalid={Boolean(errors.attending)}
                 className="h-4 w-4 accent-[#7d2535]"
               />
-              <span className="font-display text-[1.15rem]">{ATTENDANCE_LABEL[v]}</span>
+              <span className="font-display text-[1.15rem]">{t(v === 'yes' ? 'rsvp.accepts' : 'rsvp.declines')}</span>
             </label>
           ))}
         </div>
         {errors.attending && (
           <p id={`${id}-att-err`} className="mt-1.5 text-[0.85rem] text-rose">
-            {errors.attending}
+            {errorText(errors.attending)}
           </p>
         )}
       </fieldset>
@@ -171,7 +176,7 @@ function RsvpForm() {
       {attending === 'yes' && (
         <div className="mt-6">
           <label htmlFor={`${id}-guests`} className="text-label font-bold uppercase tracking-[0.2em] text-burgundy">
-            Number of attendees, including you <span className="font-semibold normal-case tracking-normal text-ink-soft">(optional)</span>
+            {t('rsvp.guests')} <span className="font-semibold normal-case tracking-normal text-ink-soft">{t('rsvp.optional')}</span>
           </label>
           <input
             id={`${id}-guests`}
@@ -186,11 +191,11 @@ function RsvpForm() {
             aria-invalid={Boolean(errors.guests)}
             aria-describedby={errors.guests ? `${id}-guests-err` : undefined}
             className={`${field} max-w-[10rem]`}
-            placeholder="e.g. 2"
+            placeholder={t('rsvp.guestsPlaceholder')}
           />
           {errors.guests && (
             <p id={`${id}-guests-err`} className="mt-1.5 text-[0.85rem] text-rose">
-              {errors.guests}
+              {errorText(errors.guests)}
             </p>
           )}
         </div>
@@ -203,7 +208,7 @@ function RsvpForm() {
           className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-[3px] bg-maroon px-6 text-button font-semibold uppercase tracking-[0.18em] text-ivory shadow-[0_12px_28px_-14px_rgba(90,21,36,.9)] transition-[background-color,transform] hover:bg-burgundy active:scale-[0.97] disabled:opacity-60 xs:px-8 xs:tracking-[0.22em] sm:w-auto"
         >
           <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {busy ? 'Opening WhatsApp…' : 'Send RSVP via WhatsApp'}
+          {busy ? t('rsvp.opening') : t('rsvp.send')}
         </button>
       </div>
 
@@ -211,12 +216,10 @@ function RsvpForm() {
         {prepared && (
           <div className="mt-6 rounded-[3px] border border-brass/50 bg-[#fffaf0]/70 p-5 text-center text-ink">
             <p className="font-display text-[1.25rem] leading-snug text-burgundy">
-              {prepared.blocked ? 'Your WhatsApp message is ready.' : 'Your WhatsApp message is ready. Please tap Send to confirm your RSVP.'}
+              {prepared.blocked ? t('rsvp.readyBlocked') : t('rsvp.ready')}
             </p>
             <p className="mt-2 text-[0.92rem] leading-relaxed">
-              {prepared.blocked
-                ? 'Your browser kept WhatsApp from opening automatically. Open it below, then tap Send to confirm your RSVP.'
-                : 'Your RSVP reaches the family once you send it in WhatsApp.'}
+              {prepared.blocked ? t('rsvp.blockedNote') : t('rsvp.readyNote')}
             </p>
             <a
               href={prepared.url}
@@ -225,7 +228,7 @@ function RsvpForm() {
               className="mt-4 inline-flex min-h-11 items-center gap-2 px-3 text-label font-semibold uppercase tracking-[0.2em] text-burgundy underline-offset-4 hover:underline"
             >
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              {prepared.blocked ? 'Open WhatsApp' : 'WhatsApp didn’t open? Open it again'}
+              {prepared.blocked ? t('rsvp.openWhatsApp') : t('rsvp.openAgain')}
             </a>
           </div>
         )}
@@ -233,7 +236,7 @@ function RsvpForm() {
 
       <p className="mt-6 flex items-start justify-center gap-2 text-center text-caption text-ink-soft">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>Your details go only into the WhatsApp message you send. This website does not save them.</span>
+        <span>{t('rsvp.privacy')}</span>
       </p>
     </form>
   )
@@ -242,7 +245,8 @@ function RsvpForm() {
 export function RSVPSection() {
   const section = useRef<HTMLElement>(null)
   const { prefersReducedMotion } = useMotion()
-  const timeline = getTimeline()
+  const { t, lang } = useI18n()
+  const timeline = getTimeline(lang)
   useReveal(section)
 
   const startRsvp = () => {
@@ -252,7 +256,7 @@ export function RSVPSection() {
   }
 
   return (
-    <section ref={section} id="rsvp" aria-labelledby="rsvp-title" className="relative isolate overflow-hidden bg-night">
+    <section ref={section} id="rsvp" aria-label={t('nav.rsvp')} className="relative isolate overflow-hidden bg-night">
       {/* ── The final frame: a lamp-lit temple doorway that bookends the hero ── */}
       <div className="relative overflow-hidden pb-24 pt-[var(--section-pad)] sm:pb-32">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(45%_55%_at_50%_45%,rgba(240,169,74,.16),transparent_70%),radial-gradient(70%_50%_at_50%_100%,rgba(90,21,36,.5),transparent_70%),linear-gradient(180deg,#061914,#08120e)]" />
@@ -276,19 +280,19 @@ export function RSVPSection() {
 
         <div className="relative mx-auto max-w-2xl px-[var(--gutter)] pt-[min(8rem,14vw)] text-center" data-reveal="fade">
           <p className="script text-[length:var(--step-3)] text-gold-light">
-            With love <Amp className="text-[0.75em]" /> blessings
+            {withAmp(t('rsvp.closingScript'), 'text-[0.75em]')}
           </p>
           <h2 id="rsvp-title" className="mt-6 flex flex-col items-center font-display font-medium leading-[0.9]">
-            <span className="text-gold-gradient text-[clamp(3rem,2rem+6vw,6.5rem)]">{wedding.couple.displayNames[0]}</span>
-            <Amp className="my-1 text-[clamp(1.8rem,1.3rem+2vw,3rem)] text-gold" />
-            <span className="text-gold-gradient text-[clamp(3rem,2rem+6vw,6.5rem)]">{wedding.couple.displayNames[1]}</span>
+            <span className="text-gold-gradient text-[clamp(3rem,2rem+6vw,6.5rem)]">{t('couple.first')}</span>
+            <NameJoiner className="my-1 text-[clamp(1.8rem,1.3rem+2vw,3rem)] text-gold" wordClassName="text-[clamp(1.3rem,1rem+1.4vw,2.1rem)]" />
+            <span className="text-gold-gradient text-[clamp(3rem,2rem+6vw,6.5rem)]">{t('couple.second')}</span>
           </h2>
           <p className="mt-6 text-label font-semibold uppercase tracking-[0.3em] text-gold/85">
             {timeline.daysLabel}
-            {` · ${timeline.monthYearLabel}`} · {wedding.venue.city}
+            {` · ${timeline.monthYearLabel}`} · {t('venue.city')}
           </p>
           <p className="mx-auto mt-7 max-w-[30rem] font-display text-[length:var(--step-1)] italic leading-relaxed text-ivory/90">
-            {wedding.copy.closing}
+            {t('rsvp.closing')}
           </p>
 
           <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
@@ -297,7 +301,7 @@ export function RSVPSection() {
               onClick={startRsvp}
               className="inline-flex min-h-12 items-center justify-center gap-3 border border-gold/70 bg-gold/10 px-8 text-button font-semibold uppercase tracking-[0.26em] text-gold-light shadow-[0_0_40px_-12px_rgba(213,176,109,.6)] transition-[background-color,color,transform] hover:bg-gold/20 hover:text-ivory active:scale-[0.97]"
             >
-              Kindly RSVP
+              {t('rsvp.kindly')}
             </button>
             <a
               href={wedding.venue.mapsUrl}
@@ -305,8 +309,8 @@ export function RSVPSection() {
               rel="noopener noreferrer"
               className="inline-flex min-h-12 items-center justify-center gap-2 px-6 text-label font-semibold uppercase tracking-[0.24em] text-ivory/85 underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
             >
-              <MapPin className="h-4 w-4 text-gold" aria-hidden="true" /> Get directions
-              <span className="sr-only"> (opens Google Maps in a new tab)</span>
+              <MapPin className="h-4 w-4 text-gold" aria-hidden="true" /> {t('rsvp.directions')}
+              <span className="sr-only"> {t('common.mapsNewTab')}</span>
             </a>
           </div>
         </div>
@@ -329,10 +333,10 @@ export function RSVPSection() {
               <FloralCorner className="pointer-events-none absolute -bottom-4 -right-4 w-24 rotate-180 sm:w-32" />
 
               <div className="relative text-center">
-                <p className="text-label font-bold uppercase tracking-[0.3em] text-burgundy">R · S · V · P</p>
-                <h3 className="mt-3 font-display text-[length:var(--step-3)] text-ink">Kindly let us know</h3>
+                <p className="text-label font-bold uppercase tracking-[0.3em] text-burgundy">{t('rsvp.cardEyebrow')}</p>
+                <h3 className="mt-3 font-display text-[length:var(--step-3)] text-ink">{t('rsvp.cardTitle')}</h3>
                 <LotusDivider className="mx-auto mt-4 h-5 w-40 text-brass" />
-                {wedding.rsvp.respondBy && <p className="mt-2 text-sm text-ink-soft">Please respond by {wedding.rsvp.respondBy}.</p>}
+                {wedding.rsvp.respondBy && <p className="mt-2 text-sm text-ink-soft">{t('rsvp.respondBy', { date: wedding.rsvp.respondBy })}</p>}
               </div>
               <div className="relative mx-auto max-w-[28rem]">
                 <RsvpForm />
@@ -349,7 +353,7 @@ export function RSVPSection() {
               <span className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/45 transition-transform duration-500 group-hover:-translate-y-1">
                 <ArrowUp className="h-4 w-4" aria-hidden="true" />
               </span>
-              Return to the beginning
+              {t('rsvp.backToTop')}
             </button>
           </div>
         </div>

@@ -7,24 +7,20 @@ import { getTimeline } from '../../lib/dates'
 import { MotionToggle } from '../ui/Ambient'
 import { Monogram } from '../ui/Monogram'
 import { MandapMotif } from '../ui/Ornaments'
-import { Amp } from '../ui/Amp'
+import { NameJoiner } from '../ui/Amp'
+import { useI18n } from '../../i18n/useI18n'
+import { shareContent } from '../../lib/shareContent'
 
-const shareMessages: Record<ShareResult, string> = {
-  shared: 'Thank you for sharing our invitation.',
-  copied: 'Invitation link copied to your clipboard.',
-  cancelled: '',
-  failed: 'Sharing isn’t available here — please copy the address bar link.',
-}
 
 export function WeddingFooter() {
   const { prefersReducedMotion } = useMotion()
-  const timeline = getTimeline()
-  const [shareStatus, setShareStatus] = useState('')
-
+  const { t, lang } = useI18n()
+  const timeline = getTimeline(lang)
+  // kept as a code and translated at render, so it follows a language change
+  const [shareStatus, setShareStatus] = useState<ShareResult | null>(null)
   const share = async () => {
     const url = wedding.share.siteUrl ?? window.location.href.split('#')[0]
-    const result = await shareInvitation({ title: wedding.share.title, text: wedding.share.text, url })
-    setShareStatus(shareMessages[result])
+    setShareStatus(await shareInvitation(shareContent(t, lang, url)))
   }
 
   const linkCls =
@@ -36,19 +32,19 @@ export function WeddingFooter() {
       <div className="container-wide relative flex flex-col items-center">
         <Monogram size="md" />
         <p className="mt-5 font-display text-[length:var(--step-3)] text-ivory">
-          {wedding.couple.displayNames[0]} <Amp className="text-gold" /> {wedding.couple.displayNames[1]}
+          {t('couple.first')} <NameJoiner className="text-gold" wordClassName="text-[0.6em]" /> {t('couple.second')}
         </p>
         <p className="mt-2 text-sm tracking-wide text-ivory/65">
           {timeline.daysLabel}
-          {` ${timeline.monthYearLabel}`} · {wedding.venue.city}
+          {` ${timeline.monthYearLabel}`} · {t('venue.city')}
         </p>
 
-        <nav aria-label="Footer" className="mt-8">
+        <nav aria-label={t('nav.footer')} className="mt-8">
           <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <li>
               <a href={wedding.venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={linkCls}>
-                <MapPin className="h-3.5 w-3.5 text-gold" aria-hidden="true" /> Venue directions
-                <span className="sr-only"> (opens Google Maps in a new tab)</span>
+                <MapPin className="h-3.5 w-3.5 text-gold" aria-hidden="true" /> {t('footer.directions')}
+                <span className="sr-only"> {t('common.mapsNewTab')}</span>
               </a>
             </li>
             <li>
@@ -60,25 +56,24 @@ export function WeddingFooter() {
                 }}
                 className={linkCls}
               >
-                RSVP
+                {t('nav.rsvp')}
               </a>
             </li>
             <li>
               <button type="button" onClick={share} className={linkCls}>
-                <Share2 className="h-3.5 w-3.5 text-gold" aria-hidden="true" /> Share invitation
+                <Share2 className="h-3.5 w-3.5 text-gold" aria-hidden="true" /> {t('footer.share')}
               </button>
             </li>
           </ul>
         </nav>
         <p role="status" aria-live="polite" className="mt-2 min-h-5 text-sm text-gold-light/85">
-          {shareStatus}
+          {shareStatus && shareStatus !== 'cancelled' ? t(`share.${shareStatus}`) : ''}
         </p>
 
         <MotionToggle className="mt-6" />
 
         <p className="mt-10 max-w-xl text-caption leading-relaxed text-ivory/65">
-          Made with love for {wedding.couple.pair}. The mandap scene and venue artwork are conceptual
-          illustrations.
+          {t('footer.credit')}
         </p>
       </div>
     </footer>

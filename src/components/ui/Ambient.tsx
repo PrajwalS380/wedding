@@ -3,6 +3,7 @@ import { Pause, Play } from 'lucide-react'
 import { useInView } from '../../hooks/useInView'
 import { useMotion } from '../../hooks/motion'
 import { PetalShape } from './Ornaments'
+import { useI18n } from '../../i18n/useI18n'
 
 /** Deterministic PRNG so decorative layouts are stable across renders. */
 function rng(seed: number) {
@@ -126,6 +127,7 @@ export function GoldMotes({ count = 18, seed = 3, className = '' }: { count?: nu
 /** Guest-facing control to pause all decorative motion (WCAG 2.2.2). */
 export function MotionToggle({ className = '' }: { className?: string }) {
   const { paused, prefersReducedMotion, togglePaused } = useMotion()
+  const { t } = useI18n()
   if (prefersReducedMotion) return null
   return (
     <button
@@ -135,7 +137,7 @@ export function MotionToggle({ className = '' }: { className?: string }) {
       className={`inline-flex min-h-11 items-center gap-2 rounded-full border border-gold/35 bg-night/40 px-4 text-label font-semibold uppercase tracking-[0.22em] text-gold-light/90 backdrop-blur-sm transition-colors hover:border-gold/70 hover:text-ivory ${className}`}
     >
       {paused ? <Play className="h-3.5 w-3.5" aria-hidden="true" /> : <Pause className="h-3.5 w-3.5" aria-hidden="true" />}
-      <span>{paused ? 'Play animations' : 'Pause animations'}</span>
+      <span>{paused ? t('motion.play') : t('motion.pause')}</span>
     </button>
   )
 }

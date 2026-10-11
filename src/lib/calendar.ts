@@ -1,4 +1,6 @@
-import { wedding, type CelebrationDay } from '../data/wedding'
+import { localized, wedding, type CelebrationDay } from '../data/wedding'
+import type { Lang } from '../i18n/languages'
+import { translator } from '../i18n/translate'
 import { formatClock, getDaySchedule, type DateParts } from './dates'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -54,26 +56,29 @@ export interface CalendarEntry {
 }
 
 /**
- * One calendar entry per wedding day. All-day unless BOTH start and end times
- * are confirmed — no ceremony time or duration is ever invented.
+ * One calendar entry per wedding day, written in the guest's language. All-day
+ * unless BOTH start and end times are confirmed — no ceremony time or duration
+ * is ever invented. The location stays the official address so map apps find it.
  */
-export function calendarEntryForDay(day: CelebrationDay): CalendarEntry | null {
+export function calendarEntryForDay(day: CelebrationDay, lang: Lang = 'en'): CalendarEntry | null {
   const s = getDaySchedule(day)
   if (!s.parts) return null
-  const lines: string[] = [`${wedding.couple.pair}'s wedding celebrations — ${day.label}.`]
+  const t = translator(lang)
+  const dayLabel = t(`days.${day.id}`)
+  const lines: string[] = [t('calendarFile.description', { day: dayLabel })]
   if (day.events.length) {
     for (const ev of day.events) {
-      const t = [formatClock(ev.startTime), formatClock(ev.endTime)].filter(Boolean).join(' – ')
-      lines.push(`• ${ev.name}${t ? ` (${t})` : ''}`)
+      const time = [formatClock(ev.startTime, lang), formatClock(ev.endTime, lang)].filter(Boolean).join(' – ')
+      lines.push(`• ${localized(ev.name, lang)}${time ? ` (${time})` : ''}`)
     }
   } else {
-    lines.push(`${wedding.copy.schedulePending}.`)
+    lines.push(t('calendarFile.schedulePending'))
   }
-  if (s.timeConfirmed && !day.endTime) lines.push(`Begins at ${formatClock(day.startTime)}.`)
-  lines.push('', `Venue: ${wedding.venue.fullAddress}`, `Directions: ${wedding.venue.mapsUrl}`)
+  if (s.timeConfirmed && !day.endTime) lines.push(t('calendarFile.beginsAt', { time: formatClock(day.startTime, lang) ?? '' }))
+  lines.push('', t('calendarFile.venue', { address: wedding.venue.fullAddress }), t('calendarFile.directions', { url: wedding.venue.mapsUrl }))
   const base = {
     uid: `${wedding.calendarExport.fileName}-${day.id}@the-wedding-realm`,
-    title: `${wedding.calendarExport.title} — ${day.label}`,
+    title: t('calendarFile.summary', { day: dayLabel }),
     description: lines.join('\n'),
     location: wedding.venue.fullAddress,
   }
@@ -81,8 +86,8 @@ export function calendarEntryForDay(day: CelebrationDay): CalendarEntry | null {
   return { ...base, allDay: s.parts }
 }
 
-export function weddingCalendarEntries(): CalendarEntry[] {
-  return wedding.days.map(calendarEntryForDay).filter((e): e is CalendarEntry => e !== null)
+export function weddingCalendarEntries(lang: Lang = 'en'): CalendarEntry[] {
+  return wedding.days.map((d) => calendarEntryForDay(d, lang)).filter((e): e is CalendarEntry => e !== null)
 }
 
 export function buildIcs(entries: CalendarEntry[]): string {
