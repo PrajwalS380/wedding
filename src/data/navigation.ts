@@ -3,7 +3,6 @@ export const NAV_ITEMS = [
   { id: 'invitation', label: 'Invitation' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'compass', label: 'Compass' },
-  { id: 'moments', label: 'Moments' },
   { id: 'rsvp', label: 'RSVP' },
 ] as const
 

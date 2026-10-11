@@ -4,8 +4,10 @@ A cinematic, mobile-first wedding invitation website for the celebrations on
 **15 & 16 November 2026** at Bapuji Samudhaya Bhavan, Davangere: a real-time 3D
 South Indian mandap, an unfurling invitation scroll, **The Living Wedding
 Calendar** (live countdowns for both days), **The Wedding Compass** (invitation,
-schedule, venue and guest services in one place), an interactive **Magical
-Moments** journey built around the couple's own photographs, and an RSVP page.
+schedule, venue and guest services in one place), and an RSVP card that
+prepares each guest's reply as a WhatsApp message to the family.
+
+Live: https://thedarshanandvathsala.vercel.app/
 
 **Stack:** React 19 · TypeScript · Vite · Tailwind CSS 4 · Three.js / React Three
 Fiber / drei · GSAP + ScrollTrigger · Lucide icons · self-hosted Fontsource fonts.
@@ -48,7 +50,7 @@ shows a tasteful "to be announced" state for them — nothing is invented.
 | `couple.displayNames` | Name order used everywhere the names appear together (title, monogram, invitation, sharing). Currently `['Darshan', 'Vathsala']`. |
 | `days` | The two confirmed dates (`2026-11-15`, `2026-11-16`), optional `startTime` / `endTime`, verified `events`, `dressCode`, `note`. |
 | `venue` | Name, address, the exact Google Maps link and the opt-in map embed. |
-| `rsvp` | Preview mode vs. a real endpoint (see below). |
+| `rsvp` | WhatsApp RSVP (see below); the number itself lives in `src/data/site.ts`. |
 | `contact` | Verified contact details only — the Guest Services card stays "to be shared" until one is set. |
 | `calendarExport` | `.ics` file name and calendar entry title. |
 | `copy` | Invitation, calendar and compass wording. |
@@ -79,26 +81,28 @@ That change automatically:
 The calendar never shows negative numbers: on a wedding day it says the
 celebrations are today, and after 16 November it shows a thank-you message.
 
-Magical Moments titles and captions are in `src/data/moments.ts`.
+Deployment-level settings (production URL, RSVP WhatsApp number) are in
+`src/data/site.ts`.
 
 ---
 
-## RSVP
+## RSVP (WhatsApp)
 
-By default the RSVP form runs in an honest **preview mode**: it validates, but
-clearly tells guests that nothing was sent or saved, and stores nothing in the browser.
+Guests reply through WhatsApp — no backend, database or secret is involved:
 
-To collect real responses, point it at any endpoint that accepts a JSON `POST`
-(e.g. Formspree, a Google Apps Script web app, or a serverless function):
+1. The form checks the guest's name and attendance (attendee count is optional).
+2. It builds a readable message and opens `https://wa.me/<number>?text=<message>`
+   (the message is percent-encoded, so guest input cannot change the link).
+3. WhatsApp opens with the message ready; **the guest reviews it and taps Send**.
 
-```bash
-# .env.local
-VITE_RSVP_ENDPOINT=https://formspree.io/f/xxxxxxx
-```
+The site never claims a reply was received — it tells the guest the message is
+ready and that it reaches the family once they send it. Nothing is stored in the
+browser or anywhere else. If a browser blocks the new tab, a plain "Open WhatsApp"
+link to the same prefilled chat is shown.
 
-The payload is `{ name, attending, guests, submittedAt }`. Only public endpoint
-URLs belong here — **never put secret API keys in `VITE_*` variables**; they
-are visible to every visitor.
+The recipient is `RSVP_WHATSAPP_NUMBER` in `src/data/site.ts` (international
+format, digits only, e.g. `919591420987`); the message text is built in
+`src/lib/rsvp.ts`.
 
 ---
 
@@ -115,14 +119,13 @@ Changing one only takes effect after a **redeploy**.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `VITE_SITE_URL` | on Vercel: the project's production domain | Canonical link, absolute `og:image` / `og:url`, `sitemap.xml`, and the link guests share. Set it if you add a custom domain. |
+| `VITE_SITE_URL` | `PRODUCTION_URL` in `src/data/site.ts` | Canonical link, absolute `og:image` / `og:url`, `sitemap.xml`, and the link guests share. Set it if you add a custom domain. |
 | `VITE_ALLOW_INDEXING` | `false` | `true` lets search engines index the site; default is `noindex` for the family's privacy. |
-| `VITE_RSVP_ENDPOINT` | unset (RSVP preview mode) | Public URL that accepts the RSVP JSON `POST` (see RSVP above). |
 
-When `VITE_SITE_URL` is not set, the build uses `VERCEL_PROJECT_PRODUCTION_URL`,
-which Vercel provides automatically — so link previews (WhatsApp, Instagram,
-Facebook…) get absolute image URLs and shared links point at the production
-site, even from preview deployments.
+When `VITE_SITE_URL` is not set, the build uses `PRODUCTION_URL`
+(https://thedarshanandvathsala.vercel.app) — so link previews (WhatsApp,
+Instagram, Facebook…) get absolute image URLs and shared links point at the
+production site, even from preview deployments.
 
 Every push to `main` deploys to production; other branches get preview URLs.
 Earlier deployments stay available in the Vercel dashboard for instant rollback.
@@ -135,13 +138,12 @@ Earlier deployments stay available in the Vercel dashboard for instant rollback.
 src/
   app/App.tsx                 page shell, intro gate, deep links (incl. Compass aliases)
   data/wedding.ts             ← all wedding facts & copy
-  data/moments.ts             Magical Moments content
-  data/assets.ts              image manifest (provenance + status)
+  data/site.ts                production URL + RSVP WhatsApp number
   data/navigation.ts
   components/
     navigation/               desktop bar + accessible mobile menu
     sections/                 CinematicIntro, WeddingHero, InvitationScroll, LivingCalendar,
-                              WeddingCompass, MagicalMoments (+ MomentArt), RSVPSection,
+                              WeddingCompass, RSVPSection,
                               WeddingFooter, VenueIllustration (used in the Compass venue panel)
     compass/                  CompassPanels — Invitation (N), Schedule (E), Venue (S), Guest Services (W)
     three/                    MandapScene (Canvas, camera rig, foreground torana), stage (portrait
@@ -150,7 +152,7 @@ src/
     ui/                       Button, CalendarDial, CompassRose, Picture, Ornaments, Ambient,
                               Monogram, Amp / withAmp, ErrorBoundary, LoadingState
   hooks/                      motion preferences, reveals, in-view, active section, useNow (live clock)
-  lib/                        dates/timezone, weddingClock (countdown/phase logic), calendar (.ics),
+  lib/                        dates/timezone, rsvp (WhatsApp message + link), weddingClock (countdown/phase logic), calendar (.ics),
                               compass (direction events + deep-link aliases), browser helpers
   styles/index.css            design tokens & utilities
 public/                       optimised images, icons, manifest, OG image
@@ -174,7 +176,7 @@ docs/ASSETS.md                asset provenance and what to replace later
 - **Motion**: respects `prefers-reduced-motion` (static, complete content — the
   invitation shows open), and offers a *Pause animations* control.
 - **Accessibility**: landmarks, one `h1`, logical headings, skip link, visible
-  focus, keyboard-operable menu/scroll/moments/forms, Escape closes overlays,
+  focus, keyboard-operable menu/scroll/compass/forms, Escape closes overlays,
   live regions for status messages, 44 px touch targets.
 - **Privacy**: the Google map loads only when the guest asks for it; the only
   storage is a per-tab flag that the intro was seen (no personal data).

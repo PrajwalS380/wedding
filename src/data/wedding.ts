@@ -13,7 +13,7 @@
  * from here — never hard-code dates in components.
  */
 
-import { photos } from './assets'
+import { PRODUCTION_URL, RSVP_WHATSAPP_NUMBER } from './site'
 
 export type DayId = 'day-1' | 'day-2'
 
@@ -47,15 +47,13 @@ export interface CelebrationDay {
 
 export interface RsvpConfig {
   /**
-   * 'demo'     — form validates but does NOT send anything (honest preview).
-   * 'endpoint' — POSTs JSON to `endpoint` (e.g. a Formspree / Google Apps
-   *              Script / serverless URL). Never put secret keys here.
+   * Guests reply through WhatsApp: the form builds their message and opens a
+   * chat with this number (international format, digits only). Nothing is
+   * sent or stored by the website itself — the guest reviews and taps Send.
    */
-  mode: 'demo' | 'endpoint'
-  endpoint: string | null
+  whatsappNumber: string
   /** 'YYYY-MM-DD' or null when no deadline has been set. */
   respondBy: string | null
-  maxGuestsPerResponse: number
 }
 
 /** Only verified contact details — all null until the family provides them. */
@@ -150,10 +148,8 @@ export const wedding = {
   },
 
   rsvp: {
-    mode: import.meta.env.VITE_RSVP_ENDPOINT ? 'endpoint' : 'demo',
-    endpoint: (import.meta.env.VITE_RSVP_ENDPOINT as string | undefined) ?? null,
+    whatsappNumber: RSVP_WHATSAPP_NUMBER,
     respondBy: null,
-    maxGuestsPerResponse: 6,
   } satisfies RsvpConfig as RsvpConfig,
 
   contact: {
@@ -176,21 +172,20 @@ export const wedding = {
     title: null as string | null,
   },
 
-  photos,
 
   share: {
     title: `${pair} — You Are Invited`,
     text: `You are warmly invited to celebrate the wedding of ${pair} on 15 & 16 November 2026 at Bapuji Samudhaya Bhavan, Davangere.`,
-    /** Public deployment URL; injected from VITE_SITE_URL at build time when available. */
-    siteUrl: (import.meta.env.VITE_SITE_URL as string | undefined) || null,
+    /** The link guests share: VITE_SITE_URL when set at build time, otherwise the production site. */
+    siteUrl: (import.meta.env.VITE_SITE_URL as string | undefined) || PRODUCTION_URL,
     ogImage: '/og/og-image.jpg',
   },
 } as const
 
 export type Wedding = typeof wedding
 
-/** RSVP is only "open" when a real endpoint is configured. */
-export const rsvpIsLive = (): boolean => wedding.rsvp.mode === 'endpoint' && Boolean(wedding.rsvp.endpoint)
+/** RSVP is open when a WhatsApp number is configured. */
+export const rsvpIsLive = (): boolean => /^\d{8,15}$/.test(wedding.rsvp.whatsappNumber)
 
 /** True when at least one verified contact detail exists. */
 export const hasContact = (): boolean => Boolean(wedding.contact.phone || wedding.contact.email || wedding.contact.whatsapp)

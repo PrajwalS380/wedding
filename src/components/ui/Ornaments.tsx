@@ -159,6 +159,8 @@ export function TempleLineArt({ className, ...rest }: OrnamentProps) {
 
 /** Stylised rose / marigold / jasmine petals for CSS petal fields. */
 export function PetalShape({ kind, className, style }: { kind: 'rose' | 'marigold' | 'jasmine'; className?: string; style?: CSSProperties }) {
+  // a unique gradient id per petal (a petal field renders many of them)
+  const gradId = `${useId().replace(/:/g, '')}-petal`
   if (kind === 'jasmine') {
     return (
       <svg viewBox="0 0 24 24" className={className} style={style} aria-hidden="true" focusable="false">
@@ -169,22 +171,17 @@ export function PetalShape({ kind, className, style }: { kind: 'rose' | 'marigol
       </svg>
     )
   }
-  const fill = kind === 'rose' ? 'url(#petal-rose)' : 'url(#petal-marigold)'
+  const stops = kind === 'rose' ? ['#c8475a', '#8f1f33', '#5e1222'] : ['#ffc861', '#ec9a2b', '#c46a12']
   return (
     <svg viewBox="0 0 24 30" className={className} style={style} aria-hidden="true" focusable="false">
       <defs>
-        <radialGradient id="petal-rose" cx="40%" cy="35%" r="70%">
-          <stop offset="0" stopColor="#c8475a" />
-          <stop offset=".7" stopColor="#8f1f33" />
-          <stop offset="1" stopColor="#5e1222" />
-        </radialGradient>
-        <radialGradient id="petal-marigold" cx="40%" cy="35%" r="70%">
-          <stop offset="0" stopColor="#ffc861" />
-          <stop offset=".7" stopColor="#ec9a2b" />
-          <stop offset="1" stopColor="#c46a12" />
+        <radialGradient id={gradId} cx="40%" cy="35%" r="70%">
+          <stop offset="0" stopColor={stops[0]} />
+          <stop offset=".7" stopColor={stops[1]} />
+          <stop offset="1" stopColor={stops[2]} />
         </radialGradient>
       </defs>
-      <path d="M12 1 C20 4 24 13 20 22 C17.5 27.5 13 29 12 29 C11 29 6.5 27.5 4 22 C0 13 4 4 12 1 Z" fill={fill} />
+      <path d="M12 1 C20 4 24 13 20 22 C17.5 27.5 13 29 12 29 C11 29 6.5 27.5 4 22 C0 13 4 4 12 1 Z" fill={`url(#${gradId})`} />
       <path d="M12 4 C11 12 11.5 20 12 27" stroke="rgba(255,255,255,.18)" strokeWidth=".6" fill="none" />
     </svg>
   )

@@ -68,6 +68,13 @@ function tzOffsetMs(instant: number, timeZone: string): number {
   return asUtc - (instant - (instant % 1000))
 }
 
+/** 'YYYY-MM-DD' calendar date of an instant in `timeZone` (default: the wedding's, IST). */
+export function zonedDateKey(instant: Date, timeZone: string = wedding.timezone): string {
+  const parts = formatter('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(instant)
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+  return `${get('year')}-${get('month')}-${get('day')}`
+}
+
 /** Converts a wall-clock time in `timeZone` to a UTC instant. */
 export function zonedToUtc(y: number, mo: number, d: number, h: number, mi: number, timeZone: string = wedding.timezone): Date {
   const guess = Date.UTC(y, mo - 1, d, h, mi)

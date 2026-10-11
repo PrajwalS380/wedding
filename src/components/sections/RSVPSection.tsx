@@ -1,16 +1,17 @@
 import { useId, useRef, useState, type FormEvent } from 'react'
-import { ArrowUp, Info, MapPin, Send } from 'lucide-react'
+import { ArrowUp, ExternalLink, MapPin, MessageCircle, ShieldCheck } from 'lucide-react'
 import { wedding } from '../../data/wedding'
 import { useMotion } from '../../hooks/motion'
 import { useReveal } from '../../hooks/useReveal'
 import { scrollToSection } from '../../lib/browser'
 import { getTimeline } from '../../lib/dates'
+import { ATTENDANCE_LABEL, buildRsvpMessage, whatsappRsvpUrl, type Attendance } from '../../lib/rsvp'
 import { FloralCorner, LotusDivider } from '../ui/Ornaments'
 import { PetalField } from '../ui/Ambient'
 import { Amp } from '../ui/Amp'
 
-type Attending = 'yes' | 'no' | ''
-type Status = 'idle' | 'submitting' | 'success' | 'demo' | 'error'
+/** Sanity bound for the optional attendee count — a typo guard, not a guest limit. */
+const MAX_ATTENDEES = 50
 
 interface Errors {
   name?: string
@@ -18,110 +19,88 @@ interface Errors {
   guests?: string
 }
 
+/** "+91 95914 20987" for display (Indian numbers grouped 5 + 5; others shown as +digits). */
+function displayNumber(digits: string): string {
+  return digits.length === 12 && digits.startsWith('91') ? `+91 ${digits.slice(2, 7)} ${digits.slice(7)}` : `+${digits}`
+}
+
 const field =
   'mt-2 block min-h-12 w-full rounded-[3px] border border-brass/50 bg-[#fffaf0]/80 px-4 text-[1rem] text-ink shadow-inner outline-none transition-[border-color,box-shadow] placeholder:text-ink-soft/50 focus:border-burgundy focus:shadow-[0_0_0_3px_rgba(125,37,53,.18)] aria-[invalid=true]:border-rose'
 
+/**
+ * RSVP through WhatsApp: the guest's reply is turned into a message and a chat
+ * with the family opens with it prefilled. The guest reviews it and taps Send
+ * in WhatsApp — the website itself never sends or stores anything.
+ */
 function RsvpForm() {
-  const { rsvp } = wedding
   const id = useId()
   const formRef = useRef<HTMLFormElement>(null)
+  const opening = useRef(false)
   const [name, setName] = useState('')
-  const [attending, setAttending] = useState<Attending>('')
-  const [guests, setGuests] = useState('1')
+  const [attending, setAttending] = useState<Attendance | ''>('')
+  const [guests, setGuests] = useState('')
   const [errors, setErrors] = useState<Errors>({})
-  const [status, setStatus] = useState<Status>('idle')
-  const [submittedName, setSubmittedName] = useState('')
-  const isDemo = rsvp.mode !== 'endpoint' || !rsvp.endpoint
+  const [busy, setBusy] = useState(false)
+  /** The prefilled chat link once prepared; `blocked` when the browser stopped the new tab. */
+  const [prepared, setPrepared] = useState<{ url: string; blocked: boolean } | null>(null)
+  const recipient = displayNumber(wedding.rsvp.whatsappNumber)
 
   const validate = (): Errors => {
     const e: Errors = {}
     if (name.trim().length < 2) e.name = 'Please enter your name.'
     if (!attending) e.attending = 'Please let us know whether you can attend.'
-    const n = Number(guests)
-    if (attending === 'yes' && (!Number.isInteger(n) || n < 1 || n > rsvp.maxGuestsPerResponse)) {
-      e.guests = `Please choose between 1 and ${rsvp.maxGuestsPerResponse} guests.`
+    if (attending === 'yes' && guests.trim()) {
+      const n = Number(guests)
+      if (!Number.isInteger(n) || n < 1 || n > MAX_ATTENDEES) e.guests = `Please enter a whole number from 1 to ${MAX_ATTENDEES}, or leave it blank.`
     }
     return e
   }
 
-  const onSubmit = async (ev: FormEvent) => {
+  const onSubmit = (ev: FormEvent) => {
     ev.preventDefault()
+    if (opening.current) return // one WhatsApp tab per tap
     const e = validate()
     setErrors(e)
     if (Object.keys(e).length) {
       // Focus the first invalid control (decided from the result, not the DOM,
       // because React has not re-rendered the aria-invalid flags yet).
-      const selector = e.name ? 'input[name="name"]' : e.attending ? 'input[name="attending"]' : 'select[name="guests"]'
+      const selector = e.name ? 'input[name="name"]' : e.attending ? 'input[name="attending"]' : 'input[name="guests"]'
       formRef.current?.querySelector<HTMLElement>(selector)?.focus()
       return
     }
-    const cleanName = name.trim()
-    setSubmittedName(cleanName)
-    if (isDemo) {
-      // Honest preview: nothing is sent or stored anywhere.
-      setStatus('demo')
-      return
-    }
-    setStatus('submitting')
-    try {
-      const res = await fetch(rsvp.endpoint!, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          name: cleanName,
-          attending: attending === 'yes',
-          guests: attending === 'yes' ? Number(guests) : 0,
-          submittedAt: new Date().toISOString(),
-        }),
-      })
-      if (!res.ok) throw new Error(String(res.status))
-      setStatus('success')
-    } catch {
-      setStatus('error')
-    }
-  }
-
-  if (status === 'success' || status === 'demo') {
-    return (
-      <div role="status" className="mt-8 rounded-[3px] border border-brass/50 bg-[#fffaf0]/70 p-6 text-center">
-        <p className="script text-[length:var(--step-3)] text-burgundy">Thank you, {submittedName}</p>
-        {status === 'success' ? (
-          <p className="mt-3 text-ink">Your response has been received. We look forward to celebrating with you.</p>
-        ) : (
-          <p className="mt-3 text-ink">
-            <strong className="font-semibold">This was a preview only — your response has not been sent or saved.</strong> Online RSVP
-            will open soon; until then, please share your response with the family directly.
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            setStatus('idle')
-            setName('')
-            setAttending('')
-            setGuests('1')
-          }}
-          className="mt-5 inline-flex min-h-11 items-center px-3 text-label font-semibold uppercase tracking-[0.2em] text-burgundy underline-offset-4 hover:underline"
-        >
-          Respond for another guest
-        </button>
-      </div>
+    const url = whatsappRsvpUrl(
+      buildRsvpMessage({ name, attendance: attending as Attendance, guests: attending === 'yes' && guests.trim() ? Number(guests) : null }),
     )
+    opening.current = true
+    setBusy(true)
+    // Opened straight from the tap, so it is not treated as a pop-up. If the
+    // browser still blocks it, a plain link to the same chat is offered below.
+    const win = window.open(url, '_blank')
+    if (win) {
+      try {
+        win.opener = null
+      } catch {
+        /* cross-origin already — nothing to detach */
+      }
+    }
+    setPrepared({ url, blocked: !win })
+    window.setTimeout(() => {
+      opening.current = false
+      setBusy(false)
+    }, 1500)
   }
 
   const errorList = Object.values(errors).filter(Boolean)
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} noValidate className="mt-8 text-left" aria-describedby={isDemo ? `${id}-demo` : undefined}>
-      {isDemo && (
-        <p id={`${id}-demo`} className="mb-6 flex gap-3 rounded-[3px] border border-brass/40 bg-parchment/60 p-4 text-[0.9rem] leading-relaxed text-ink">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-burgundy" aria-hidden="true" />
-          <span>
-            <strong className="font-semibold">Preview mode:</strong> online RSVP is not connected yet, so responses entered here are not
-            sent or saved.
-          </span>
-        </p>
-      )}
+    <form ref={formRef} onSubmit={onSubmit} noValidate className="mt-8 text-left" aria-describedby={`${id}-how`}>
+      <p id={`${id}-how`} className="mb-6 flex gap-3 rounded-[3px] border border-brass/40 bg-parchment/60 p-4 text-[0.9rem] leading-relaxed text-ink">
+        <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-burgundy" aria-hidden="true" />
+        <span>
+          Your reply goes to the family on <strong className="font-semibold">WhatsApp</strong> <span className="whitespace-nowrap">({recipient})</span>. It opens with your message
+          ready — just <strong className="font-semibold">tap Send there</strong> to confirm.
+        </span>
+      </p>
 
       {errorList.length > 0 && (
         <div role="alert" className="mb-6 rounded-[3px] border border-rose/50 bg-rose/5 p-4 text-[0.9rem] text-ink">
@@ -144,6 +123,7 @@ function RsvpForm() {
           type="text"
           autoComplete="name"
           maxLength={80}
+          required
           value={name}
           onChange={(e) => setName(e.target.value)}
           aria-invalid={Boolean(errors.name)}
@@ -161,26 +141,23 @@ function RsvpForm() {
       <fieldset className="mt-6" aria-describedby={errors.attending ? `${id}-att-err` : undefined}>
         <legend className="text-label font-bold uppercase tracking-[0.2em] text-burgundy">Will you join us?</legend>
         <div className="mt-2 grid gap-3 sm:grid-cols-2">
-          {[
-            { v: 'yes', label: 'Joyfully accepts' },
-            { v: 'no', label: 'Regretfully declines' },
-          ].map((o) => (
+          {(['yes', 'no'] as const).map((v) => (
             <label
-              key={o.v}
+              key={v}
               className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-[3px] border px-4 transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-burgundy ${
-                attending === o.v ? 'border-burgundy bg-burgundy/8 text-ink' : 'border-brass/50 bg-[#fffaf0]/60 text-ink hover:border-brass'
+                attending === v ? 'border-burgundy bg-burgundy/8 text-ink' : 'border-brass/50 bg-[#fffaf0]/60 text-ink hover:border-brass'
               }`}
             >
               <input
                 type="radio"
                 name="attending"
-                value={o.v}
-                checked={attending === o.v}
-                onChange={() => setAttending(o.v as Attending)}
+                value={v}
+                checked={attending === v}
+                onChange={() => setAttending(v)}
                 aria-invalid={Boolean(errors.attending)}
                 className="h-4 w-4 accent-[#7d2535]"
               />
-              <span className="font-display text-[1.15rem]">{o.label}</span>
+              <span className="font-display text-[1.15rem]">{ATTENDANCE_LABEL[v]}</span>
             </label>
           ))}
         </div>
@@ -194,23 +171,23 @@ function RsvpForm() {
       {attending === 'yes' && (
         <div className="mt-6">
           <label htmlFor={`${id}-guests`} className="text-label font-bold uppercase tracking-[0.2em] text-burgundy">
-            Number of guests (including you)
+            Number of attendees, including you <span className="font-semibold normal-case tracking-normal text-ink-soft">(optional)</span>
           </label>
-          <select
+          <input
             id={`${id}-guests`}
             name="guests"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            maxLength={3}
             value={guests}
-            onChange={(e) => setGuests(e.target.value)}
+            onChange={(e) => setGuests(e.target.value.replace(/\D/g, ''))}
             aria-invalid={Boolean(errors.guests)}
             aria-describedby={errors.guests ? `${id}-guests-err` : undefined}
-            className={`${field} appearance-none bg-[url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%237d2535'%3E%3Cpath d='M5 7l5 6 5-6z'/%3E%3C/svg%3E")] bg-[length:1rem] bg-[right_1rem_center] bg-no-repeat`}
-          >
-            {Array.from({ length: rsvp.maxGuestsPerResponse }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1}
-              </option>
-            ))}
-          </select>
+            className={`${field} max-w-[10rem]`}
+            placeholder="e.g. 2"
+          />
           {errors.guests && (
             <p id={`${id}-guests-err`} className="mt-1.5 text-[0.85rem] text-rose">
               {errors.guests}
@@ -219,22 +196,45 @@ function RsvpForm() {
         </div>
       )}
 
-      {status === 'error' && (
-        <p role="alert" className="mt-6 rounded-[3px] border border-rose/50 bg-rose/5 p-4 text-[0.9rem] text-ink">
-          We couldn’t send your response just now. Please try again in a moment, or share it with the family directly.
-        </p>
-      )}
-
       <div className="mt-8 flex justify-center">
         <button
           type="submit"
-          disabled={status === 'submitting'}
-          className="inline-flex min-h-12 items-center gap-2.5 rounded-[3px] bg-maroon px-8 text-button font-semibold uppercase tracking-[0.22em] text-ivory shadow-[0_12px_28px_-14px_rgba(90,21,36,.9)] transition-[background-color,transform] hover:bg-burgundy active:scale-[0.97] disabled:opacity-60"
+          disabled={busy}
+          className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-[3px] bg-maroon px-6 text-button font-semibold uppercase tracking-[0.18em] text-ivory shadow-[0_12px_28px_-14px_rgba(90,21,36,.9)] transition-[background-color,transform] hover:bg-burgundy active:scale-[0.97] disabled:opacity-60 xs:px-8 xs:tracking-[0.22em] sm:w-auto"
         >
-          <Send className="h-4 w-4" aria-hidden="true" />
-          {status === 'submitting' ? 'Sending…' : isDemo ? 'Preview RSVP' : 'Send RSVP'}
+          <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {busy ? 'Opening WhatsApp…' : 'Send RSVP via WhatsApp'}
         </button>
       </div>
+
+      <div role="status" aria-live="polite">
+        {prepared && (
+          <div className="mt-6 rounded-[3px] border border-brass/50 bg-[#fffaf0]/70 p-5 text-center text-ink">
+            <p className="font-display text-[1.25rem] leading-snug text-burgundy">
+              {prepared.blocked ? 'Your WhatsApp message is ready.' : 'Your WhatsApp message is ready. Please tap Send to confirm your RSVP.'}
+            </p>
+            <p className="mt-2 text-[0.92rem] leading-relaxed">
+              {prepared.blocked
+                ? 'Your browser kept WhatsApp from opening automatically. Open it below, then tap Send to confirm your RSVP.'
+                : 'Your RSVP reaches the family once you send it in WhatsApp.'}
+            </p>
+            <a
+              href={prepared.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 px-3 text-label font-semibold uppercase tracking-[0.2em] text-burgundy underline-offset-4 hover:underline"
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              {prepared.blocked ? 'Open WhatsApp' : 'WhatsApp didn’t open? Open it again'}
+            </a>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-6 flex items-start justify-center gap-2 text-center text-caption text-ink-soft">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>Your details go only into the WhatsApp message you send. This website does not save them.</span>
+      </p>
     </form>
   )
 }

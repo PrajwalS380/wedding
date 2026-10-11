@@ -1,13 +1,13 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { PRODUCTION_URL } from './src/data/site.ts'
 
 /**
  * SEO / sharing plumbing.
- *  - VITE_SITE_URL       e.g. https://darshan-vathsala.example — enables canonical,
- *                        absolute og:url / og:image and sitemap.xml. On Vercel it
- *                        defaults to the project's production domain
- *                        (VERCEL_PROJECT_PRODUCTION_URL, provided by Vercel at build time).
+ *  - VITE_SITE_URL       overrides the public URL used for the canonical link,
+ *                        absolute og:url / og:image and sitemap.xml. Defaults to
+ *                        PRODUCTION_URL in src/data/site.ts.
  *  - VITE_ALLOW_INDEXING 'true' to let search engines index the site. Default is
  *                        noindex (private family invitation); link previews in
  *                        WhatsApp / social apps still work either way.
@@ -52,12 +52,11 @@ function seo(site: string, indexable: boolean): Plugin {
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
-  // An explicit VITE_SITE_URL wins; on Vercel, fall back to the real production domain it provides.
-  const vercelProd = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  const site = (env.VITE_SITE_URL || (vercelProd ? `https://${vercelProd}` : '')).replace(/\/+$/, '')
+  // An explicit VITE_SITE_URL wins; otherwise the confirmed production address.
+  const site = (env.VITE_SITE_URL || PRODUCTION_URL).replace(/\/+$/, '')
   return {
     plugins: [react(), tailwindcss(), seo(site, env.VITE_ALLOW_INDEXING === 'true')],
-    // the app shares this same public URL (falls back to the current page when empty)
+    // the app shares this same public URL
     define: { 'import.meta.env.VITE_SITE_URL': JSON.stringify(site) },
     build: {
       target: 'es2022',

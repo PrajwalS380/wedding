@@ -8,7 +8,6 @@ import { WeddingHero } from '../components/sections/WeddingHero'
 import { InvitationScroll } from '../components/sections/InvitationScroll'
 import { LivingCalendar } from '../components/sections/LivingCalendar'
 import { WeddingCompass } from '../components/sections/WeddingCompass'
-import { MagicalMoments } from '../components/sections/MagicalMoments'
 import { RSVPSection } from '../components/sections/RSVPSection'
 import { WeddingFooter } from '../components/sections/WeddingFooter'
 
@@ -91,7 +90,6 @@ export default function App() {
           <InvitationScroll />
           <LivingCalendar />
           <WeddingCompass />
-          <MagicalMoments />
           <RSVPSection />
         </main>
         {!stillMode && <WeddingFooter />}

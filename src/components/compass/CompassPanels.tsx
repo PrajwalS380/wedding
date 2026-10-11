@@ -1,5 +1,5 @@
 import { useId, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { ArrowLeft, ArrowUpRight, CalendarPlus, Check, Copy, Download, Mail, MapPin, MessageCircle, Phone, Send, Share2 } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, CalendarPlus, Check, Copy, Download, Mail, MapPin, MessageCircle, Phone, Share2 } from 'lucide-react'
 import { hasContact, rsvpIsLive, wedding, type DayId } from '../../data/wedding'
 import { copyText, scrollToSection, shareInvitation, type ShareResult } from '../../lib/browser'
 import { calendarEntryForDay, downloadIcs, googleCalendarUrl, weddingCalendarEntries } from '../../lib/calendar'
@@ -300,11 +300,14 @@ export function ServicesPanel({ onBack }: { onBack: () => void }) {
   return (
     <PanelShell eyebrow="West · Guest Services" title="At your service" onBack={onBack}>
       <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-        <ServiceCard icon={<Send className="h-4 w-4" />} title="RSVP">
+        <ServiceCard icon={<MessageCircle className="h-4 w-4" />} title="RSVP">
           {rsvpIsLive() ? (
-            <button type="button" onClick={goToRsvp} className={textLink}>
-              Reply online
-            </button>
+            <>
+              <p>Reply in a few taps — your answer is sent to the family on WhatsApp.</p>
+              <button type="button" onClick={goToRsvp} className={textLink}>
+                RSVP via WhatsApp
+              </button>
+            </>
           ) : (
             <p>RSVP details will be shared soon.</p>
           )}

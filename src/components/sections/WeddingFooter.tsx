@@ -77,8 +77,8 @@ export function WeddingFooter() {
         <MotionToggle className="mt-6" />
 
         <p className="mt-10 max-w-xl text-caption leading-relaxed text-ivory/65">
-          Made with love for {wedding.couple.pair}. Photographs © the couple. The mandap scene and venue artwork
-          are conceptual illustrations.
+          Made with love for {wedding.couple.pair}. The mandap scene and venue artwork are conceptual
+          illustrations.
         </p>
       </div>
     </footer>

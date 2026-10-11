@@ -253,32 +253,6 @@ html.is-locked body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   }
 
-  /* Gold hairline frame with inner offset line */
-  .frame-gold {
-    position: relative;
-  }
-  .frame-gold::before,
-  .frame-gold::after {
-    content: '';
-    position: absolute;
-    pointer-events: none;
-    border: 1px solid var(--hairline);
-  }
-  .frame-gold::before {
-    inset: 0.6rem;
-  }
-  .frame-gold::after {
-    inset: 1rem;
-    border-color: color-mix(in oklab, var(--color-gold) 30%, transparent);
-  }
-
-  /* Temple-arch mask for portraits (rounded crown) */
-  /* Explicit percentages: a 999px radius would make the browser scale every
-     radius down proportionally and flatten the crown of the arch. */
-  .arch-mask {
-    border-radius: 50% 50% 0.4rem 0.4rem / 36% 36% 0.4rem 0.4rem;
-  }
-
   .text-gold-gradient {
     background: linear-gradient(180deg, #f7e5bb 0%, #d9b46e 48%, #a9844b 100%);
     -webkit-background-clip: text;
@@ -385,16 +359,6 @@ html.is-locked body {
   animation: dial-turn 18s linear infinite;
 }
 
-@keyframes memory-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
 @keyframes caption-in {
   from {
     opacity: 0;
@@ -403,15 +367,6 @@ html.is-locked body {
   to {
     opacity: 1;
     transform: none;
-  }
-}
-
-@keyframes slow-zoom {
-  from {
-    transform: scale(1.02);
-  }
-  to {
-    transform: scale(1.09);
   }
 }
 

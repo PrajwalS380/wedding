@@ -20,7 +20,7 @@ function Countdown({ clock }: { clock: DayClock }) {
   return (
     <div>
       <p className="sr-only">
-        {r.days} days, {r.hours} hours and {r.minutes} minutes until {clock.dateBased ? `the start of ${when}, in your local time` : `${formatClock(clock.day.startTime)} on ${when}`}.
+        {r.days} days, {r.hours} hours and {r.minutes} minutes until {clock.dateBased ? `the start of ${when}, India Standard Time` : `${formatClock(clock.day.startTime)} on ${when}`}.
       </p>
       <div className="flex items-end gap-4" aria-hidden="true">
         <span className="font-display text-[clamp(4.4rem,3.2rem+5vw,7.2rem)] font-medium leading-[0.8] lining-nums tabular-nums text-ivory">{r.days}</span>
@@ -208,7 +208,7 @@ export function LivingCalendar() {
                     <Countdown clock={active} />
                     <p className="mt-4 max-w-sm text-[0.84rem] leading-relaxed text-ivory/65">
                       {active.dateBased
-                        ? `A date-based countdown to the start of ${formatDayLong(day)} in your local time. Ceremony timings will be shared once confirmed.`
+                        ? `A date-based countdown to the start of ${formatDayLong(day)} in India Standard Time (IST). Ceremony timings will be shared once confirmed.`
                         : `Counting down to ${formatClock(day.startTime)} on ${formatDayLong(day)}.`}
                     </p>
                   </div>
