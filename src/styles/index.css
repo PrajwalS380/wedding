@@ -1,0 +1,440 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------
+   THE WEDDING REALM — design tokens
+   Palette: emerald architecture, luminous parchment, restrained gold.
+------------------------------------------------------------------- */
+@theme {
+  --color-night: #061914;
+  --color-forest: #0b3026;
+  --color-deep: #123d30;
+  --color-moss: #1c4b3c;
+  --color-maroon: #5a1524;
+  --color-burgundy: #7d2535;
+  --color-ivory: #f6ead5;
+  --color-parchment: #e9d5b2;
+  --color-parchment-deep: #d6bb8c;
+  --color-gold: #d5b06d;
+  --color-gold-light: #ecd4a2;
+  --color-brass: #a9844b;
+  --color-brass-deep: #7a5a28; /* gold text on parchment/ivory (5.3:1) */
+  --color-charcoal: #191813;
+  --color-ink: #3a2418;
+  --color-ink-soft: #694832;
+  --color-marigold: #e39a32;
+  --color-rose: #a8323f;
+
+  --font-display: 'Cormorant Garamond', 'Cormorant Fallback', 'Cormorant', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Manrope Variable', 'Manrope Fallback', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-script: 'Pinyon Script', 'Pinyon Fallback', 'Snell Roundhand', 'Brush Script MT', cursive;
+
+  /* Small-text scale — every label, CTA and note routes through these, so
+     nothing renders below 11px (tags) / 12px (labels) on any screen. */
+  --text-tag: 0.6875rem; /* 11px: tiny tags inside compact UI (dial weekdays, badges, indices) */
+  --text-tag--line-height: 1.3;
+  --text-label: 0.75rem; /* 12px: uppercase tracked labels, links, form labels */
+  --text-label--line-height: 1.5;
+  --text-button: 0.78rem; /* 12.5px: call-to-action buttons */
+  --text-button--line-height: 1.4;
+  --text-caption: 0.8125rem; /* 13px: sentence-case notes, hints and captions */
+  --text-caption--line-height: 1.55;
+
+  --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-curtain: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --breakpoint-xs: 25rem;
+}
+
+/* Metric-matched fallbacks: while the web fonts load, local fonts are scaled to
+   the same width and line metrics (measured in-browser), so text barely moves
+   when the real fonts swap in. Liberation fonts are metric-compatible with
+   Times New Roman / Arial on Linux; other systems fall through to the stack. */
+@font-face {
+  font-family: 'Cormorant Fallback';
+  src: local('Times New Roman'), local('TimesNewRomanPSMT'), local('Liberation Serif');
+  font-style: normal;
+  font-weight: 300 700;
+  size-adjust: 95.03%;
+  ascent-override: 96.81%;
+  descent-override: 30.52%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Cormorant Fallback';
+  src: local('Times New Roman Italic'), local('TimesNewRomanPS-ItalicMT'), local('Liberation Serif Italic');
+  font-style: italic;
+  font-weight: 300 700;
+  size-adjust: 87.73%;
+  ascent-override: 104.87%;
+  descent-override: 33.06%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Manrope Fallback';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans');
+  font-weight: 200 800;
+  size-adjust: 101.61%;
+  ascent-override: 105.31%;
+  descent-override: 29.53%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Pinyon Fallback';
+  src: local('Times New Roman Italic'), local('TimesNewRomanPS-ItalicMT'), local('Liberation Serif Italic');
+  size-adjust: 89.71%;
+  ascent-override: 95.87%;
+  descent-override: 42.36%;
+  line-gap-override: 0%;
+}
+
+/* Fluid type & spacing scale (mobile-first, 320px → 1920px) */
+:root {
+  --step--1: clamp(0.8rem, 0.77rem + 0.15vw, 0.9rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-1: clamp(1.2rem, 1.1rem + 0.45vw, 1.5rem);
+  --step-2: clamp(1.5rem, 1.3rem + 0.9vw, 2.2rem);
+  --step-3: clamp(1.9rem, 1.55rem + 1.7vw, 3.3rem);
+  --step-4: clamp(2.4rem, 1.8rem + 3vw, 4.8rem);
+  --step-names: clamp(3.1rem, min(1.6rem + 10vw, 10.4svh), 8.75rem);
+  --section-pad: clamp(4.5rem, 3rem + 7vw, 10rem);
+  --gutter: clamp(1.25rem, 0.8rem + 2.2vw, 3rem);
+  --nav-h: 4.25rem;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --hairline: color-mix(in oklab, var(--color-gold) 55%, transparent);
+}
+
+@layer base {
+  html {
+    background: var(--color-night);
+    color: var(--color-ivory);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    scroll-padding-top: 1rem;
+  }
+
+  body {
+    min-height: 100dvh;
+    overflow-x: clip;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-gold) 45%, transparent);
+    color: var(--color-ivory);
+  }
+
+  :focus-visible {
+    /* gold on the dark surfaces; light parchment surfaces switch to burgundy for contrast */
+    outline: 2px solid var(--focus-ring, var(--color-gold));
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  [id] {
+    scroll-margin-top: 0.5rem;
+  }
+
+  [tabindex='-1']:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* `?still` capture mode — hides everything but the 3D stage */
+.still-mode [data-still-hide] {
+  display: none !important;
+}
+
+/* Scroll lock (intro / mobile menu) */
+html.is-locked,
+html.is-locked body {
+  overflow: hidden;
+}
+
+@layer components {
+  /* Small uppercase eyebrow label */
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: var(--step--1);
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  .script {
+    font-family: var(--font-script);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  .container-wide {
+    width: 100%;
+    max-width: 82rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .section-pad {
+    padding-block: var(--section-pad);
+  }
+
+  /* Hairline gold rule with a lozenge in the centre */
+  .rule-ornament {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-gold);
+  }
+  .rule-ornament::before,
+  .rule-ornament::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, transparent, currentColor);
+    opacity: 0.7;
+  }
+  .rule-ornament::after {
+    background: linear-gradient(270deg, transparent, currentColor);
+  }
+
+  /* Antique parchment surface (no bitmap texture required) */
+  .parchment {
+    --focus-ring: var(--color-burgundy);
+    color: var(--color-ink);
+    background-color: var(--color-ivory);
+    background-image:
+      radial-gradient(120% 80% at 50% 0%, rgba(255, 250, 238, 0.85), transparent 60%),
+      radial-gradient(90% 70% at 0% 100%, rgba(196, 160, 104, 0.32), transparent 55%),
+      radial-gradient(80% 60% at 100% 85%, rgba(186, 146, 92, 0.28), transparent 55%),
+      radial-gradient(60% 40% at 85% 10%, rgba(214, 187, 140, 0.35), transparent 70%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .3 0 0 0 0 .17 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Fine grain for dark sections */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  }
+
+  /* Gold hairline frame with inner offset line */
+  .frame-gold {
+    position: relative;
+  }
+  .frame-gold::before,
+  .frame-gold::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    border: 1px solid var(--hairline);
+  }
+  .frame-gold::before {
+    inset: 0.6rem;
+  }
+  .frame-gold::after {
+    inset: 1rem;
+    border-color: color-mix(in oklab, var(--color-gold) 30%, transparent);
+  }
+
+  /* Temple-arch mask for portraits (rounded crown) */
+  /* Explicit percentages: a 999px radius would make the browser scale every
+     radius down proportionally and flatten the crown of the arch. */
+  .arch-mask {
+    border-radius: 50% 50% 0.4rem 0.4rem / 36% 36% 0.4rem 0.4rem;
+  }
+
+  .text-gold-gradient {
+    background: linear-gradient(180deg, #f7e5bb 0%, #d9b46e 48%, #a9844b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Ambient CSS motion — paused when the guest pauses motion or when the
+   operating system requests reduced motion.
+------------------------------------------------------------------- */
+@keyframes petal-fall {
+  0% {
+    transform: translate3d(0, -12vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--petal-opacity, 0.85);
+  }
+  90% {
+    opacity: var(--petal-opacity, 0.85);
+  }
+  100% {
+    transform: translate3d(var(--petal-drift, 6vw), 112vh, 0) rotate(var(--petal-spin, 340deg));
+    opacity: 0;
+  }
+}
+
+@keyframes petal-sway {
+  0%,
+  100% {
+    transform: translateX(-12px) rotateY(0deg);
+  }
+  50% {
+    transform: translateX(12px) rotateY(160deg);
+  }
+}
+
+@keyframes mote-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate3d(var(--mote-x, 10px), var(--mote-y, -24px), 0);
+    opacity: var(--mote-opacity, 0.75);
+  }
+}
+
+@keyframes flame-flicker {
+  0%,
+  100% {
+    transform: scale(1, 1);
+    opacity: 0.95;
+  }
+  30% {
+    transform: scale(0.94, 1.06);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.04, 0.95);
+    opacity: 0.88;
+  }
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* paper on a descending roll appears to turn */
+@keyframes roll-turn {
+  to {
+    background-position: 0 14px, 0 0;
+  }
+}
+
+/* Living Wedding Calendar: a very slow turn of the engraving ring + a travelling sheen */
+@keyframes dial-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.dial-turn {
+  animation: dial-turn 240s linear infinite;
+}
+.dial-sheen {
+  animation: dial-turn 18s linear infinite;
+}
+
+@keyframes memory-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes slow-zoom {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.09);
+  }
+}
+
+.ambient {
+  animation-play-state: running;
+}
+html[data-motion='off'] .ambient,
+html[data-motion='off'] .ambient * {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+html[data-motion='off'] {
+  scroll-behavior: auto;
+}

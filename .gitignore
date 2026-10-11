@@ -1,0 +1,24 @@
+# dependencies & build output
+node_modules
+dist
+*.tsbuildinfo
+
+# local environment files (only the placeholder template is committed)
+*.local
+.env
+.env.*
+!.env.example
+
+# Vercel CLI link folder
+.vercel
+
+# The family's original photographs and full-resolution processing masters.
+# Never committed: the repository is public, the originals carry camera GPS
+# metadata, and the site only needs the optimised copies in public/images.
+source-images/
+
+# OS / editor / tool noise
+.DS_Store
+Thumbs.db
+*.log
+__pycache__/

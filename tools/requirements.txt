@@ -1,0 +1,6 @@
+# Photo pipeline (tools/process_photos.py) and brand assets (tools/make_brand_assets.py)
+rembg[cpu]>=2.0.60      # BiRefNet-portrait via ONNX Runtime (downloads the model on first run)
+pymatting>=1.1.12
+opencv-python-headless>=4.9
+numpy>=1.26
+pillow>=10.3

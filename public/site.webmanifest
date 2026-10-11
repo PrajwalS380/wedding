@@ -1,0 +1,28 @@
+{
+  "name": "Darshan & Vathsala — The Wedding Realm",
+  "short_name": "D & V Wedding",
+  "description": "Two Families. One Beautiful Journey. The wedding invitation of Darshan and Vathsala, 15 & 16 November 2026.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#061914",
+  "theme_color": "#0B3026",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
