@@ -27,7 +27,7 @@ export function WeddingFooter() {
     'inline-flex min-h-11 items-center gap-2 px-2 text-label font-semibold uppercase tracking-[0.22em] text-ivory/75 transition-colors hover:text-gold-light'
 
   return (
-    <footer className="relative overflow-hidden border-t border-gold/15 bg-night pb-[calc(2.5rem+var(--safe-bottom))] pt-16 text-center">
+    <footer className="relative overflow-hidden bg-night pb-[calc(2.5rem+var(--safe-bottom))] pt-16 text-center">
       <MandapMotif className="pointer-events-none absolute left-1/2 top-6 w-[min(90vw,34rem)] -translate-x-1/2 text-gold/[0.06]" />
       <div className="container-wide relative flex flex-col items-center">
         <Monogram size="md" />

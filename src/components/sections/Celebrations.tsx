@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { Moon, Sun, Sunrise, Sunset } from 'lucide-react'
+import { Moon, Sun, Sunset } from 'lucide-react'
 import { wedding } from '../../data/wedding'
-import { SCENES } from '../../data/sceneArt'
 import { dayOfMonth, formatTimeWords, formatWeekday } from '../../lib/dates'
 import { useReveal } from '../../hooks/useReveal'
 import { useI18n } from '../../i18n/useI18n'
-import { GlanceChapter, Interlude, MuhurtaChapter, ReceptionChapter, VenueChapter } from '../celebrations/Chapters'
+import { DuskBand, GlanceChapter, MuhurtaChapter, ReceptionChapter, VenueChapter } from '../celebrations/Chapters'
 
 /**
- * "From dusk to dawn" — the two wedding days told as one scroll: sunset (at a
- * glance), twilight, the night of the Aaratakshate, the misty dawn, the sunrise
- * of the Vivaha Muhurta, and daylight for the venue and guest services.
+ * "From dusk to dawn" — the two wedding days told as one continuous sky:
+ * sunset (at a glance), the night of the Aaratakshate, dawn breaking into the
+ * morning of the Vivaha Muhurta, daylight for the venue and guest services,
+ * and evening again as the page closes into the RSVP. Every scene dissolves
+ * into the next; there are no hard edges between chapters.
  */
 export function Celebrations() {
   const section = useRef<HTMLElement>(null)
@@ -44,9 +45,7 @@ export function Celebrations() {
 
   const clock: Record<string, [typeof Sun, string]> = {
     glance: [Sunset, `${formatWeekday(d1, 'long', lang)} · ${t('celebrations.evening')}`],
-    twilight: [Moon, `${formatWeekday(d1, 'long', lang)} · ${t('celebrations.dusk')}`],
     aaratakshate: [Moon, `${formatWeekday(d1, 'short', lang)} ${dayOfMonth(d1)} · ${formatTimeWords(d1.startTime, lang) ?? ''}`],
-    dawn: [Sunrise, `${formatWeekday(d2, 'long', lang)} · ${t('celebrations.dawn')}`],
     muhurta: [Sun, `${formatWeekday(d2, 'short', lang)} ${dayOfMonth(d2)} · ${formatTimeWords(d2.startTime, lang) ?? ''}`],
     venue: [Sun, `${t('celebrations.bothDays')} · ${t('venue.city')}`],
   }
@@ -70,11 +69,13 @@ export function Celebrations() {
       </div>
 
       <GlanceChapter />
-      <Interlude art={SCENES.twilight} day={d1} clock="twilight" />
       <ReceptionChapter day={d1} />
-      <Interlude art={SCENES.dawn} day={d2} clock="dawn" />
-      <MuhurtaChapter day={d2} />
-      <VenueChapter />
+      {/* morning: one sheet of handmade paper behind the Muhurta, the venue and the dusk */}
+      <div className="paper-sheet relative">
+        <MuhurtaChapter day={d2} />
+        <VenueChapter />
+        <DuskBand />
+      </div>
     </section>
   )
 }

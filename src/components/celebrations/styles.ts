@@ -4,3 +4,41 @@ export const actionClass = {
   light: 'inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] border border-maroon/50 bg-[rgba(255,252,244,.35)] px-4 text-label font-semibold uppercase tracking-[0.18em] text-maroon transition-colors hover:bg-maroon/10',
   lightFill: 'inline-flex min-h-11 items-center justify-center gap-2 rounded-[3px] bg-[linear-gradient(180deg,#6a1a2a,#521220)] px-4 text-label font-semibold uppercase tracking-[0.18em] text-ivory shadow-[0_8px_18px_-10px_rgba(80,10,20,.8),inset_0_1px_0_rgba(255,255,255,.12)] transition-[filter] hover:brightness-110',
 } as const
+
+/**
+ * Where neighbouring parts of the page meet, both fade into the same colour, so
+ * the page reads as one sky — evening, night, dawn, morning and evening again.
+ */
+export const SKY = {
+  /** the page's night green: hero, invitation, RSVP and footer */
+  night: '#061914',
+  /** calendar → sunset */
+  dusk: '#0a1424',
+  /** sunset → the Aaratakshate night */
+  nightfall: '#08070f',
+  /** the night's lamps → the dawn before the Muhurta */
+  embers: '#1c0c12',
+} as const
+
+/** Night giving way to morning: deep plum, rose, peach, ending in the colour `to`. */
+export const dawnGradient = (to: string) => `linear-gradient(180deg, ${SKY.embers} 0%, #34162c 24%, #74354a 50%, #bf6b66 74%, #e0a079 90%, ${to} 100%)`
+
+/** The day closing back into the night green of the RSVP (starts transparent, over paper). */
+export const duskGradient = `linear-gradient(180deg, transparent 0%, #ead0aa 16%, #cf9a7c 36%, #8a4e5c 58%, #34192c 80%, ${SKY.night} 100%)`
+
+/** Mixes two #rrggbb colours (t = 0 gives a, 1 gives b). */
+export function mix(a: string, b: string, t: number) {
+  const ch = (c: string, i: number) => parseInt(c.slice(1 + i * 2, 3 + i * 2), 16)
+  return `#${[0, 1, 2].map((i) => Math.round(ch(a, i) + (ch(b, i) - ch(a, i)) * t).toString(16).padStart(2, '0')).join('')}`
+}
+
+/**
+ * A scene's backdrop: from the colour above, eased into the picture's own edge
+ * colours, and eased out to the colour below (fades are percentages of the height).
+ */
+export function sceneBackdrop(edges: readonly [string, string], from: string, to: string, fadeTop = 14, fadeBottom = 14) {
+  const ease = [0.25, 0.5, 0.75].map((k) => [k, k * k * (3 - 2 * k)] as const)
+  const top = ease.map(([k, e]) => `${mix(from, edges[0], e)} ${fadeTop * k}%`)
+  const bottom = ease.map(([k, e]) => `${mix(edges[1], to, e)} ${100 - fadeBottom + fadeBottom * k}%`)
+  return `linear-gradient(180deg, ${from} 0%, ${top.join(', ')}, ${edges[0]} ${fadeTop}%, ${edges[1]} ${100 - fadeBottom}%, ${bottom.join(', ')}, ${to} 100%)`
+}

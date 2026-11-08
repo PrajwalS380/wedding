@@ -516,6 +516,36 @@ html.is-locked body {
 }
 
 /* handmade paper (sunrise and daylight chapters) */
+/* Celebrations: scenes dissolve into the page at their edges instead of ending in a hard line */
+.scene-fade {
+  --fade-top: 14%;
+  --fade-bottom: 14%;
+  /* eased (not linear) so no line shows where a fade starts or ends */
+  --fade-v: linear-gradient(
+    180deg,
+    transparent 0,
+    rgba(0, 0, 0, 0.06) calc(var(--fade-top) * 0.25),
+    rgba(0, 0, 0, 0.3) calc(var(--fade-top) * 0.5),
+    rgba(0, 0, 0, 0.72) calc(var(--fade-top) * 0.75),
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    rgba(0, 0, 0, 0.72) calc(100% - var(--fade-bottom) * 0.75),
+    rgba(0, 0, 0, 0.3) calc(100% - var(--fade-bottom) * 0.5),
+    rgba(0, 0, 0, 0.06) calc(100% - var(--fade-bottom) * 0.25),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--fade-v);
+  mask-image: var(--fade-v);
+}
+@media (min-width: 1024px) {
+  /* also melt the right-hand edge into the paper beside it */
+  .scene-fade.scene-fade-right {
+    -webkit-mask-image: var(--fade-v), linear-gradient(90deg, #000 68%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: var(--fade-v), linear-gradient(90deg, #000 68%, transparent);
+    mask-composite: intersect;
+  }
+}
 .paper-sheet {
   --focus-ring: var(--color-burgundy);
   color: var(--color-ink);

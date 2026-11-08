@@ -3,8 +3,8 @@ Exports the scene renders (tools/scenes/out/*.png) for the website:
 
   * blends the night sky and the diya floor into one night picture per orientation
   * writes WebP files in two widths to public/images/celebrations/
-  * regenerates the handmade-paper texture and its torn top edge
-  * writes src/data/sceneArt.generated.ts (sizes, crop focus and live-light points)
+  * regenerates the handmade-paper texture
+  * writes src/data/sceneArt.generated.ts (sizes, crop focus, edge colours and live-light points)
 
 Usage:  python tools/scenes/export.py      (after node tools/scenes/render-all.cjs)
 Needs:  numpy, pillow (with WebP support)
@@ -27,13 +27,19 @@ QUALITY = 78
 # scene -> orientation -> (source file, export widths, crop focus x, y)
 SCENES = {
     "sunset": {"portrait": ("sunset-portrait", (1080, 720), (0.42, 0.5)), "landscape": ("sunset-landscape", (1920, 1280), (0.6, 0.5))},
-    "twilight": {"portrait": ("twilight-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("twilight-landscape", (1920, 1280), (0.5, 0.55))},
     "night": {"portrait": ("night-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("night-landscape", (1920, 1280), (0.62, 0.5))},
-    "dawn": {"portrait": ("dawn-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("dawn-landscape", (1920, 1280), (0.58, 0.5))},
     "sunrise": {"portrait": ("sunrise-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("sunrise-landscape", (1920, 1280), (0.72, 0.5))},
     "daylight": {"portrait": ("daylight-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("daylight-landscape", (1200, 800), (0.5, 0.5))},
 }
 MAX_LIGHTS = 64
+
+
+def edge_colours(im: Image.Image) -> tuple[str, str]:
+    """Average colour of the top and bottom 4% of a picture: the page fades the scene into these."""
+    a = np.asarray(im.convert("RGB")).astype(np.float32)
+    n = max(2, a.shape[0] // 25)
+    hexc = lambda c: "#%02x%02x%02x" % tuple(int(round(v)) for v in c)
+    return hexc(a[:n].mean((0, 1))), hexc(a[-n:].mean((0, 1)))
 
 
 def lights(name: str) -> list[dict]:
@@ -89,18 +95,6 @@ def paper() -> None:
         d.ellipse([x - r, y - r, x + r, y + r], fill=(c, int(c * 0.85), int(c * 0.65), int(60 + rs.rand() * 90)))
     pil = pil.filter(ImageFilter.GaussianBlur(0.35))
     pil.save(PUB / "paper.webp", quality=QUALITY, method=6)
-    # torn top edge: a strip of the same paper with a deckled alpha
-    edge = pil.crop((0, 0, W, 64)).convert("RGBA")
-    alpha = Image.new("L", (W, 64), 255)
-    ad = ImageDraw.Draw(alpha)
-    yv, ys = 22.0, []
-    for x in range(W + 1):
-        yv += rs.randn() * 1.0
-        yv = 0.93 * yv + 0.07 * 22
-        ys.append(yv + 3 * np.sin(x / 31.0) + 2 * np.sin(x / 9.0))
-    ad.polygon([(0, 0)] + [(x, ys[x]) for x in range(W + 1)] + [(W, 0)], fill=0)
-    edge.putalpha(alpha.filter(ImageFilter.GaussianBlur(0.9)))
-    edge.save(PUB / "paper-edge.webp", quality=82, method=6)
 
 
 def fmt_lights(ls: list[dict]) -> str:
@@ -129,10 +123,11 @@ def main() -> None:
                 total += (PUB / name).stat().st_size
                 files.append((name, w, h))
             big = files[0]
+            top, bottom = edge_colours(im)
             src_set = ", ".join(f"{URL}/{n} {w}w" for n, w, _ in sorted(files, key=lambda f: f[1]))
             parts.append(
                 f"    {orient}: {{\n      src: '{URL}/{files[-1][0]}',\n      srcSet: '{src_set}',\n      width: {big[1]},\n      height: {big[2]},\n"
-                f"      focus: [{focus[0]}, {focus[1]}],\n      lights: {fmt_lights(lights(src))},\n    }},"
+                f"      focus: [{focus[0]}, {focus[1]}],\n      edges: ['{top}', '{bottom}'],\n      lights: {fmt_lights(lights(src))},\n    }},"
             )
         entries.append(f"  {key}: {{\n" + "\n".join(parts) + "\n  },")
 
@@ -147,7 +142,6 @@ def main() -> None:
         "import type { SceneArt, SceneKey } from './sceneArt'\n\n"
         "export const SCENES: Record<SceneKey, SceneArt> = {\n" + "\n".join(entries) + "\n}\n\n"
         f"export const THAMBOOLA = {{ src: '{URL}/thamboola.webp', width: {pw}, height: {ph} }}\n"
-        f"export const PAPER = {{ src: '{URL}/paper.webp', edge: '{URL}/paper-edge.webp', width: 1200, height: 1700 }}\n"
     )
     print(f"scenes: {total / 1024:.0f} KB total in {len(list(PUB.glob('*.webp')))} files")
 

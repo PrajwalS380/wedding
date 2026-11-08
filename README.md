@@ -216,7 +216,7 @@ src/
     navigation/               desktop bar + accessible mobile menu
     sections/                 CinematicIntro, WeddingHero, InvitationScroll, LivingCalendar,
                               Celebrations, RSVPSection, WeddingFooter
-    celebrations/             Chapters (at a glance, dusk, Aaratakshate, dawn, Muhurta, venue + guest
+    celebrations/             Chapters (at a glance, Aaratakshate, Muhurta, venue + guest
                               services), SceneStage (cover-fitted render + parallax), LiveLights,
                               EventCountdown, CalendarMenu
     three/                    MandapScene (Canvas, camera rig, foreground torana), stage (portrait
@@ -266,11 +266,19 @@ docs/ASSETS.md                asset provenance and what to replace later
 ## The Celebrations section and its scenes
 
 The section reads as one evening and morning: *at a glance* (sunset over a temple
-tank), *dusk* (the tank lit with diyas — Sunday), the **Aaratakshate** (night sky,
-strings of lights and lamps), *dawn* (flooded paddy fields — Monday), the **Vivaha
+tank), the **Aaratakshate** (night sky, strings of lights and lamps), the **Vivaha
 Muhurta** (kalasha on a brass plate in morning light) and the **venue** (a
 decorated entrance by day) with guest services. A small "sky clock" chip shows
 where you are in time while the scenery is on screen.
+
+**One continuous page:** every scene dissolves into the next instead of ending
+in a hard edge. Each picture fades at its top and bottom (`.scene-fade`) into a
+backdrop that runs from the colour of the part above to the colour of the part
+below; neighbouring parts meet in the shared colours in `SKY`
+(`src/components/celebrations/styles.ts`) — night green → dusk → nightfall →
+embers, a short dawn gradient into the morning, handmade paper for the morning
+chapters, and a dusk gradient back into the night green of the RSVP. The
+calendar above and the RSVP card and footer below fade into the same colours.
 
 The scenes are **artistic 3D renders made for this site** (captioned as such where
 the venue is shown), not photographs. Each has a portrait and a landscape version
@@ -287,8 +295,8 @@ python tools/scenes/export.py                    # → public/images/celebration
                                                  #   + src/data/sceneArt.generated.ts
 ```
 
-Preview one scene in a browser with `http://localhost:5199/?s=dawn&w=1280&h=720&o=landscape`.
-`tools/scenes/out/` is git-ignored; the exported WebP files (≈1.4 MB for all
+Preview one scene in a browser with `http://localhost:5199/?s=sunset&w=1280&h=720&o=landscape`.
+`tools/scenes/out/` is git-ignored; the exported WebP files (≈0.9 MB for all
 scenes) are what ships.
 
 ## Content still needed from the family

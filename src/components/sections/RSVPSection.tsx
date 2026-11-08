@@ -260,6 +260,7 @@ export function RSVPSection() {
       {/* ── The final frame: a lamp-lit temple doorway that bookends the hero ── */}
       <div className="relative overflow-hidden pb-24 pt-[var(--section-pad)] sm:pb-32">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(45%_55%_at_50%_45%,rgba(240,169,74,.16),transparent_70%),radial-gradient(70%_50%_at_50%_100%,rgba(90,21,36,.5),transparent_70%),linear-gradient(180deg,#061914,#08120e)]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(0deg,#08120e,transparent)]" />
         <PetalField count={6} kinds={['rose', 'marigold', 'jasmine']} seed={57} intensity={0.6} />
         <svg
           viewBox="0 0 400 520"
@@ -319,6 +320,9 @@ export function RSVPSection() {
       {/* ── The reply card ── */}
       <div className="grain relative bg-forest pb-[var(--section-pad)]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_40%_at_50%_0%,rgba(213,176,109,.10),transparent_70%)]" />
+        {/* no seams: fade in from the closing frame above and out into the footer below */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[linear-gradient(180deg,#08120e,transparent)]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-[linear-gradient(0deg,var(--color-night),transparent)]" />
         <div className="relative mx-auto w-full max-w-[38rem] -translate-y-14 px-[var(--gutter)]">
           <div className="relative">
             {/* layered parchment sheets */}

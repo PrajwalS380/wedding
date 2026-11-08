@@ -145,8 +145,6 @@ export const en = {
     where: 'Where',
     timings: 'Timings',
     evening: 'evening',
-    dusk: 'dusk',
-    dawn: 'dawn',
     bothDays: 'Both days',
     fromTime: '{time} onwards',
     timeRange: '{start} – {end}',

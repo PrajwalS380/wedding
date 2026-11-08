@@ -140,8 +140,6 @@ export const hi: Dictionary = {
     where: 'कहाँ',
     timings: 'समय',
     evening: 'शाम',
-    dusk: 'गोधूलि',
-    dawn: 'भोर',
     bothDays: 'दोनों दिन',
     fromTime: '{time} से',
     timeRange: '{start} से {end} तक',

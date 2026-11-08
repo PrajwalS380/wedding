@@ -137,8 +137,6 @@ export const kn: Dictionary = {
     where: 'ಎಲ್ಲಿ',
     timings: 'ಸಮಯ',
     evening: 'ಸಂಜೆ',
-    dusk: 'ಮುಸ್ಸಂಜೆ',
-    dawn: 'ಮುಂಜಾನೆ',
     bothDays: 'ಎರಡೂ ದಿನಗಳು',
     fromTime: '{time} ರಿಂದ',
     timeRange: '{start} ರಿಂದ {end} ರವರೆಗೆ',

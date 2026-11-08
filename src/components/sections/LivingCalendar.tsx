@@ -12,6 +12,7 @@ import { useMotion } from '../../hooks/motion'
 import { gsap, useReveal } from '../../hooks/useReveal'
 import { CalendarDial } from '../ui/CalendarDial'
 import { useI18n } from '../../i18n/useI18n'
+import { SKY } from '../celebrations/styles'
 import { MandapMotif } from '../ui/Ornaments'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -99,6 +100,9 @@ export function LivingCalendar() {
   return (
     <section ref={section} id="calendar" aria-labelledby="calendar-title" className="grain relative isolate overflow-hidden bg-forest section-pad">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(45%_50%_at_32%_50%,rgba(213,176,109,.13),transparent_70%),radial-gradient(60%_60%_at_100%_0%,rgba(90,21,36,.28),transparent_70%)]" />
+      {/* melt into the invitation above and the sunset of the Celebrations below */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[min(28%,14rem)]" style={{ background: `linear-gradient(180deg, ${SKY.night}, transparent)` }} />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(30%,16rem)]" style={{ background: `linear-gradient(0deg, ${SKY.dusk}, transparent)` }} />
 
       <div className="container-wide relative">
         <header className="mx-auto max-w-2xl text-center">

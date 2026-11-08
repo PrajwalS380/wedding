@@ -6,18 +6,15 @@ const path = require('path')
 const fs = require('fs')
 const { chromium } = require('playwright')
 const OUT = path.join(__dirname, 'out')
-// [scene, width, height, file, query] — renders at 1.5× the largest export size, then downscaled
+// [scene, width, height, file, query] — renders at 1.5× the largest export size, then downscaled.
+// (scenes/twilight.js and scenes/dawn.js are kept in the workbench but are not used on the site.)
 const JOBS = [
   ['sunset', 1620, 3506, 'sunset-portrait', 'o=portrait'],
   ['sunset', 2880, 1620, 'sunset-landscape', 'o=landscape'],
-  ['twilight', 1620, 2880, 'twilight-portrait', 'o=portrait'],
-  ['twilight', 2880, 1620, 'twilight-landscape', 'o=landscape'],
   ['night-sky', 1620, 3506, 'night-sky-portrait', 'o=portrait'],
   ['night-sky', 2880, 1620, 'night-sky-landscape', 'o=landscape'],
   ['night-diyas', 1620, 969, 'night-diyas-portrait', 'o=portrait'],
   ['night-diyas', 1800, 720, 'night-diyas-landscape', 'o=landscape&exp=0.75&li=0.2&bs=0.45'],
-  ['dawn', 1620, 2880, 'dawn-portrait', 'o=portrait'],
-  ['dawn', 2880, 1620, 'dawn-landscape', 'o=landscape'],
   ['sunrise', 1620, 1952, 'sunrise-portrait', 'o=portrait'],
   ['sunrise', 2880, 1620, 'sunrise-landscape', 'o=landscape'],
   ['daylight', 1620, 1246, 'daylight-portrait', 'o=portrait'],

@@ -23,6 +23,8 @@ export interface SceneVariant {
   height: number
   /** Which point of the image stays in view when it has to be cropped (0–1, like object-position). */
   focus: readonly [number, number]
+  /** Average colour along the top and bottom edge — the page's gradients meet the picture in these. */
+  edges: readonly [string, string]
   lights: readonly LightPoint[]
 }
 
@@ -32,6 +34,6 @@ export interface SceneArt {
   landscape: SceneVariant
 }
 
-export type SceneKey = 'sunset' | 'twilight' | 'night' | 'dawn' | 'sunrise' | 'daylight'
+export type SceneKey = 'sunset' | 'night' | 'sunrise' | 'daylight'
 
-export { SCENES, THAMBOOLA, PAPER } from './sceneArt.generated'
+export { SCENES, THAMBOOLA } from './sceneArt.generated'

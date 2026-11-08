@@ -1,9 +1,9 @@
-import { Fragment, useState, type ReactNode } from 'react'
+import { Fragment, useState, type CSSProperties, type ReactNode } from 'react'
 import { CalendarHeart, Check, Copy, MapPin, MessageCircle, Phone, Share2 } from 'lucide-react'
 import { localized, wedding, type CelebrationDay } from '../../data/wedding'
-import { PAPER, SCENES, THAMBOOLA, type SceneArt } from '../../data/sceneArt'
+import { SCENES, THAMBOOLA, type SceneArt } from '../../data/sceneArt'
 import { copyText, shareInvitation, type ShareResult } from '../../lib/browser'
-import { dateJoiner, formatDayLong, formatDayMonthYearFull, formatWeekday, getTimeline } from '../../lib/dates'
+import { dateJoiner, formatDayLong, formatWeekday, getTimeline } from '../../lib/dates'
 import { dayTimeText as eventTime, displayPhone } from '../../lib/eventTime'
 import { shareContent } from '../../lib/shareContent'
 import { useMotion } from '../../hooks/motion'
@@ -13,7 +13,7 @@ import { SceneStage } from './SceneStage'
 import { useOrientation } from '../../hooks/useOrientation'
 import { EventCountdown } from './EventCountdown'
 import { CalendarMenu } from './CalendarMenu'
-import { actionClass } from './styles'
+import { actionClass, dawnGradient, duskGradient, sceneBackdrop, SKY } from './styles'
 
 /* ---------------------------------------------------------------- helpers */
 
@@ -38,17 +38,26 @@ function SceneTitle({ text }: { text: string }) {
   )
 }
 
+/** Sets how far into a scene its top and bottom edges dissolve (see .scene-fade). */
+const fades = (top: string, bottom: string) => ({ '--fade-top': top, '--fade-bottom': bottom }) as CSSProperties
+
 /**
- * A full-bleed chapter over a rendered scene. On upright screens the chapter
- * keeps the render's proportions (so nothing important is cropped) and grows
- * if its text needs more room; on wide screens it fills the viewport.
+ * A full-bleed chapter over a rendered scene. The picture dissolves at its top
+ * and bottom into a backdrop that runs from the colour of the part above
+ * (`from`) to the colour of the part below (`to`), so chapters flow into each
+ * other. On upright screens the chapter keeps the render's proportions (so
+ * nothing important is cropped) and grows if its text needs more room.
  */
 function SceneChapter({
   art,
   id,
   clock,
   labelledBy,
-  landscapeMin = 'min-h-[max(100svh,44rem)]',
+  from,
+  to,
+  landscapeMin = 'min-h-[max(94svh,42rem)]',
+  fadeTop = 14,
+  fadeBottom = 14,
   className = '',
   overlay,
   children,
@@ -57,7 +66,12 @@ function SceneChapter({
   id?: string
   clock: string
   labelledBy?: string
+  from: string
+  to: string
   landscapeMin?: string
+  /** how far (percent of the chapter's height) the picture dissolves at the top and bottom */
+  fadeTop?: number
+  fadeBottom?: number
   className?: string
   overlay?: ReactNode
   children: ReactNode
@@ -65,9 +79,11 @@ function SceneChapter({
   const o = useOrientation()
   const v = art[o]
   return (
-    <article id={id} data-clock={clock} aria-labelledby={labelledBy} className={`film-grain relative isolate grid scroll-mt-0 ${className}`}>
-      <SceneStage art={art} />
-      {overlay}
+    <article id={id} data-clock={clock} aria-labelledby={labelledBy} className={`relative isolate grid scroll-mt-0 ${className}`} style={{ background: sceneBackdrop(v.edges, from, to, fadeTop, fadeBottom) }}>
+      <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades(`${fadeTop}%`, `${fadeBottom}%`)}>
+        <SceneStage art={art} />
+        {overlay}
+      </div>
       <div aria-hidden="true" className={`col-start-1 row-start-1 ${o === 'landscape' ? landscapeMin : ''}`} style={o === 'portrait' ? { aspectRatio: `${v.width} / ${v.height}` } : undefined} />
       <div className="relative z-10 col-start-1 row-start-1 flex flex-col">{children}</div>
     </article>
@@ -116,6 +132,9 @@ export function GlanceChapter() {
       art={SCENES.sunset}
       clock="glance"
       labelledBy="celebrations-title"
+      from={SKY.dusk}
+      to={SKY.nightfall}
+      fadeTop={portrait ? 14 : 22}
       overlay={
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]">
           {portrait ? (
@@ -128,7 +147,7 @@ export function GlanceChapter() {
     >
       <div
         className={`container-wide flex flex-1 flex-col ${
-          portrait ? 'justify-between pb-[7%] pt-[calc(var(--safe-top)+5.25rem)] text-center' : 'justify-center gap-10 py-28'
+          portrait ? 'justify-between pb-[7%] pt-[calc(var(--safe-top)+4.25rem)] text-center' : 'justify-center gap-10 py-28'
         }`}
       >
         <header className={portrait ? '' : 'max-w-[31rem]'} data-reveal="fade">
@@ -139,7 +158,7 @@ export function GlanceChapter() {
           >
             <SceneTitle text={t('celebrations.title')} />
           </h2>
-          <p className="mt-3 text-[0.95rem] text-[rgba(255,240,220,.92)] [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">{t('celebrations.sub')}</p>
+          <p className="mt-3 text-[0.95rem] text-[rgba(255,240,220,.95)] [text-shadow:0_1px_3px_rgba(0,0,0,.7),0_0_14px_rgba(8,8,26,.9)]">{t('celebrations.sub')}</p>
         </header>
         <div className={`${glassCard} px-5 pb-2 pt-5 text-left ${portrait ? 'mx-auto w-full max-w-[26rem]' : 'max-w-[31rem]'}`} data-reveal="up">
           <p className="eyebrow text-gold">{t('celebrations.glance')}</p>
@@ -152,30 +171,6 @@ export function GlanceChapter() {
             ))}
           </dl>
         </div>
-      </div>
-    </SceneChapter>
-  )
-}
-
-/* ---------------------------------------------------------------- interludes: twilight & dawn */
-
-export function Interlude({ art, day, clock }: { art: SceneArt; day: CelebrationDay; clock: string }) {
-  const { t, lang } = useI18n()
-  return (
-    <SceneChapter
-      art={art}
-      clock={clock}
-      landscapeMin="min-h-[max(88svh,40rem)]"
-      overlay={<div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[38%] bg-[linear-gradient(0deg,rgba(4,6,14,.42),transparent)]" />}
-    >
-      <div className="flex flex-1 flex-col items-center justify-end px-[var(--gutter)] pb-[12%] text-center" data-reveal="fade">
-        <p className="eyebrow text-gold-light [text-shadow:0_1px_8px_rgba(0,0,0,.7)]">{t(`days.${day.id}`)}</p>
-        <p className="mt-2 font-display text-[clamp(3.4rem,2.6rem+4vw,6.5rem)] font-medium leading-none text-ivory [text-shadow:0_4px_30px_rgba(0,0,0,.55)]">{formatWeekday(day, 'long', lang)}</p>
-        <p className="mt-3 flex items-center gap-3 font-display text-[1.25rem] italic text-ivory/90 [text-shadow:0_1px_10px_rgba(0,0,0,.7)]">
-          <span className="h-px w-8 bg-gold/70" aria-hidden="true" />
-          {formatDayMonthYearFull(day, lang)}
-          <span className="h-px w-8 bg-gold/70" aria-hidden="true" />
-        </p>
       </div>
     </SceneChapter>
   )
@@ -194,6 +189,8 @@ export function ReceptionChapter({ day }: { day: CelebrationDay }) {
       id="aaratakshate"
       clock="aaratakshate"
       labelledBy="aaratakshate-title"
+      from={SKY.nightfall}
+      to={SKY.embers}
       overlay={
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]">
           {portrait ? (
@@ -233,11 +230,15 @@ export function ReceptionChapter({ day }: { day: CelebrationDay }) {
   )
 }
 
-/* ---------------------------------------------------------------- paper */
+/* ---------------------------------------------------------------- dawn: night turning to morning */
 
-function PaperEdge() {
-  return <div aria-hidden="true" className="absolute inset-x-0 -top-[14px] h-[30px] bg-[length:100%_100%]" style={{ backgroundImage: `url(${PAPER.edge})` }} />
+/** A short band of sky between the night and the morning scene: no page of its own, just the light changing. */
+function DawnBand({ to }: { to: string }) {
+  return <div aria-hidden="true" className="h-[clamp(6.5rem,16svh,10rem)]" style={{ background: dawnGradient(to) }} />
 }
+
+/** Behind a scene's top edge: the dawn's last colour, then the paper shows through below the fade. */
+const underTop = (colour: string, fade: string) => `linear-gradient(180deg, ${colour} 0, ${colour} ${fade}, transparent ${fade})`
 
 /* ---------------------------------------------------------------- 3 · sunrise: Muhurta */
 
@@ -273,12 +274,14 @@ export function MuhurtaChapter({ day }: { day: CelebrationDay }) {
   if (portrait) {
     return (
       <article id="muhurta" aria-labelledby="muhurta-title" className="relative isolate">
-        <div data-clock="muhurta" className="film-grain relative" style={{ aspectRatio: `${art.portrait.width} / ${art.portrait.height}` }}>
-          <SceneStage art={art} />
+        <DawnBand to={art.portrait.edges[0]} />
+        <div data-clock="muhurta" className="relative" style={{ aspectRatio: `${art.portrait.width} / ${art.portrait.height}`, background: underTop(art.portrait.edges[0], '12%') }}>
+          <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades('12%', '24%')}>
+            <SceneStage art={art} />
+          </div>
           <PetalField count={6} kinds={['marigold', 'rose', 'marigold']} seed={33} intensity={0.75} />
         </div>
-        <div className="paper-sheet relative z-10 px-[var(--gutter)] pb-14 pt-8">
-          <PaperEdge />
+        <div className="relative z-10 px-[var(--gutter)] pb-12 pt-2">
           <div className="mx-auto max-w-[30rem]" data-reveal="up">
             {content}
           </div>
@@ -287,12 +290,17 @@ export function MuhurtaChapter({ day }: { day: CelebrationDay }) {
     )
   }
   return (
-    <article id="muhurta" data-clock="muhurta" aria-labelledby="muhurta-title" className="film-grain relative isolate flex min-h-[max(100svh,44rem)] items-center">
-      <SceneStage art={art} />
-      <PetalField count={8} kinds={['marigold', 'rose', 'marigold']} seed={33} intensity={0.75} />
-      <div className="container-wide relative z-10 py-24">
-        <div className="paper-sheet paper-card max-w-[31rem] rounded-[3px] px-9 py-10" data-reveal="up">
-          {content}
+    <article id="muhurta" aria-labelledby="muhurta-title" className="relative isolate">
+      <DawnBand to={art.landscape.edges[0]} />
+      <div data-clock="muhurta" className="relative flex min-h-[max(94svh,42rem)] items-center" style={{ background: underTop(art.landscape.edges[0], '12%') }}>
+        <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades('12%', '26%')}>
+          <SceneStage art={art} />
+        </div>
+        <PetalField count={8} kinds={['marigold', 'rose', 'marigold']} seed={33} intensity={0.75} />
+        <div className="container-wide relative z-10 py-24">
+          <div className="paper-sheet paper-card max-w-[31rem] rounded-[3px] px-9 py-10" data-reveal="up">
+            {content}
+          </div>
         </div>
       </div>
     </article>
@@ -452,16 +460,16 @@ export function VenueChapter() {
   const art = SCENES.daylight
   // A real photograph of the hall, once the family supplies one, replaces the rendered entrance.
   const photo = wedding.venue.photo
-  const caption = <p className="absolute bottom-2 right-3 z-[2] text-[0.7rem] italic text-ivory/80 [text-shadow:0_1px_4px_rgba(0,0,0,.8)]">{t('celebrations.artNote')}</p>
   const picture = photo ? (
     <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
   ) : (
     <>
       <SceneStage art={art} />
       <PetalField count={o === 'portrait' ? 5 : 6} kinds={['marigold', 'jasmine', 'marigold']} seed={41} intensity={0.7} />
-      {caption}
     </>
   )
+  // the note sits where the picture has already faded into the paper
+  const caption = !photo && <p className="absolute bottom-1 right-[var(--gutter)] z-[2] text-[0.7rem] italic text-ink-soft/85 lg:left-8 lg:right-auto">{t('celebrations.artNote')}</p>
   const portraitRatio = photo ? `${photo.width} / ${photo.height}` : `${art.portrait.width} / ${art.portrait.height}`
   const body = (
     <>
@@ -476,20 +484,32 @@ export function VenueChapter() {
   if (o === 'portrait') {
     return (
       <article id="venue" aria-labelledby="venue-title" className="relative isolate scroll-mt-0">
-        <div data-clock="venue" className="film-grain relative" style={{ aspectRatio: portraitRatio }}>
-          {picture}
+        <div data-clock="venue" className="relative" style={{ aspectRatio: portraitRatio }}>
+          <div className={`scene-fade pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('18%', '18%')}>
+            {picture}
+          </div>
+          {caption}
         </div>
-        <div className="paper-sheet relative z-10 px-[var(--gutter)] pb-16 pt-8">
-          <PaperEdge />
+        <div className="relative z-10 px-[var(--gutter)] pb-6 pt-6">
           <div className="mx-auto max-w-[32rem]">{body}</div>
         </div>
       </article>
     )
   }
   return (
-    <article id="venue" data-clock="venue" data-tone="light" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(100svh,46rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)]">
-      <div data-clock="venue" className="film-grain relative min-h-[60svh]">{picture}</div>
-      <div className="paper-sheet relative z-10 px-[var(--gutter)] py-16 shadow-[-20px_0_40px_-20px_rgba(30,14,4,.6)] lg:px-12">{body}</div>
+    <article id="venue" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(94svh,44rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)]">
+      <div data-clock="venue" className="relative min-h-[60svh]">
+        <div className={`scene-fade scene-fade-right pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('16%', '16%')}>
+          {picture}
+        </div>
+        {caption}
+      </div>
+      <div className="relative z-10 px-[var(--gutter)] pb-10 pt-16 lg:px-12">{body}</div>
     </article>
   )
+}
+
+/** The end of the day: the paper warms and darkens into the night of the RSVP below. */
+export function DuskBand() {
+  return <div aria-hidden="true" className="h-[clamp(8rem,22svh,13rem)]" style={{ background: duskGradient }} />
 }
