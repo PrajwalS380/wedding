@@ -1,11 +1,10 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useGSAP } from '@gsap/react'
 import { ArrowRight, CalendarHeart } from 'lucide-react'
-import { localized, wedding, type DayId } from '../../data/wedding'
-import { dayOfMonth, formatClock, formatDayLong, formatWeekday, getTimeline, ordinalSuffix, parseIsoDate } from '../../lib/dates'
+import { wedding, type DayId } from '../../data/wedding'
+import { dayOfMonth, formatClock, formatDayLong, formatTimeWords, formatWeekday, getTimeline, ordinalSuffix, parseIsoDate } from '../../lib/dates'
 import { defaultDayId, getDayClock, getPhase, type DayClock } from '../../lib/weddingClock'
 import { scrollToSection } from '../../lib/browser'
-import { eventTimeText } from '../../lib/eventTime'
 import { useNow, currentTime } from '../../hooks/useNow'
 import { useInView } from '../../hooks/useInView'
 import { useMotion } from '../../hooks/motion'
@@ -13,6 +12,7 @@ import { gsap, useReveal } from '../../hooks/useReveal'
 import { CalendarDial } from '../ui/CalendarDial'
 import { useI18n } from '../../i18n/useI18n'
 import { SKY } from '../celebrations/styles'
+import { CalendarMenu } from '../celebrations/CalendarMenu'
 import { MandapMotif } from '../ui/Ornaments'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -188,9 +188,7 @@ export function LivingCalendar() {
             className="relative mx-auto w-full max-w-[30rem] border-l-0 border-gold/30 lg:mx-0 lg:border-l lg:pl-12"
           >
             <div key={selected + phase} className={ambientMotion ? 'animate-[caption-in_.8s_var(--ease-silk)_both]' : ''}>
-              <p className="eyebrow text-gold">
-                {t(`days.${day.id}`)} · {formatWeekday(day, 'long', lang)}
-              </p>
+              <p className="eyebrow text-gold">{t(`days.${day.id}`)}</p>
               <h3 className="mt-3 font-display text-[clamp(1.9rem,1.5rem+1.6vw,2.7rem)] leading-tight text-ivory">{formatDayLong(day, lang)}</h3>
 
               <div className="mt-7">
@@ -219,37 +217,19 @@ export function LivingCalendar() {
                     <p className="mt-4 max-w-sm text-[0.84rem] leading-relaxed text-ivory/65">
                       {active.dateBased
                         ? t('calendar.dateBasedNote', { date: formatDayLong(day, lang) })
-                        : t('calendar.timedNote', { date: formatDayLong(day, lang), time: formatClock(day.startTime, lang) ?? '' })}
+                        : t('calendar.timedNote', { time: formatTimeWords(day.startTime, lang) ?? '' })}
                     </p>
                   </div>
                 )}
               </div>
 
-              <div className="mt-8 border-t border-gold/20 pt-6">
-                {day.events.length ? (
-                  <ul className="space-y-3">
-                    {day.events.map((ev) => (
-                      <li key={ev.name.en}>
-                        <span className="block font-display text-[1.3rem] leading-tight text-ivory">{localized(ev.name, lang)}</span>
-                        <span className="mt-0.5 block text-[0.88rem] text-gold-light">
-                          {eventTimeText(ev, t, lang)} <span className="text-gold/70">{wedding.timezoneLabel}</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <>
-                    <p className="font-display text-[1.25rem] text-ivory">{t('calendar.schedulePending')}</p>
-                    <p className="mt-1 text-[0.86rem] leading-relaxed text-ivory/65">{t('calendar.schedulePendingNote')}</p>
-                  </>
-                )}
-                <p className="mt-4 text-[0.86rem] text-ivory/70">
-                  {t('venue.name')}, {t('venue.city')}
-                </p>
+              {/* what happens that day is told in the Celebrations; saving both dates lives here */}
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-gold/20 pt-6">
+                <CalendarMenu days={wedding.days} tone="dark" />
                 <button
                   type="button"
                   onClick={() => scrollToSection(day.id === 'day-1' ? 'aaratakshate' : 'muhurta', prefersReducedMotion)}
-                  className="mt-3 inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.22em] text-gold-light underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
+                  className="inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.22em] text-gold-light underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
                 >
                   {t('calendar.viewSchedule')} <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </button>

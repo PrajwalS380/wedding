@@ -1,4 +1,4 @@
-import type { CelebrationDay, ScheduledEvent } from '../data/wedding'
+import type { CelebrationDay } from '../data/wedding'
 import type { Lang } from '../i18n/languages'
 import type { Translate } from '../i18n/translate'
 import { formatTimeRangeWords, formatTimeWords } from './dates'
@@ -13,8 +13,6 @@ export function timeText(start: string | null, end: string | null, t: Translate,
   const one = formatTimeWords(start, lang)
   return one ? t('celebrations.fromTime', { time: one }) : t('common.timeToBeAnnounced')
 }
-
-export const eventTimeText = (ev: ScheduledEvent, t: Translate, lang: Lang) => timeText(ev.startTime, ev.endTime, t, lang)
 
 /** The time of a day's (first) ceremony, falling back to the day's own times. */
 export function dayTimeText(day: CelebrationDay, t: Translate, lang: Lang): string {

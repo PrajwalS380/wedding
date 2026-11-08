@@ -14,11 +14,11 @@ interface Box {
 }
 
 /** Size and offset that make the image cover `cw × ch`, keeping its focus point in view. */
-function coverBox(cw: number, ch: number, v: SceneVariant): Box {
+function coverBox(cw: number, ch: number, v: SceneVariant, focus: readonly [number, number]): Box {
   const s = Math.max(cw / v.width, ch / v.height)
   const w = v.width * s
   const h = v.height * s
-  return { w, h, x: (cw - w) * v.focus[0], y: (ch - h) * v.focus[1] }
+  return { w, h, x: (cw - w) * focus[0], y: (ch - h) * focus[1] }
 }
 
 /**
@@ -27,8 +27,25 @@ function coverBox(cw: number, ch: number, v: SceneVariant): Box {
  * always sit on the flames and bulbs they belong to. While the chapter
  * scrolls past, the stage drifts and settles very slightly (parallax).
  */
-export function SceneStage({ art, eager = false, parallax = true, className = '', children }: { art: SceneArt; eager?: boolean; parallax?: boolean; className?: string; children?: ReactNode }) {
+export function SceneStage({
+  art,
+  focus: focusOverride,
+  eager = false,
+  parallax = true,
+  className = '',
+  children,
+}: {
+  art: SceneArt
+  /** keep a different point of the picture in view than the art's own focus */
+  focus?: readonly [number, number]
+  eager?: boolean
+  parallax?: boolean
+  className?: string
+  children?: ReactNode
+}) {
   const v = useSceneVariant(art)
+  const focus = focusOverride ?? v.focus
+  const [fx, fy] = focus
   const frame = useRef<HTMLDivElement>(null)
   const stage = useRef<HTMLDivElement>(null)
   const [box, setBox] = useState<Box | null>(null)
@@ -40,14 +57,14 @@ export function SceneStage({ art, eager = false, parallax = true, className = ''
     const measure = () => {
       const r = el.getBoundingClientRect()
       if (!r.width || !r.height) return
-      const next = coverBox(r.width, r.height, v)
+      const next = coverBox(r.width, r.height, v, [fx, fy])
       setBox((b) => (b && Math.abs(b.w - next.w) < 0.5 && Math.abs(b.h - next.h) < 0.5 && Math.abs(b.x - next.x) < 0.5 && Math.abs(b.y - next.y) < 0.5 ? b : next))
     }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [v])
+  }, [v, fx, fy])
 
   useGSAP(
     () => {
@@ -78,7 +95,7 @@ export function SceneStage({ art, eager = false, parallax = true, className = ''
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
-          style={{ objectPosition: `${v.focus[0] * 100}% ${v.focus[1] * 100}%` }}
+          style={{ objectPosition: `${fx * 100}% ${fy * 100}%` }}
         />
         {box && <LiveLights lights={v.lights} active={ambientMotion} />}
         {children}

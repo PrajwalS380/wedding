@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { MapPin, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { NAV_ITEMS } from '../../data/navigation'
-import { wedding } from '../../data/wedding'
-import { getTimeline } from '../../lib/dates'
 import { Monogram } from '../ui/Monogram'
 import { LotusDivider } from '../ui/Ornaments'
 import { useI18n } from '../../i18n/useI18n'
@@ -19,8 +17,7 @@ interface MobileMenuProps {
 export function MobileMenu({ open, active, onClose, onNavigate }: MobileMenuProps) {
   const panel = useRef<HTMLDivElement>(null)
   const closeBtn = useRef<HTMLButtonElement>(null)
-  const { t, lang } = useI18n()
-  const timeline = getTimeline(lang)
+  const { t } = useI18n()
 
   useEffect(() => {
     if (!open) return
@@ -107,23 +104,6 @@ export function MobileMenu({ open, active, onClose, onNavigate }: MobileMenuProp
       </div>
       <div className="relative mt-8 text-center">
         <LotusDivider className="mx-auto h-5 w-44 text-gold/80" />
-        <p className="mt-4 font-display text-xl text-ivory">
-          {t('couple.pair')}
-        </p>
-        <p className="mt-1 text-sm text-ivory/70">
-          {timeline.daysLabel}
-          {` · ${timeline.monthYearLabel}`}
-        </p>
-        <a
-          href={wedding.venue.mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.22em] text-gold-light underline-offset-4 hover:underline"
-        >
-          <MapPin className="h-4 w-4" aria-hidden="true" />
-          {t('venue.name')}
-          <span className="sr-only"> {t('nav.venueInMaps')}</span>
-        </a>
       </div>
     </div>
   )

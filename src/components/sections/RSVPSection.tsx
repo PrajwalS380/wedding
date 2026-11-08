@@ -1,10 +1,9 @@
 import { useId, useRef, useState, type FormEvent } from 'react'
-import { ArrowUp, ExternalLink, MapPin, MessageCircle, ShieldCheck } from 'lucide-react'
+import { ArrowUp, ExternalLink, MessageCircle, ShieldCheck } from 'lucide-react'
 import { wedding } from '../../data/wedding'
 import { useMotion } from '../../hooks/motion'
 import { useReveal } from '../../hooks/useReveal'
 import { scrollToSection } from '../../lib/browser'
-import { getTimeline } from '../../lib/dates'
 import { buildRsvpMessage, whatsappRsvpUrl, type Attendance } from '../../lib/rsvp'
 import { useI18n } from '../../i18n/useI18n'
 import { Rich } from '../../i18n/Rich'
@@ -245,15 +244,8 @@ function RsvpForm() {
 export function RSVPSection() {
   const section = useRef<HTMLElement>(null)
   const { prefersReducedMotion } = useMotion()
-  const { t, lang } = useI18n()
-  const timeline = getTimeline(lang)
+  const { t } = useI18n()
   useReveal(section)
-
-  const startRsvp = () => {
-    const input = document.querySelector<HTMLInputElement>('#rsvp form input[name="name"]')
-    input?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' })
-    input?.focus({ preventScroll: true })
-  }
 
   return (
     <section ref={section} id="rsvp" aria-label={t('nav.rsvp')} className="relative isolate overflow-hidden bg-night">
@@ -288,32 +280,9 @@ export function RSVPSection() {
             <NameJoiner className="my-1 text-[clamp(1.8rem,1.3rem+2vw,3rem)] text-gold" wordClassName="text-[clamp(1.3rem,1rem+1.4vw,2.1rem)]" />
             <span className="text-gold-gradient text-[clamp(3rem,2rem+6vw,6.5rem)]">{t('couple.second')}</span>
           </h2>
-          <p className="mt-6 text-label font-semibold uppercase tracking-[0.3em] text-gold/85">
-            {timeline.daysLabel}
-            {` · ${timeline.monthYearLabel}`} · {t('venue.city')}
-          </p>
           <p className="mx-auto mt-7 max-w-[30rem] font-display text-[length:var(--step-1)] italic leading-relaxed text-ivory/90">
             {t('rsvp.closing')}
           </p>
-
-          <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              onClick={startRsvp}
-              className="inline-flex min-h-12 items-center justify-center gap-3 border border-gold/70 bg-gold/10 px-8 text-button font-semibold uppercase tracking-[0.26em] text-gold-light shadow-[0_0_40px_-12px_rgba(213,176,109,.6)] transition-[background-color,color,transform] hover:bg-gold/20 hover:text-ivory active:scale-[0.97]"
-            >
-              {t('rsvp.kindly')}
-            </button>
-            <a
-              href={wedding.venue.mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center gap-2 px-6 text-label font-semibold uppercase tracking-[0.24em] text-ivory/85 underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
-            >
-              <MapPin className="h-4 w-4 text-gold" aria-hidden="true" /> {t('rsvp.directions')}
-              <span className="sr-only"> {t('common.mapsNewTab')}</span>
-            </a>
-          </div>
         </div>
       </div>
 

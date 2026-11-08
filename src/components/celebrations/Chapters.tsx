@@ -1,18 +1,15 @@
 import { Fragment, useState, type CSSProperties, type ReactNode } from 'react'
-import { CalendarHeart, Check, Copy, MapPin, MessageCircle, Phone, Share2 } from 'lucide-react'
+import { Check, Copy, MapPin, Phone, Share2 } from 'lucide-react'
 import { localized, wedding, type CelebrationDay } from '../../data/wedding'
 import { SCENES, THAMBOOLA, type SceneArt } from '../../data/sceneArt'
 import { copyText, shareInvitation, type ShareResult } from '../../lib/browser'
-import { dateJoiner, formatDayLong, formatWeekday, getTimeline } from '../../lib/dates'
+import { formatDayLong } from '../../lib/dates'
 import { dayTimeText as eventTime, displayPhone } from '../../lib/eventTime'
 import { shareContent } from '../../lib/shareContent'
-import { useMotion } from '../../hooks/motion'
 import { useI18n } from '../../i18n/useI18n'
 import { PetalField } from '../ui/Ambient'
 import { SceneStage } from './SceneStage'
 import { useOrientation } from '../../hooks/useOrientation'
-import { EventCountdown } from './EventCountdown'
-import { CalendarMenu } from './CalendarMenu'
 import { actionClass, dawnGradient, duskGradient, sceneBackdrop, SKY } from './styles'
 
 /* ---------------------------------------------------------------- helpers */
@@ -51,11 +48,12 @@ const fades = (top: string, bottom: string) => ({ '--fade-top': top, '--fade-bot
 function SceneChapter({
   art,
   id,
-  clock,
   labelledBy,
   from,
   to,
   landscapeMin = 'min-h-[max(94svh,42rem)]',
+  portraitAspect,
+  focus,
   fadeTop = 14,
   fadeBottom = 14,
   className = '',
@@ -64,11 +62,13 @@ function SceneChapter({
 }: {
   art: SceneArt
   id?: string
-  clock: string
   labelledBy?: string
   from: string
   to: string
   landscapeMin?: string
+  /** a shorter frame than the picture on upright screens (CSS aspect-ratio), cropped around `focus` */
+  portraitAspect?: string
+  focus?: readonly [number, number]
   /** how far (percent of the chapter's height) the picture dissolves at the top and bottom */
   fadeTop?: number
   fadeBottom?: number
@@ -79,77 +79,45 @@ function SceneChapter({
   const o = useOrientation()
   const v = art[o]
   return (
-    <article id={id} data-clock={clock} aria-labelledby={labelledBy} className={`relative isolate grid scroll-mt-0 ${className}`} style={{ background: sceneBackdrop(v.edges, from, to, fadeTop, fadeBottom) }}>
+    <article id={id} aria-labelledby={labelledBy} className={`relative isolate grid scroll-mt-0 ${className}`} style={{ background: sceneBackdrop(v.edges, from, to, fadeTop, fadeBottom) }}>
       <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades(`${fadeTop}%`, `${fadeBottom}%`)}>
-        <SceneStage art={art} />
+        <SceneStage art={art} focus={focus} />
         {overlay}
       </div>
-      <div aria-hidden="true" className={`col-start-1 row-start-1 ${o === 'landscape' ? landscapeMin : ''}`} style={o === 'portrait' ? { aspectRatio: `${v.width} / ${v.height}` } : undefined} />
+      <div aria-hidden="true" className={`col-start-1 row-start-1 ${o === 'landscape' ? landscapeMin : ''}`} style={o === 'portrait' ? { aspectRatio: portraitAspect ?? `${v.width} / ${v.height}` } : undefined} />
       <div className="relative z-10 col-start-1 row-start-1 flex flex-col">{children}</div>
     </article>
   )
 }
 
-const glassCard =
-  'rounded-[6px] border border-gold-light/25 bg-[linear-gradient(180deg,rgba(22,12,24,.42),rgba(10,6,14,.58))] shadow-[0_24px_50px_-20px_rgba(0,0,0,.75)] backdrop-blur-[16px] backdrop-saturate-[1.2]'
+/* ---------------------------------------------------------------- 1 · sunset: the opening */
 
-/* ---------------------------------------------------------------- 1 · sunset: at a glance */
-
+/** The section's title over the sunset. Dates, timings and the venue each have one place of their own further on. */
 export function GlanceChapter() {
-  const { t, lang } = useI18n()
+  const { t } = useI18n()
   const o = useOrientation()
-  const [d1, d2] = wedding.days
-  const tl = getTimeline(lang)
-  const rows: [string, ReactNode][] = [
-    [
-      t('celebrations.when'),
-      <>
-        {formatWeekday(d1, 'long', lang)} {dateJoiner(lang)} {formatWeekday(d2, 'long', lang)}
-        <small className="block text-[0.86em] text-ivory/70">{tl.datesLabel}</small>
-      </>,
-    ],
-    [
-      t('celebrations.where'),
-      <>
-        {t('venue.name')}
-        <small className="block text-[0.86em] text-ivory/70">{t('venue.city')}</small>
-      </>,
-    ],
-    [
-      t('celebrations.timings'),
-      <>
-        {wedding.days.map((d, i) => (
-          <span key={d.id} className={i ? 'block text-[0.86em] text-ivory/75' : 'block'}>
-            {localized(d.events[0]?.name ?? null, lang) ?? t(`days.${d.id}`)} · {formatWeekday(d, 'short', lang)}, {eventTime(d, t, lang)}
-          </span>
-        ))}
-      </>,
-    ],
-  ]
   const portrait = o === 'portrait'
   return (
     <SceneChapter
       art={SCENES.sunset}
-      clock="glance"
       labelledBy="celebrations-title"
       from={SKY.dusk}
       to={SKY.nightfall}
       fadeTop={portrait ? 14 : 22}
+      portraitAspect="63 / 100"
+      focus={portrait ? [0.42, 0.06] : undefined}
+      landscapeMin="min-h-[max(78svh,36rem)]"
       overlay={
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]">
           {portrait ? (
-            <div className="absolute inset-x-0 top-0 h-[38%] bg-[linear-gradient(180deg,rgba(8,8,26,.5),transparent)]" />
+            <div className="absolute inset-x-0 top-0 h-[42%] bg-[linear-gradient(180deg,rgba(8,8,26,.5),transparent)]" />
           ) : (
             <div className="absolute inset-y-0 left-0 w-[58%] bg-[linear-gradient(90deg,rgba(8,6,18,.62),rgba(8,6,18,.3)_60%,transparent)]" />
           )}
         </div>
       }
     >
-      <div
-        className={`container-wide flex flex-1 flex-col ${
-          portrait ? 'justify-between pb-[7%] pt-[calc(var(--safe-top)+4.25rem)] text-center' : 'justify-center gap-10 py-28'
-        }`}
-      >
+      <div className={`container-wide flex flex-1 flex-col ${portrait ? 'pt-[calc(var(--safe-top)+4.25rem)] text-center' : 'justify-center py-24'}`}>
         <header className={portrait ? '' : 'max-w-[31rem]'} data-reveal="fade">
           <p className="eyebrow text-gold-light [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">{t('celebrations.eyebrow')}</p>
           <h2
@@ -158,19 +126,7 @@ export function GlanceChapter() {
           >
             <SceneTitle text={t('celebrations.title')} />
           </h2>
-          <p className="mt-3 text-[0.95rem] text-[rgba(255,240,220,.95)] [text-shadow:0_1px_3px_rgba(0,0,0,.7),0_0_14px_rgba(8,8,26,.9)]">{t('celebrations.sub')}</p>
         </header>
-        <div className={`${glassCard} px-5 pb-2 pt-5 text-left ${portrait ? 'mx-auto w-full max-w-[26rem]' : 'max-w-[31rem]'}`} data-reveal="up">
-          <p className="eyebrow text-gold">{t('celebrations.glance')}</p>
-          <dl className="mt-3">
-            {rows.map(([term, value]) => (
-              <div key={term} className="grid grid-cols-[5.25rem_minmax(0,1fr)] gap-3 border-t border-gold-light/15 py-3">
-                <dt className="pt-1 text-label font-semibold uppercase tracking-[0.24em] text-gold-light/85">{term}</dt>
-                <dd className="font-display text-[1.18rem] leading-snug text-ivory">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
       </div>
     </SceneChapter>
   )
@@ -187,10 +143,12 @@ export function ReceptionChapter({ day }: { day: CelebrationDay }) {
     <SceneChapter
       art={SCENES.night}
       id="aaratakshate"
-      clock="aaratakshate"
       labelledBy="aaratakshate-title"
       from={SKY.nightfall}
       to={SKY.embers}
+      portraitAspect="54 / 100"
+      landscapeMin="min-h-[max(84svh,40rem)]"
+      focus={portrait ? [0.5, 0.55] : undefined}
       overlay={
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]">
           {portrait ? (
@@ -201,7 +159,7 @@ export function ReceptionChapter({ day }: { day: CelebrationDay }) {
         </div>
       }
     >
-      <div className={`container-wide flex flex-1 flex-col ${portrait ? 'pt-[76%]' : 'justify-center py-28'}`}>
+      <div className={`container-wide flex flex-1 flex-col ${portrait ? 'pt-[64%]' : 'justify-center py-28'}`}>
         <div className="max-w-[30rem]" data-reveal="up">
           <p className="eyebrow text-gold-light [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">
             {t(`days.${day.id}`)} · {formatDayLong(day, lang)}
@@ -214,16 +172,6 @@ export function ReceptionChapter({ day }: { day: CelebrationDay }) {
             {eventTime(day, t, lang)}
             <span className="ml-2 align-middle font-sans text-label font-semibold tracking-[0.2em] text-gold-light/80">{wedding.timezoneLabel}</span>
           </p>
-          <div className="mt-4">
-            <EventCountdown day={day} tone="dark" layout="inline" />
-          </div>
-          <div className="mt-5 flex flex-wrap gap-2.5">
-            <CalendarMenu days={[day]} tone="dark" />
-            <a href={wedding.venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={actionClass.dark}>
-              <MapPin className="h-4 w-4" aria-hidden="true" /> {t('celebrations.directions')}
-              <span className="sr-only"> {t('common.mapsNewTab')}</span>
-            </a>
-          </div>
         </div>
       </div>
     </SceneChapter>
@@ -259,23 +207,13 @@ export function MuhurtaChapter({ day }: { day: CelebrationDay }) {
       <p className="mt-3 font-display text-[clamp(1.5rem,1.35rem+0.8vw,1.95rem)] leading-snug text-ink">
         {eventTime(day, t, lang)} <span className="font-sans text-label font-semibold tracking-[0.2em] text-brass-deep">{wedding.timezoneLabel}</span>
       </p>
-      <div className="mt-5">
-        <EventCountdown day={day} tone="light" layout="boxes" />
-      </div>
-      <div className="mt-6 flex flex-wrap justify-center gap-2.5 lg:justify-start">
-        <CalendarMenu days={[day]} tone="light" fill />
-        <a href={wedding.venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={actionClass.light}>
-          <MapPin className="h-4 w-4" aria-hidden="true" /> {t('celebrations.directions')}
-          <span className="sr-only"> {t('common.mapsNewTab')}</span>
-        </a>
-      </div>
     </div>
   )
   if (portrait) {
     return (
       <article id="muhurta" aria-labelledby="muhurta-title" className="relative isolate">
         <DawnBand to={art.portrait.edges[0]} />
-        <div data-clock="muhurta" className="relative" style={{ aspectRatio: `${art.portrait.width} / ${art.portrait.height}`, background: underTop(art.portrait.edges[0], '12%') }}>
+        <div className="relative" style={{ aspectRatio: `${art.portrait.width} / ${art.portrait.height}`, background: underTop(art.portrait.edges[0], '12%') }}>
           <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades('12%', '24%')}>
             <SceneStage art={art} />
           </div>
@@ -292,7 +230,7 @@ export function MuhurtaChapter({ day }: { day: CelebrationDay }) {
   return (
     <article id="muhurta" aria-labelledby="muhurta-title" className="relative isolate">
       <DawnBand to={art.landscape.edges[0]} />
-      <div data-clock="muhurta" className="relative flex min-h-[max(94svh,42rem)] items-center" style={{ background: underTop(art.landscape.edges[0], '12%') }}>
+      <div className="relative flex min-h-[max(94svh,42rem)] items-center" style={{ background: underTop(art.landscape.edges[0], '12%') }}>
         <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades('12%', '26%')}>
           <SceneStage art={art} />
         </div>
@@ -382,13 +320,7 @@ const serviceCard = 'flex min-h-[4.75rem] items-center gap-3 rounded-[4px] bg-[r
 
 function GuestServices() {
   const { t, lang } = useI18n()
-  const { prefersReducedMotion } = useMotion()
   const [shareStatus, setShareStatus] = useState<ShareResult | null>(null)
-  const goToRsvp = () => {
-    const input = document.querySelector<HTMLInputElement>('#rsvp form input[name="name"]')
-    input?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' })
-    input?.focus({ preventScroll: true })
-  }
   const share = async () => setShareStatus(await shareInvitation(shareContent(t, lang, wedding.share.siteUrl)))
   return (
     <div id="guest-services" className="scroll-mt-6" data-reveal="up">
@@ -403,15 +335,6 @@ function GuestServices() {
         className="mx-auto mt-2 h-auto w-[min(19rem,80%)] lg:mx-0"
       />
       <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
-        <button type="button" onClick={goToRsvp} className={`${serviceCard} transition-colors hover:bg-[rgba(255,252,244,.75)]`}>
-          <span className={brassDisc} aria-hidden="true">
-            <MessageCircle className="h-[18px] w-[18px]" />
-          </span>
-          <span>
-            <span className="block font-display text-[1.15rem] font-semibold leading-tight text-ink">{t('celebrations.rsvp')}</span>
-            <span className="block text-caption text-ink-soft">{t('celebrations.rsvpHint')}</span>
-          </span>
-        </button>
         <div className={serviceCard}>
           <span className={brassDisc} aria-hidden="true">
             <Phone className="h-4 w-4" />
@@ -438,16 +361,6 @@ function GuestServices() {
               {shareStatus && shareStatus !== 'cancelled' ? t(`share.${shareStatus}`) : t('celebrations.shareHint')}
             </span>
           </span>
-        </div>
-        <div className={`${serviceCard} flex-wrap sm:col-span-2`}>
-          <span className={brassDisc} aria-hidden="true">
-            <CalendarHeart className="h-4 w-4" />
-          </span>
-          <span className="min-w-0 flex-1 basis-40">
-            <span className="block font-display text-[1.15rem] font-semibold leading-tight text-ink">{t('celebrations.saveDates')}</span>
-            <span className="block text-caption text-ink-soft">{t('celebrations.calendarHint')}</span>
-          </span>
-          <CalendarMenu days={wedding.days} tone="light" align="end" className="ml-auto shrink-0" />
         </div>
       </div>
     </div>
@@ -484,7 +397,7 @@ export function VenueChapter() {
   if (o === 'portrait') {
     return (
       <article id="venue" aria-labelledby="venue-title" className="relative isolate scroll-mt-0">
-        <div data-clock="venue" className="relative" style={{ aspectRatio: portraitRatio }}>
+        <div className="relative" style={{ aspectRatio: portraitRatio }}>
           <div className={`scene-fade pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('18%', '18%')}>
             {picture}
           </div>
@@ -498,7 +411,7 @@ export function VenueChapter() {
   }
   return (
     <article id="venue" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(94svh,44rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)]">
-      <div data-clock="venue" className="relative min-h-[60svh]">
+      <div className="relative min-h-[60svh]">
         <div className={`scene-fade scene-fade-right pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('16%', '16%')}>
           {picture}
         </div>

@@ -76,7 +76,7 @@ That change automatically:
 
 - switches that day's countdown from **date-based** (counting to the start of the
   date in the visitor's local time) to the exact start instant, computed in `Asia/Kolkata`;
-- lists the verified ceremonies in the Living Calendar and the Celebrations chapters
+- shows the ceremony and its time in that day's Celebrations chapter
   (times are written naturally per language, e.g. "7:30 pm onwards", "ಸಂಜೆ 7:30 ರಿಂದ", "शाम 7:30 बजे से");
 - turns that day's calendar export (`.ics` and Google Calendar) from an all-day
   entry into a timed one — only when **both** `startTime` and `endTime` are set
@@ -216,9 +216,9 @@ src/
     navigation/               desktop bar + accessible mobile menu
     sections/                 CinematicIntro, WeddingHero, InvitationScroll, LivingCalendar,
                               Celebrations, RSVPSection, WeddingFooter
-    celebrations/             Chapters (at a glance, Aaratakshate, Muhurta, venue + guest
+    celebrations/             Chapters (opening, Aaratakshate, Muhurta, venue + guest
                               services), SceneStage (cover-fitted render + parallax), LiveLights,
-                              EventCountdown, CalendarMenu
+                              CalendarMenu (used by the Living Calendar)
     three/                    MandapScene (Canvas, camera rig, foreground torana), stage (portrait
                               recomposition), TempleArchitecture, Garlands, OilLamps, FloatingPetals,
                               AtmosphericLighting, GlowField, geometry, textures, layout, quality
@@ -260,16 +260,30 @@ docs/ASSETS.md                asset provenance and what to replace later
 - **Calendar & Celebrations accessibility**: the two date buttons are a tab list
   (arrow keys, Home/End); countdowns have a screen-reader summary and only tick
   while on screen; every chapter is a labelled `article` with real headings, the
-  scene images are decorative (`alt=""`), the "Add to calendar" menu closes on
-  Escape and returns focus, and "RSVP on WhatsApp" moves focus to the RSVP form.
+  scene images are decorative (`alt=""`), and the "Add to calendar" menu closes on
+  Escape and returns focus.
 
 ## The Celebrations section and its scenes
 
-The section reads as one evening and morning: *at a glance* (sunset over a temple
-tank), the **Aaratakshate** (night sky, strings of lights and lamps), the **Vivaha
+The section reads as one evening and morning: the opening title over a sunset at a
+temple tank, the **Aaratakshate** (night sky, strings of lights and lamps), the **Vivaha
 Muhurta** (kalasha on a brass plate in morning light) and the **venue** (a
-decorated entrance by day) with guest services. A small "sky clock" chip shows
-where you are in time while the scenery is on screen.
+decorated entrance by day) with guest services (call the family, share the
+invitation).
+
+**Each fact has one place on the page** — nothing is repeated section after section:
+
+| What | Where it lives |
+| --- | --- |
+| Names and dates | Hero, the invitation letter, and the closing frame above the RSVP card |
+| Countdown and "Add to calendar" (both days) | The Living Calendar |
+| Each ceremony's name and time | Its Celebrations chapter |
+| Address, map, directions, copy address | The venue chapter (the letter names the hall, as an invitation does) |
+| Replies | The RSVP card |
+| Phone numbers, sharing | Guest services |
+
+The footer is only the monogram and the credit, and the phone menu only
+navigation and language.
 
 **One continuous page:** every scene dissolves into the next instead of ending
 in a hard edge. Each picture fades at its top and bottom (`.scene-fade`) into a
