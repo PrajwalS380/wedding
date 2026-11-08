@@ -75,7 +75,7 @@ export function calendarEntryForDay(day: CelebrationDay, lang: Lang = 'en'): Cal
     lines.push(t('calendarFile.schedulePending'))
   }
   if (s.timeConfirmed && !day.endTime) lines.push(t('calendarFile.beginsAt', { time: formatClock(day.startTime, lang) ?? '' }))
-  lines.push('', t('calendarFile.venue', { address: wedding.venue.fullAddress }), t('calendarFile.directions', { url: wedding.venue.mapsUrl }))
+  lines.push('', t('calendarFile.venue', { address: wedding.venue.fullAddress }), t('calendarFile.directions', { url: wedding.venue.directionsUrl }))
   const base = {
     uid: `${wedding.calendarExport.fileName}-${day.id}@the-wedding-realm`,
     title: t('calendarFile.summary', { day: dayLabel }),

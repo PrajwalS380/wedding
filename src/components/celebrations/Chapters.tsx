@@ -215,7 +215,7 @@ function VenueBlock() {
         </p>
       )}
       <div className="mt-4 flex flex-wrap justify-center gap-2.5">
-        <a href={venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={actionClass.lightFill}>
+        <a href={venue.directionsUrl} target="_blank" rel="noopener noreferrer" className={actionClass.lightFill}>
           <MapPin className="h-4 w-4" aria-hidden="true" /> {t('celebrations.getDirections')}
           <span className="sr-only"> {t('common.mapsNewTab')}</span>
         </a>

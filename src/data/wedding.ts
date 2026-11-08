@@ -151,11 +151,14 @@ export const wedding = {
     fullAddress:
       'Bapuji Samudhaya Bhavan, Shamanur Road, Siddaveerappa Layout, Shamanur, Davangere, Karnataka 577004, India',
     city: 'Davangere',
+    /** The hall's exact position (from the family, via Google Maps). */
+    coordinates: { lat: 14.448417, lng: 75.901618 },
+    /** Turn-by-turn directions from wherever the guest is to the exact spot. */
+    directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=14.448417%2C75.901618&travelmode=driving',
     mapsUrl:
       'https://www.google.com/maps/search/?api=1&query=Bapuji+Samudhaya+Bhavan%2C+Shamanur+Road%2C+Siddaveerappa+Layout%2C+Shamanur%2C+Davangere%2C+Karnataka+577004',
     /** Keyless Google Maps embed, loaded only after the guest asks for it. */
-    mapEmbedUrl:
-      'https://www.google.com/maps?q=Bapuji+Samudhaya+Bhavan%2C+Shamanur+Road%2C+Siddaveerappa+Layout%2C+Shamanur%2C+Davangere%2C+Karnataka+577004&output=embed',
+    mapEmbedUrl: 'https://www.google.com/maps?q=14.448417,75.901618&z=16&output=embed',
     /** Set to a real, family-supplied venue photograph to show it in the Venue chapter instead of the rendered map. */
     photo: null as null | { src: string; width: number; height: number; alt: string },
   },
