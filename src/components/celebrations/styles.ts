@@ -14,9 +14,7 @@ export const SKY = {
   night: '#061914',
   /** calendar → sunset */
   dusk: '#0a1424',
-  /** sunset → the Aaratakshate night */
-  nightfall: '#08070f',
-  /** the night's lamps → the dawn before the Muhurta */
+  /** the sunset scene → the band of dawn before the venue */
   embers: '#1c0c12',
 } as const
 

@@ -159,7 +159,6 @@ export const en = {
     call: 'Call the family',
     callSr: 'Call',
     share: 'Share invitation',
-    shareHint: 'Send it to family and friends',
   },
 
   share: {

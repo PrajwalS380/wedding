@@ -151,7 +151,6 @@ export const kn: Dictionary = {
     call: 'ಕುಟುಂಬಕ್ಕೆ ಕರೆ ಮಾಡಿ',
     callSr: 'ಕರೆ ಮಾಡಿ',
     share: 'ಆಮಂತ್ರಣ ಹಂಚಿಕೊಳ್ಳಿ',
-    shareHint: 'ಬಂಧು-ಮಿತ್ರರಿಗೆ ಕಳುಹಿಸಿ',
   },
 
   share: {

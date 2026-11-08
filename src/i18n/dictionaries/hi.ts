@@ -154,7 +154,6 @@ export const hi: Dictionary = {
     call: 'परिवार को कॉल करें',
     callSr: 'कॉल करें',
     share: 'निमंत्रण साझा करें',
-    shareHint: 'परिवार और मित्रों को भेजें',
   },
 
   share: {

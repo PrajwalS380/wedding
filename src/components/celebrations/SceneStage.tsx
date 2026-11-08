@@ -29,6 +29,7 @@ function coverBox(cw: number, ch: number, v: SceneVariant, focus: readonly [numb
  */
 export function SceneStage({
   art,
+  variant,
   focus: focusOverride,
   eager = false,
   parallax = true,
@@ -36,6 +37,8 @@ export function SceneStage({
   children,
 }: {
   art: SceneArt
+  /** always use this version of the art (e.g. the upright one inside an arch), whatever the screen's orientation */
+  variant?: 'portrait' | 'landscape'
   /** keep a different point of the picture in view than the art's own focus */
   focus?: readonly [number, number]
   eager?: boolean
@@ -43,7 +46,8 @@ export function SceneStage({
   className?: string
   children?: ReactNode
 }) {
-  const v = useSceneVariant(art)
+  const byOrientation = useSceneVariant(art)
+  const v = variant ? art[variant] : byOrientation
   const focus = focusOverride ?? v.focus
   const [fx, fy] = focus
   const frame = useRef<HTMLDivElement>(null)

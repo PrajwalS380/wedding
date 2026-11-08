@@ -34,7 +34,7 @@ Useful URL flags while developing:
 | --- | --- |
 | `?nointro` | Skip the cinematic intro |
 | `#calendar`, `#celebrations`, `#rsvp`, … | Deep link to a section (also skips the intro) |
-| `#aaratakshate`, `#muhurta`, `#venue`, `#guest-services` | Deep link straight to a Celebrations chapter. Old links keep working: `#compass` and `#compass-invitation` open the Celebrations, `#schedule` / `#reception` the Aaratakshate, `#wedding` the Muhurta, `#compass-venue` the venue and `#compass-services` / `#services` the guest services. |
+| `#aaratakshate`, `#muhurta`, `#venue`, `#guest-services` | Deep link straight to a part of the Celebrations (`#aaratakshate` / `#muhurta` land on the pair of ceremony arches). Old links keep working: `#compass` and `#compass-invitation` open the Celebrations, `#schedule` / `#reception` the Aaratakshate, `#wedding` the Muhurta, `#compass-venue` the venue and `#compass-services` / `#services` the guest services. |
 | `?now=2026-11-15T09:30` | **Development builds only** — start the page clock at that local time to preview the calendar's "today", day-two and after-the-wedding states. Ignored in production builds. |
 | `?still` | Bare 3D stage with no UI — used to capture the poster images (re-capture them whenever the 3D scene changes, so the poster and WebGL fallback match the live scene) |
 
@@ -216,7 +216,7 @@ src/
     navigation/               desktop bar + accessible mobile menu
     sections/                 CinematicIntro, WeddingHero, InvitationScroll, LivingCalendar,
                               Celebrations, RSVPSection, WeddingFooter
-    celebrations/             Chapters (opening, Aaratakshate, Muhurta, venue + guest
+    celebrations/             Chapters (ceremonies over the sunset, venue + guest
                               services), SceneStage (cover-fitted render + parallax), LiveLights,
                               CalendarMenu (used by the Living Calendar)
     three/                    MandapScene (Canvas, camera rig, foreground torana), stage (portrait
@@ -265,11 +265,14 @@ docs/ASSETS.md                asset provenance and what to replace later
 
 ## The Celebrations section and its scenes
 
-The section reads as one evening and morning: the opening title over a sunset at a
-temple tank, the **Aaratakshate** (night sky, strings of lights and lamps), the **Vivaha
-Muhurta** (kalasha on a brass plate in morning light) and the **venue** (a
-decorated entrance by day) with guest services (call the family, share the
-invitation).
+The section is two screens. **First:** the title in the sunset sky over a temple
+tank, and both ceremonies side by side in arched temple windows on the water —
+the **Aaratakshate** (the night's strings of lights, moon and lamps; the top and
+bottom of the tall render are blended in the arch) and the **Vivaha Muhurta**
+(the kalasha in morning light), each with its day, name and time. **Second**,
+after a short band of dawn: the **venue** (a decorated entrance as a wide band)
+with directions, and one card for guests — the thamboola plate beside the
+family's numbers and a share button.
 
 **Each fact has one place on the page** — nothing is repeated section after section:
 
@@ -277,7 +280,7 @@ invitation).
 | --- | --- |
 | Names and dates | Hero, the invitation letter, and the closing frame above the RSVP card |
 | Countdown and "Add to calendar" (both days) | The Living Calendar |
-| Each ceremony's name and time | Its Celebrations chapter |
+| Each ceremony's name and time | Its arch in the Celebrations |
 | Address, map, directions, copy address | The venue chapter (the letter names the hall, as an invitation does) |
 | Replies | The RSVP card |
 | Phone numbers, sharing | Guest services |
@@ -289,9 +292,9 @@ navigation and language.
 in a hard edge. Each picture fades at its top and bottom (`.scene-fade`) into a
 backdrop that runs from the colour of the part above to the colour of the part
 below; neighbouring parts meet in the shared colours in `SKY`
-(`src/components/celebrations/styles.ts`) — night green → dusk → nightfall →
-embers, a short dawn gradient into the morning, handmade paper for the morning
-chapters, and a dusk gradient back into the night green of the RSVP. The
+(`src/components/celebrations/styles.ts`) — night green → dusk → the sunset
+scene → embers, a short dawn gradient onto the handmade paper of the venue and
+guests, and a dusk gradient back into the night green of the RSVP. The
 calendar above and the RSVP card and footer below fade into the same colours.
 
 The scenes are **artistic 3D renders made for this site** (captioned as such where

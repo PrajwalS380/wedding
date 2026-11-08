@@ -3,7 +3,7 @@ import { Check, Copy, MapPin, Phone, Share2 } from 'lucide-react'
 import { localized, wedding, type CelebrationDay } from '../../data/wedding'
 import { SCENES, THAMBOOLA, type SceneArt } from '../../data/sceneArt'
 import { copyText, shareInvitation, type ShareResult } from '../../lib/browser'
-import { formatDayLong } from '../../lib/dates'
+import { formatDayMonthShort, formatWeekday } from '../../lib/dates'
 import { dayTimeText as eventTime, displayPhone } from '../../lib/eventTime'
 import { shareContent } from '../../lib/shareContent'
 import { useI18n } from '../../i18n/useI18n'
@@ -90,35 +90,96 @@ function SceneChapter({
   )
 }
 
-/* ---------------------------------------------------------------- 1 · sunset: the opening */
+/* ---------------------------------------------------------------- 1 · from dusk to dawn: both ceremonies */
 
-/** The section's title over the sunset. Dates, timings and the venue each have one place of their own further on. */
-export function GlanceChapter() {
+const maskStyle = (m: string) => ({ WebkitMaskImage: m, maskImage: m }) as CSSProperties
+
+/**
+ * A temple-window arch with a gold double frame, holding one of the rendered
+ * scenes. With `stack`, the top and the bottom of a tall picture are shown
+ * together, blended through the sky between them (the night's strings of
+ * lights and moon above, its lamps below).
+ */
+function SceneArch({ art, focus, stack = false }: { art: SceneArt; focus: readonly [number, number]; stack?: boolean }) {
+  return (
+    <div className="mx-auto w-full rounded-t-[999px] bg-[linear-gradient(180deg,#f3d99a,#b98a43_45%,#6e4a1c)] p-[3px] shadow-[0_22px_40px_-18px_rgba(0,0,0,.85),0_0_30px_-8px_rgba(240,180,90,.35)] landscape:h-[min(22rem,42svh)] landscape:w-auto" style={{ aspectRatio: '62 / 100' }}>
+      <div className="relative h-full w-full overflow-hidden rounded-t-[999px] bg-night">
+        {stack ? (
+          <>
+            <div className="absolute inset-0" style={maskStyle('linear-gradient(180deg, #000 0, #000 46%, transparent 66%)')}>
+              <SceneStage art={art} variant="portrait" focus={[focus[0], 0]} />
+            </div>
+            <div className="absolute inset-0" style={maskStyle('linear-gradient(180deg, transparent 36%, #000 58%)')}>
+              <SceneStage art={art} variant="portrait" focus={[focus[0], 1]} />
+            </div>
+          </>
+        ) : (
+          <SceneStage art={art} variant="portrait" focus={focus} />
+        )}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-[5px] rounded-t-[999px] border border-[rgba(243,217,154,.45)]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-[linear-gradient(0deg,rgba(6,5,12,.45),transparent)]" />
+      </div>
+    </div>
+  )
+}
+
+/** One ceremony: its scene in an arch, then the day, name and time. */
+function Ceremony({ id, day, art, focus, stack }: { id: string; day: CelebrationDay; art: SceneArt; focus: readonly [number, number]; stack?: boolean }) {
+  const { t, lang } = useI18n()
+  const ev = day.events[0]
+  return (
+    <article id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 text-center" data-reveal="up">
+      <SceneArch art={art} focus={focus} stack={stack} />
+      <p className="eyebrow mt-4 text-gold-light [text-shadow:0_1px_6px_rgba(0,0,0,.8)]">
+        {formatWeekday(day, 'short', lang)} · {formatDayMonthShort(day, lang)}
+      </p>
+      <h3 id={`${id}-title`} className="mt-1.5 font-display text-[clamp(1.45rem,1.2rem+1.1vw,2.1rem)] font-medium leading-[1.05] text-gold-gradient [filter:drop-shadow(0_2px_8px_rgba(0,0,0,.7))]">
+        {localized(ev?.name ?? null, lang)}
+      </h3>
+      {ev?.description && <p className="mt-0.5 font-display text-[0.98rem] italic leading-snug text-ivory/85 [text-shadow:0_1px_6px_rgba(0,0,0,.8)]">{localized(ev.description, lang)}</p>}
+      <p className="mt-1.5 font-display text-[clamp(1.05rem,0.95rem+0.5vw,1.3rem)] leading-snug text-ivory [text-shadow:0_1px_8px_rgba(0,0,0,.8)]">
+        {eventTime(day, t, lang)} <span className="font-sans text-[0.62rem] font-semibold tracking-[0.2em] text-gold-light/80">{wedding.timezoneLabel}</span>
+      </p>
+    </article>
+  )
+}
+
+/**
+ * The section's one scene of its own: the title in the sunset sky over the
+ * temple tank, and the two ceremonies side by side in arched windows on the
+ * water — the Aaratakshate's night of lights and the Muhurta's kalasha at dawn.
+ */
+export function CeremoniesChapter() {
   const { t } = useI18n()
   const o = useOrientation()
   const portrait = o === 'portrait'
+  const [d1, d2] = wedding.days
   return (
     <SceneChapter
       art={SCENES.sunset}
       labelledBy="celebrations-title"
       from={SKY.dusk}
-      to={SKY.nightfall}
-      fadeTop={portrait ? 14 : 22}
-      portraitAspect="63 / 100"
-      focus={portrait ? [0.42, 0.06] : undefined}
-      landscapeMin="min-h-[max(78svh,36rem)]"
+      to={SKY.embers}
+      fadeTop={portrait ? 10 : 18}
+      fadeBottom={8}
+      portraitAspect="41 / 100"
+      focus={portrait ? [0.42, 0.5] : undefined}
+      landscapeMin="min-h-[max(100svh,42rem)]"
       overlay={
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]">
           {portrait ? (
-            <div className="absolute inset-x-0 top-0 h-[42%] bg-[linear-gradient(180deg,rgba(8,8,26,.5),transparent)]" />
+            <>
+              <div className="absolute inset-x-0 top-0 h-[34%] bg-[linear-gradient(180deg,rgba(8,8,26,.5),transparent)]" />
+              <div className="absolute inset-x-0 bottom-0 h-[50%] bg-[linear-gradient(0deg,rgba(6,5,12,.7),rgba(6,5,12,.35)_55%,transparent)]" />
+            </>
           ) : (
-            <div className="absolute inset-y-0 left-0 w-[58%] bg-[linear-gradient(90deg,rgba(8,6,18,.62),rgba(8,6,18,.3)_60%,transparent)]" />
+            <div className="absolute inset-y-0 left-0 w-[62%] bg-[linear-gradient(90deg,rgba(8,6,18,.68),rgba(8,6,18,.38)_62%,transparent)]" />
           )}
         </div>
       }
     >
-      <div className={`container-wide flex flex-1 flex-col ${portrait ? 'pt-[calc(var(--safe-top)+4.25rem)] text-center' : 'justify-center py-24'}`}>
-        <header className={portrait ? '' : 'max-w-[31rem]'} data-reveal="fade">
+      <div className={`container-wide flex flex-1 flex-col ${portrait ? 'justify-between pb-[9%] pt-[calc(var(--safe-top)+4.25rem)]' : 'justify-center gap-10 py-20'}`}>
+        <header className={portrait ? 'text-center' : 'max-w-[34rem]'} data-reveal="fade">
           <p className="eyebrow text-gold-light [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">{t('celebrations.eyebrow')}</p>
           <h2
             id="celebrations-title"
@@ -127,51 +188,9 @@ export function GlanceChapter() {
             <SceneTitle text={t('celebrations.title')} />
           </h2>
         </header>
-      </div>
-    </SceneChapter>
-  )
-}
-
-/* ---------------------------------------------------------------- 2 · night: Aaratakshate */
-
-export function ReceptionChapter({ day }: { day: CelebrationDay }) {
-  const { t, lang } = useI18n()
-  const o = useOrientation()
-  const portrait = o === 'portrait'
-  const ev = day.events[0]
-  return (
-    <SceneChapter
-      art={SCENES.night}
-      id="aaratakshate"
-      labelledBy="aaratakshate-title"
-      from={SKY.nightfall}
-      to={SKY.embers}
-      portraitAspect="54 / 100"
-      landscapeMin="min-h-[max(84svh,40rem)]"
-      focus={portrait ? [0.5, 0.55] : undefined}
-      overlay={
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]">
-          {portrait ? (
-            <div className="absolute inset-x-0 top-[34%] h-[46%] bg-[radial-gradient(75%_55%_at_35%_50%,rgba(2,3,10,.55),transparent_75%)]" />
-          ) : (
-            <div className="absolute inset-y-0 left-0 w-[55%] bg-[linear-gradient(90deg,rgba(2,3,10,.62),rgba(2,3,10,.25)_65%,transparent)]" />
-          )}
-        </div>
-      }
-    >
-      <div className={`container-wide flex flex-1 flex-col ${portrait ? 'pt-[64%]' : 'justify-center py-28'}`}>
-        <div className="max-w-[30rem]" data-reveal="up">
-          <p className="eyebrow text-gold-light [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">
-            {t(`days.${day.id}`)} · {formatDayLong(day, lang)}
-          </p>
-          <h3 id="aaratakshate-title" className="mt-3 font-display text-[clamp(3rem,2.5rem+2.6vw,4.6rem)] font-medium leading-[0.95] text-gold-gradient [filter:drop-shadow(0_4px_18px_rgba(0,0,0,.6))]">
-            {localized(ev?.name ?? null, lang)}
-          </h3>
-          <p className="mt-1 font-display text-[1.3rem] italic text-ivory/90 [text-shadow:0_1px_8px_rgba(0,0,0,.6)]">{localized(ev?.description ?? null, lang)}</p>
-          <p className="mt-5 font-display text-[clamp(2.2rem,1.9rem+1.6vw,3rem)] font-medium leading-tight text-ivory [text-shadow:0_2px_14px_rgba(0,0,0,.6)]">
-            {eventTime(day, t, lang)}
-            <span className="ml-2 align-middle font-sans text-label font-semibold tracking-[0.2em] text-gold-light/80">{wedding.timezoneLabel}</span>
-          </p>
+        <div className={`grid grid-cols-2 items-start ${portrait ? 'gap-4' : 'w-max gap-10'}`}>
+          <Ceremony id="aaratakshate" day={d1} art={SCENES.night} focus={[0.5, 0.5]} stack />
+          <Ceremony id="muhurta" day={d2} art={SCENES.sunrise} focus={[0.52, 0.5]} />
         </div>
       </div>
     </SceneChapter>
@@ -180,69 +199,9 @@ export function ReceptionChapter({ day }: { day: CelebrationDay }) {
 
 /* ---------------------------------------------------------------- dawn: night turning to morning */
 
-/** A short band of sky between the night and the morning scene: no page of its own, just the light changing. */
-function DawnBand({ to }: { to: string }) {
-  return <div aria-hidden="true" className="h-[clamp(6.5rem,16svh,10rem)]" style={{ background: dawnGradient(to) }} />
-}
-
-/** Behind a scene's top edge: the dawn's last colour, then the paper shows through below the fade. */
-const underTop = (colour: string, fade: string) => `linear-gradient(180deg, ${colour} 0, ${colour} ${fade}, transparent ${fade})`
-
-/* ---------------------------------------------------------------- 3 · sunrise: Muhurta */
-
-export function MuhurtaChapter({ day }: { day: CelebrationDay }) {
-  const { t, lang } = useI18n()
-  const o = useOrientation()
-  const portrait = o === 'portrait'
-  const ev = day.events[0]
-  const art = SCENES.sunrise
-  const content = (
-    <div className="text-center lg:text-left">
-      <p className="indic-boost text-label font-bold uppercase tracking-[0.24em] text-burgundy">
-        {t(`days.${day.id}`)} · {formatDayLong(day, lang)}
-      </p>
-      <h3 id="muhurta-title" className="mt-3 font-display text-[clamp(2.6rem,2.2rem+2vw,3.8rem)] font-semibold leading-[1] text-maroon">
-        {localized(ev?.name ?? null, lang)}
-      </h3>
-      <p className="mt-3 font-display text-[clamp(1.5rem,1.35rem+0.8vw,1.95rem)] leading-snug text-ink">
-        {eventTime(day, t, lang)} <span className="font-sans text-label font-semibold tracking-[0.2em] text-brass-deep">{wedding.timezoneLabel}</span>
-      </p>
-    </div>
-  )
-  if (portrait) {
-    return (
-      <article id="muhurta" aria-labelledby="muhurta-title" className="relative isolate">
-        <DawnBand to={art.portrait.edges[0]} />
-        <div className="relative" style={{ aspectRatio: `${art.portrait.width} / ${art.portrait.height}`, background: underTop(art.portrait.edges[0], '12%') }}>
-          <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades('12%', '24%')}>
-            <SceneStage art={art} />
-          </div>
-          <PetalField count={6} kinds={['marigold', 'rose', 'marigold']} seed={33} intensity={0.75} />
-        </div>
-        <div className="relative z-10 px-[var(--gutter)] pb-12 pt-2">
-          <div className="mx-auto max-w-[30rem]" data-reveal="up">
-            {content}
-          </div>
-        </div>
-      </article>
-    )
-  }
-  return (
-    <article id="muhurta" aria-labelledby="muhurta-title" className="relative isolate">
-      <DawnBand to={art.landscape.edges[0]} />
-      <div className="relative flex min-h-[max(94svh,42rem)] items-center" style={{ background: underTop(art.landscape.edges[0], '12%') }}>
-        <div aria-hidden="true" className="film-grain scene-fade pointer-events-none absolute inset-0" style={fades('12%', '26%')}>
-          <SceneStage art={art} />
-        </div>
-        <PetalField count={8} kinds={['marigold', 'rose', 'marigold']} seed={33} intensity={0.75} />
-        <div className="container-wide relative z-10 py-24">
-          <div className="paper-sheet paper-card max-w-[31rem] rounded-[3px] px-9 py-10" data-reveal="up">
-            {content}
-          </div>
-        </div>
-      </div>
-    </article>
-  )
+/** A short band of sky between the evening scene and the morning paper: no page of its own, just the light changing. */
+export function DawnBand() {
+  return <div aria-hidden="true" className="h-[clamp(5.5rem,13svh,8rem)]" style={{ background: dawnGradient('transparent') }} />
 }
 
 /* ---------------------------------------------------------------- 4 · daylight: venue & guests */
@@ -273,7 +232,7 @@ function VenueBlock() {
           <span className="font-semibold">{t('celebrations.asOnMaps')}</span> {venue.fullAddress}
         </p>
       )}
-      <div className="mt-5 flex flex-wrap justify-center gap-2.5 lg:justify-start">
+      <div className="mt-4 flex flex-wrap justify-center gap-2.5 lg:justify-start">
         <a href={venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={actionClass.lightFill}>
           <MapPin className="h-4 w-4" aria-hidden="true" /> {t('celebrations.getDirections')}
           <span className="sr-only"> {t('common.mapsNewTab')}</span>
@@ -283,7 +242,7 @@ function VenueBlock() {
           {copyState === 'copied' ? t('celebrations.addressCopied') : t('celebrations.copyAddress')}
         </button>
       </div>
-      <p role="status" aria-live="polite" className="mt-2 min-h-5 text-caption text-burgundy">
+      <p role="status" aria-live="polite" className="mt-1 min-h-4 text-caption text-burgundy">
         {copyState === 'copied' && t('celebrations.copiedNote')}
         {copyState === 'failed' && t('celebrations.copyFailed')}
       </p>
@@ -314,53 +273,37 @@ function VenueBlock() {
   )
 }
 
-const brassDisc =
-  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#3e2508] bg-[radial-gradient(circle_at_35%_28%,#fff3cf_0%,#f0cf86_22%,#c9963f_55%,#8d6324_82%,#6a4716_100%)] shadow-[inset_0_0_0_2px_rgba(255,240,200,.5),inset_0_0_0_3.5px_rgba(110,72,22,.55),0_3px_8px_-3px_rgba(70,40,5,.7)]'
-const serviceCard = 'flex min-h-[4.75rem] items-center gap-3 rounded-[4px] bg-[rgba(255,252,244,.5)] p-3 text-left shadow-[0_0_0_1px_rgba(122,90,40,.28),0_6px_14px_-10px_rgba(80,50,20,.45)]'
-
+/** For our guests, in one card: the thamboola plate beside the family's numbers and a share button. */
 function GuestServices() {
   const { t, lang } = useI18n()
   const [shareStatus, setShareStatus] = useState<ShareResult | null>(null)
   const share = async () => setShareStatus(await shareInvitation(shareContent(t, lang, wedding.share.siteUrl)))
   return (
-    <div id="guest-services" className="scroll-mt-6" data-reveal="up">
-      <h3 className="eyebrow !text-label text-center font-bold text-burgundy lg:text-left">{t('celebrations.guestsTitle')}</h3>
-      <img
-        src={THAMBOOLA.src}
-        width={THAMBOOLA.width}
-        height={THAMBOOLA.height}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        className="mx-auto mt-2 h-auto w-[min(19rem,80%)] lg:mx-0"
-      />
-      <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
-        <div className={serviceCard}>
-          <span className={brassDisc} aria-hidden="true">
-            <Phone className="h-4 w-4" />
-          </span>
-          <span className="min-w-0">
-            <span className="block font-display text-[1.15rem] font-semibold leading-tight text-ink">{t('celebrations.call')}</span>
-            {wedding.contact.phones.map((p) => (
-              <a key={p} href={`tel:+${p}`} className="block min-h-6 whitespace-nowrap text-[0.9rem] font-semibold text-maroon underline-offset-4 hover:underline">
-                <span className="sr-only">{t('celebrations.callSr')} </span>
-                {displayPhone(p)}
-              </a>
-            ))}
-          </span>
-        </div>
-        <div className={serviceCard}>
-          <span className={brassDisc} aria-hidden="true">
-            <Share2 className="h-4 w-4" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <button type="button" onClick={share} className="block text-left font-display text-[1.15rem] font-semibold leading-tight text-ink underline-offset-4 hover:underline">
-              {t('celebrations.share')}
-            </button>
-            <span role="status" aria-live="polite" className="block text-caption text-ink-soft">
-              {shareStatus && shareStatus !== 'cancelled' ? t(`share.${shareStatus}`) : t('celebrations.shareHint')}
-            </span>
-          </span>
+    <div id="guest-services" className="mt-7 scroll-mt-6" data-reveal="up">
+      <div className="flex items-center gap-4 rounded-[4px] bg-[rgba(255,252,244,.5)] p-4 text-left shadow-[0_0_0_1px_rgba(122,90,40,.28),0_6px_14px_-10px_rgba(80,50,20,.45)]">
+        <img src={THAMBOOLA.src} width={THAMBOOLA.width} height={THAMBOOLA.height} alt="" loading="lazy" decoding="async" className="h-auto w-[min(10rem,38%)] shrink-0" />
+        <div className="min-w-0">
+          <h3 className="eyebrow !text-label font-bold text-burgundy">{t('celebrations.guestsTitle')}</h3>
+          <p className="mt-2 flex items-center gap-1.5 font-display text-[1.1rem] font-semibold leading-tight text-ink">
+            <Phone className="h-3.5 w-3.5 text-brass-deep" aria-hidden="true" />
+            {t('celebrations.call')}
+          </p>
+          {wedding.contact.phones.map((p) => (
+            <a key={p} href={`tel:+${p}`} className="block min-h-7 whitespace-nowrap text-[0.95rem] font-semibold leading-7 text-maroon underline-offset-4 hover:underline">
+              <span className="sr-only">{t('celebrations.callSr')} </span>
+              {displayPhone(p)}
+            </a>
+          ))}
+          <button
+            type="button"
+            onClick={share}
+            className="mt-1 inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.18em] text-maroon underline-offset-[6px] hover:underline"
+          >
+            <Share2 className="h-4 w-4" aria-hidden="true" /> {t('celebrations.share')}
+          </button>
+          <p role="status" aria-live="polite" className="text-caption text-ink-soft empty:hidden">
+            {shareStatus && shareStatus !== 'cancelled' ? t(`share.${shareStatus}`) : ''}
+          </p>
         </div>
       </div>
     </div>
@@ -377,20 +320,17 @@ export function VenueChapter() {
     <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
   ) : (
     <>
-      <SceneStage art={art} />
+      <SceneStage art={art} focus={o === 'portrait' ? [0.5, 0.45] : undefined} />
       <PetalField count={o === 'portrait' ? 5 : 6} kinds={['marigold', 'jasmine', 'marigold']} seed={41} intensity={0.7} />
     </>
   )
   // the note sits where the picture has already faded into the paper
   const caption = !photo && <p className="absolute bottom-1 right-[var(--gutter)] z-[2] text-[0.7rem] italic text-ink-soft/85 lg:left-8 lg:right-auto">{t('celebrations.artNote')}</p>
-  const portraitRatio = photo ? `${photo.width} / ${photo.height}` : `${art.portrait.width} / ${art.portrait.height}`
+  // a wide band on phones, so the venue's details start within the same screen
+  const portraitRatio = '16 / 10'
   const body = (
     <>
       <VenueBlock />
-      <div className="my-8 flex items-center gap-3 text-brass" aria-hidden="true">
-        <span className="h-px flex-1 bg-[linear-gradient(90deg,transparent,rgba(169,132,75,.65))]" />✦
-        <span className="h-px flex-1 bg-[linear-gradient(270deg,transparent,rgba(169,132,75,.65))]" />
-      </div>
       <GuestServices />
     </>
   )
@@ -398,26 +338,26 @@ export function VenueChapter() {
     return (
       <article id="venue" aria-labelledby="venue-title" className="relative isolate scroll-mt-0">
         <div className="relative" style={{ aspectRatio: portraitRatio }}>
-          <div className={`scene-fade pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('18%', '18%')}>
+          <div className={`scene-fade pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('16%', '22%')}>
             {picture}
           </div>
           {caption}
         </div>
-        <div className="relative z-10 px-[var(--gutter)] pb-6 pt-6">
+        <div className="relative z-10 px-[var(--gutter)] pb-4 pt-3">
           <div className="mx-auto max-w-[32rem]">{body}</div>
         </div>
       </article>
     )
   }
   return (
-    <article id="venue" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(94svh,44rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)]">
+    <article id="venue" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(86svh,40rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)]">
       <div className="relative min-h-[60svh]">
         <div className={`scene-fade scene-fade-right pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('16%', '16%')}>
           {picture}
         </div>
         {caption}
       </div>
-      <div className="relative z-10 px-[var(--gutter)] pb-10 pt-16 lg:px-12">{body}</div>
+      <div className="relative z-10 flex flex-col justify-center px-[var(--gutter)] py-12 lg:px-12">{body}</div>
     </article>
   )
 }
