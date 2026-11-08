@@ -226,14 +226,14 @@ export function palmGeometry(r, { height = 14, lean = 2.5, fronds = 20 } = {}) {
 }
 
 /** Irregular tree canopy (neem / rain-tree look) made of displaced blobs. */
-export function treeGeometry(r, { h = 9, w = 8 } = {}) {
+export function treeGeometry(r, { h = 9, w = 8, detail = 2 } = {}) {
   const parts = []
   const trunk = new THREE.CylinderGeometry(0.25, 0.4, h * 0.35, 6)
   trunk.translate(0, h * 0.175, 0)
   parts.push(trunk.toNonIndexed())
   const blobs = 24 + Math.floor(r() * 10)
   for (let i = 0; i < blobs; i++) {
-    const g = new THREE.IcosahedronGeometry(1, 2)
+    const g = new THREE.IcosahedronGeometry(1, detail)
     const p = g.attributes.position
     for (let k = 0; k < p.count; k++) {
       const v = new THREE.Vector3().fromBufferAttribute(p, k)

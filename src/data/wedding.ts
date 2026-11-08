@@ -14,7 +14,7 @@
  *
  * WHEN TIMINGS ARE CONFIRMED: set `startTime` / `endTime` ('HH:mm', 24-hour,
  * in `timezone`) on a day, and add verified ceremonies to its `events` list.
- * The Living Calendar, the Compass schedule and the calendar export all read
+ * The Living Calendar, the Celebrations chapters and the calendar export all read
  * from here — never hard-code dates in components.
  */
 
@@ -156,7 +156,7 @@ export const wedding = {
     /** Keyless Google Maps embed, loaded only after the guest asks for it. */
     mapEmbedUrl:
       'https://www.google.com/maps?q=Bapuji+Samudhaya+Bhavan%2C+Shamanur+Road%2C+Siddaveerappa+Layout%2C+Shamanur%2C+Davangere%2C+Karnataka+577004&output=embed',
-    /** Set to a real, family-supplied venue photograph to replace the conceptual illustration. */
+    /** Set to a real, family-supplied venue photograph to show it in the Venue chapter instead of the rendered entrance. */
     photo: null as null | { src: string; width: number; height: number; alt: string },
   },
 

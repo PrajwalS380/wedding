@@ -3,8 +3,9 @@
 A cinematic, mobile-first wedding invitation website for the celebrations on
 **15 & 16 November 2026** at Bapuji Samudhaya Bhavan, Davangere: a real-time 3D
 South Indian mandap, an unfurling invitation scroll, **The Living Wedding
-Calendar** (live countdowns for both days), **The Wedding Compass** (invitation,
-schedule, venue and guest services in one place), and an RSVP card that
+Calendar** (live countdowns for both days), **The Celebrations** — a scroll
+"from dusk to dawn" through rendered scenes for the Aaratakshate (Sunday evening)
+and the Vivaha Muhurta (Monday morning), the venue and guest services — and an RSVP card that
 prepares each guest's reply as a WhatsApp message to the family. The whole
 invitation can be read in **English, ಕನ್ನಡ (Kannada) or हिन्दी (Hindi)**, and an
 optional original instrumental, *Mangala Dhwani*, can accompany it.
@@ -32,8 +33,8 @@ Useful URL flags while developing:
 | Flag | Effect |
 | --- | --- |
 | `?nointro` | Skip the cinematic intro |
-| `#calendar`, `#compass`, `#rsvp`, … | Deep link to a section (also skips the intro) |
-| `#compass-invitation`, `#schedule`, `#venue`, `#guest-services` | Deep link straight to a Compass direction (N / E / S / W) |
+| `#calendar`, `#celebrations`, `#rsvp`, … | Deep link to a section (also skips the intro) |
+| `#aaratakshate`, `#muhurta`, `#venue`, `#guest-services` | Deep link straight to a Celebrations chapter. Old links keep working: `#compass` and `#compass-invitation` open the Celebrations, `#schedule` / `#reception` the Aaratakshate, `#wedding` the Muhurta, `#compass-venue` the venue and `#compass-services` / `#services` the guest services. |
 | `?now=2026-11-15T09:30` | **Development builds only** — start the page clock at that local time to preview the calendar's "today", day-two and after-the-wedding states. Ignored in production builds. |
 | `?still` | Bare 3D stage with no UI — used to capture the poster images (re-capture them whenever the 3D scene changes, so the poster and WebGL fallback match the live scene) |
 
@@ -50,14 +51,13 @@ shows a tasteful "to be announced" state for them — nothing is invented.
 | Setting | What it controls |
 | --- | --- |
 | `couple.displayNames` | Name order used everywhere the names appear together (title, monogram, invitation, sharing). Currently `['Darshan', 'Vathsala']`. |
-| `days` | The two confirmed dates (`2026-11-15`, `2026-11-16`), optional `startTime` / `endTime`, verified `events`, `dressCode`, `note`. |
+| `days` | The two dates with their confirmed timings and ceremonies (from the printed invitation): **Aaratakshate**, Sun 15 Nov from 7:30 pm, and **Vivaha Muhurta**, Mon 16 Nov 9:20–10:30 am (IST). Also `dressCode`, `note`. |
 | `venue` | Name, address, the exact Google Maps link and the opt-in map embed. |
 | `rsvp` | WhatsApp RSVP (see below); the number itself lives in `src/data/site.ts`. |
-| `contact` | Verified contact details only — the Guest Services card stays "to be shared" until one is set. |
+| `contact` | Verified contact details only. `phones` holds the two numbers from the printed invitation (+91 90356 15991, +91 95914 20987), shown as tap-to-call links under "Call the family". |
 | `calendarExport` | `.ics` file name and calendar entry title. |
-| `copy` | Invitation, calendar and compass wording. |
 
-**When timings are confirmed**, edit a day:
+**Changing a timing** — edit the day (and its event):
 
 ```ts
 {
@@ -76,9 +76,12 @@ That change automatically:
 
 - switches that day's countdown from **date-based** (counting to the start of the
   date in the visitor's local time) to the exact start instant, computed in `Asia/Kolkata`;
-- lists the verified ceremonies in the Living Calendar and the Compass schedule;
+- lists the verified ceremonies in the Living Calendar and the Celebrations chapters
+  (times are written naturally per language, e.g. "7:30 pm onwards", "ಸಂಜೆ 7:30 ರಿಂದ", "शाम 7:30 बजे से");
 - turns that day's calendar export (`.ics` and Google Calendar) from an all-day
-  entry into a timed one — only when **both** `startTime` and `endTime` are set.
+  entry into a timed one — only when **both** `startTime` and `endTime` are set
+  (the Aaratakshate has no end time on the card, so none is invented and its
+  calendar entry stays all-day).
 
 The calendar never shows negative numbers: on a wedding day it says the
 celebrations are today, and after 16 November it shows a thank-you message.
@@ -136,8 +139,8 @@ from one dictionary per language in `src/i18n/dictionaries/` (`en.ts`, `kn.ts`,
   is on screen; letter-spacing is removed and small text is set slightly larger
   for those scripts (`src/styles/indic-fonts.css`, `src/styles/index.css`).
 - **Deliberately not translated:** the "D & V" monogram, the engraved English
-  inscription around the calendar dial and the N/E/S/W letters on the compass
-  rose (decorative, hidden from screen readers), the brand name in link previews
+  inscription around the calendar dial (decorative, hidden from screen readers),
+  the brand name in link previews
   (Open Graph tags are static, so previews stay English), and the word "Send" in
   the RSVP hint, which matches WhatsApp's button.
 
@@ -203,7 +206,7 @@ Earlier deployments stay available in the Vercel dashboard for instant rollback.
 
 ```
 src/
-  app/App.tsx                 page shell, intro gate, deep links (incl. Compass aliases)
+  app/App.tsx                 page shell, intro gate, deep links (incl. old Compass links)
   data/wedding.ts             ← all wedding facts & copy
   data/site.ts                production URL, RSVP WhatsApp number, soundtrack path
   i18n/                       languages, dictionaries (en / kn / hi), provider, t()
@@ -212,22 +215,27 @@ src/
   components/
     navigation/               desktop bar + accessible mobile menu
     sections/                 CinematicIntro, WeddingHero, InvitationScroll, LivingCalendar,
-                              WeddingCompass, RSVPSection,
-                              WeddingFooter, VenueIllustration (used in the Compass venue panel)
-    compass/                  CompassPanels — Invitation (N), Schedule (E), Venue (S), Guest Services (W)
+                              Celebrations, RSVPSection, WeddingFooter
+    celebrations/             Chapters (at a glance, dusk, Aaratakshate, dawn, Muhurta, venue + guest
+                              services), SceneStage (cover-fitted render + parallax), LiveLights,
+                              EventCountdown, CalendarMenu
     three/                    MandapScene (Canvas, camera rig, foreground torana), stage (portrait
                               recomposition), TempleArchitecture, Garlands, OilLamps, FloatingPetals,
                               AtmosphericLighting, GlowField, geometry, textures, layout, quality
-    ui/                       Button, CalendarDial, CompassRose, LanguageSelector, MusicControl, Picture, Ornaments, Ambient,
+    ui/                       Button, CalendarDial, LanguageSelector, MusicControl, Picture, Ornaments, Ambient,
                               Monogram, Amp / withAmp, ErrorBoundary, LoadingState
-  hooks/                      motion preferences, reveals, in-view, active section, useNow (live clock)
+  hooks/                      motion preferences, reveals, in-view, active section, useNow (live clock),
+                              useOrientation (portrait / landscape scene art)
   lib/                        dates/timezone, rsvp (WhatsApp message + link), weddingClock (countdown/phase logic), calendar (.ics),
-                              compass (direction events + deep-link aliases), browser helpers
+                              celebrations (chapter ids + deep-link aliases), eventTime (localized
+                              times, phone formatting), browser helpers
+  data/sceneArt*.ts           scene image sizes, crop focus and light positions (generated)
   styles/index.css            design tokens & utilities
-public/                       optimised images, icons, manifest, OG image
+public/                       optimised images (incl. images/celebrations), icons, manifest, OG image
 source-images/originals/      the family's untouched photographs (local only — git-ignored)
 source-images/processed/      lossless masters, masks, manifest (local only — git-ignored)
-tools/                        photo pipeline + brand asset generator (Python)
+tools/                        photo pipeline + brand asset generator (Python), scenes/ (3D renders
+                              for the Celebrations — see below)
 docs/ASSETS.md                asset provenance and what to replace later
 ```
 
@@ -245,15 +253,43 @@ docs/ASSETS.md                asset provenance and what to replace later
 - **Motion**: respects `prefers-reduced-motion` (static, complete content — the
   invitation shows open), and offers a *Pause animations* control.
 - **Accessibility**: landmarks, one `h1`, logical headings, skip link, visible
-  focus, keyboard-operable menu/scroll/compass/forms, Escape closes overlays,
+  focus, keyboard-operable menu/scroll/forms, Escape closes overlays,
   live regions for status messages, 44 px touch targets.
 - **Privacy**: the Google map loads only when the guest asks for it; the only
   storage is a per-tab flag that the intro was seen (no personal data).
-- **Calendar & Compass accessibility**: the two date buttons are a tab list
-  (arrow keys, Home/End); the countdown has a screen-reader summary and only
-  ticks while the calendar is on screen; Compass directions are toggle buttons
-  (arrow keys map to N/E/S/W) and "Back to the compass" returns focus to the
-  direction you came from.
+- **Calendar & Celebrations accessibility**: the two date buttons are a tab list
+  (arrow keys, Home/End); countdowns have a screen-reader summary and only tick
+  while on screen; every chapter is a labelled `article` with real headings, the
+  scene images are decorative (`alt=""`), the "Add to calendar" menu closes on
+  Escape and returns focus, and "RSVP on WhatsApp" moves focus to the RSVP form.
+
+## The Celebrations section and its scenes
+
+The section reads as one evening and morning: *at a glance* (sunset over a temple
+tank), *dusk* (the tank lit with diyas — Sunday), the **Aaratakshate** (night sky,
+strings of lights and lamps), *dawn* (flooded paddy fields — Monday), the **Vivaha
+Muhurta** (kalasha on a brass plate in morning light) and the **venue** (a
+decorated entrance by day) with guest services. A small "sky clock" chip shows
+where you are in time while the scenery is on screen.
+
+The scenes are **artistic 3D renders made for this site** (captioned as such where
+the venue is shown), not photographs. Each has a portrait and a landscape version
+(WebP, two widths each) chosen by screen orientation. Flames, bulbs and stars
+are softly animated on top of the still image (`LiveLights`), only while the scene
+is on screen and never when reduced motion is requested.
+
+To change or re-render a scene (`tools/scenes/`, three.js + Playwright's Chromium):
+
+```bash
+npx vite --config tools/scenes/vite.config.mjs   # scene workbench on :5199 — keep it running
+node tools/scenes/render-all.cjs [scene …]       # → tools/scenes/out/*.png (+ light positions)
+python tools/scenes/export.py                    # → public/images/celebrations/*.webp
+                                                 #   + src/data/sceneArt.generated.ts
+```
+
+Preview one scene in a browser with `http://localhost:5199/?s=dawn&w=1280&h=720&o=landscape`.
+`tools/scenes/out/` is git-ignored; the exported WebP files (≈1.4 MB for all
+scenes) are what ships.
 
 ## Content still needed from the family
 

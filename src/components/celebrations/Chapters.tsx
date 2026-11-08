@@ -1,5 +1,5 @@
 import { Fragment, useState, type ReactNode } from 'react'
-import { Check, Copy, MapPin, MessageCircle, Phone, Share2 } from 'lucide-react'
+import { CalendarHeart, Check, Copy, MapPin, MessageCircle, Phone, Share2 } from 'lucide-react'
 import { localized, wedding, type CelebrationDay } from '../../data/wedding'
 import { PAPER, SCENES, THAMBOOLA, type SceneArt } from '../../data/sceneArt'
 import { copyText, shareInvitation, type ShareResult } from '../../lib/browser'
@@ -431,12 +431,15 @@ function GuestServices() {
             </span>
           </span>
         </div>
-        <div className={`${serviceCard} justify-between`}>
-          <span className="min-w-0">
+        <div className={`${serviceCard} flex-wrap sm:col-span-2`}>
+          <span className={brassDisc} aria-hidden="true">
+            <CalendarHeart className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1 basis-40">
             <span className="block font-display text-[1.15rem] font-semibold leading-tight text-ink">{t('celebrations.saveDates')}</span>
             <span className="block text-caption text-ink-soft">{t('celebrations.calendarHint')}</span>
           </span>
-          <CalendarMenu days={wedding.days} tone="light" className="shrink-0" />
+          <CalendarMenu days={wedding.days} tone="light" align="end" className="ml-auto shrink-0" />
         </div>
       </div>
     </div>
@@ -447,7 +450,19 @@ export function VenueChapter() {
   const { t } = useI18n()
   const o = useOrientation()
   const art = SCENES.daylight
+  // A real photograph of the hall, once the family supplies one, replaces the rendered entrance.
+  const photo = wedding.venue.photo
   const caption = <p className="absolute bottom-2 right-3 z-[2] text-[0.7rem] italic text-ivory/80 [text-shadow:0_1px_4px_rgba(0,0,0,.8)]">{t('celebrations.artNote')}</p>
+  const picture = photo ? (
+    <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+  ) : (
+    <>
+      <SceneStage art={art} />
+      <PetalField count={o === 'portrait' ? 5 : 6} kinds={['marigold', 'jasmine', 'marigold']} seed={41} intensity={0.7} />
+      {caption}
+    </>
+  )
+  const portraitRatio = photo ? `${photo.width} / ${photo.height}` : `${art.portrait.width} / ${art.portrait.height}`
   const body = (
     <>
       <VenueBlock />
@@ -461,10 +476,8 @@ export function VenueChapter() {
   if (o === 'portrait') {
     return (
       <article id="venue" aria-labelledby="venue-title" className="relative isolate scroll-mt-0">
-        <div data-clock="venue" className="film-grain relative" style={{ aspectRatio: `${art.portrait.width} / ${art.portrait.height}` }}>
-          <SceneStage art={art} />
-          <PetalField count={5} kinds={['marigold', 'jasmine', 'marigold']} seed={41} intensity={0.7} />
-          {caption}
+        <div data-clock="venue" className="film-grain relative" style={{ aspectRatio: portraitRatio }}>
+          {picture}
         </div>
         <div className="paper-sheet relative z-10 px-[var(--gutter)] pb-16 pt-8">
           <PaperEdge />
@@ -475,11 +488,7 @@ export function VenueChapter() {
   }
   return (
     <article id="venue" data-clock="venue" data-tone="light" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(100svh,46rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)]">
-      <div data-clock="venue" className="film-grain relative min-h-[60svh]">
-        <SceneStage art={art} />
-        <PetalField count={6} kinds={['marigold', 'jasmine', 'marigold']} seed={41} intensity={0.7} />
-        {caption}
-      </div>
+      <div data-clock="venue" className="film-grain relative min-h-[60svh]">{picture}</div>
       <div className="paper-sheet relative z-10 px-[var(--gutter)] py-16 shadow-[-20px_0_40px_-20px_rgba(30,14,4,.6)] lg:px-12">{body}</div>
     </article>
   )

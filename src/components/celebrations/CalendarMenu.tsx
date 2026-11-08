@@ -12,7 +12,20 @@ import { actionClass } from './styles'
  * .ics file (Apple Calendar, Outlook…). Timed entries for confirmed times;
  * the location is always the official address.
  */
-export function CalendarMenu({ days, tone, fill = false, className = '' }: { days: CelebrationDay[]; tone: 'dark' | 'light'; fill?: boolean; className?: string }) {
+export function CalendarMenu({
+  days,
+  tone,
+  fill = false,
+  align = 'start',
+  className = '',
+}: {
+  days: CelebrationDay[]
+  tone: 'dark' | 'light'
+  fill?: boolean
+  /** which edge of the button the menu lines up with */
+  align?: 'start' | 'end'
+  className?: string
+}) {
   const { t, lang } = useI18n()
   const { open, setOpen, close, root, trigger } = usePopover()
   const [done, setDone] = useState(false)
@@ -45,7 +58,7 @@ export function CalendarMenu({ days, tone, fill = false, className = '' }: { day
           id={id}
           role="group"
           aria-label={t('celebrations.addToCalendar')}
-          className={`absolute bottom-[calc(100%+0.5rem)] left-0 z-40 w-[min(17rem,calc(100vw-2.5rem))] rounded-[4px] p-1.5 shadow-[0_18px_40px_-12px_rgba(0,0,0,.6)] ${
+          className={`absolute bottom-[calc(100%+0.5rem)] ${align === 'end' ? 'right-0' : 'left-0'} z-40 w-[min(17rem,calc(100vw-2.5rem))] rounded-[4px] p-1.5 shadow-[0_18px_40px_-12px_rgba(0,0,0,.6)] ${
             tone === 'dark' ? 'border border-gold/40 bg-night/95 backdrop-blur-md' : 'border border-brass/50 bg-[#fbf3e3]'
           }`}
         >
