@@ -331,19 +331,36 @@ scenes) are what ships.
 ### The 3D route map (venue)
 
 When the venue comes into view, a short film plays (`src/components/routemap/`,
-plain three.js, loaded only when the venue is near): a wide shot over the city,
-a dive down to the railway station, then a glowing route that draws itself
-along the real roads — Hadadi Road, Vidhyanagar Road, BIET Road, Shamanur Road,
-named in the caption as it goes (6.1 km, about 8 minutes) — the camera following
-it, until a brass pin drops on Bapuji Samudhaya Bhavan and the camera circles the
-hall. "Replay" plays it again. With reduced motion (or animations paused) it shows
-the finished map as a still; without WebGL, the rendered paper-map pin shows
+plain three.js, loaded only when the venue is near): a wide shot high over the
+city through scattered cloud, a dive down to the railway station, then a glowing
+route that draws itself along the real roads — Hadadi Road, Vidhyanagar Road,
+BIET Road, Shamanur Road, named in the caption as it goes (6.1 km, about 8
+minutes) — the camera following it, until a brass pin drops over Bapuji
+Samudhaya Bhavan, its wedding lights glow up and the camera circles the hall.
+"Replay" plays it again. With reduced motion (or animations paused) it shows the
+finished map as a still; without WebGL, the rendered paper-map pin shows
 instead. "Get directions" stays the way to navigate.
 
+What's in the city, one module each: `city.ts` (houses — rows of windows under
+sunshade slabs with some panes catching the low sun, parapets, stair rooms with
+the water tank on top, shopfronts with shutters and sign boards on main roads,
+weathering), `streets.ts` (asphalt with lane markings and a planted median on
+the widest roads, pale patchy lanes, the double-line railway with sleepers and
+rails, canals), `nature.ts` (neem, coconut palms and gulmohar in flower; the
+lake as moving water mirroring the evening sky, with water hyacinth),
+`landmarks.ts` (the hall dressed for the wedding — cascades of lights, a
+marigold arch, a shamiana, guests' cars — and the station's platforms,
+canopies, footbridge, overhead wires and a train), `traffic.ts` (autos, cars,
+buses, lorries and two-wheelers keeping left), `sky.ts` (the clouds of the
+opening). `shaders.ts` adds drifting cloud shadows and the fade at the map's
+edge to every surface; `textures.ts` makes the noise, water, sky and cloth
+textures at load time. All shaders are compiled while the map loads, so
+nothing stalls mid-film.
+
 The streets, lake, parks, canals and railway were **traced from OpenStreetMap**
-(© OpenStreetMap contributors, ODbL — credited on the map). The houses and trees
-are **illustrative**: placed along the real streets, but not real buildings — the
-caption says so. The data is built offline (`tools/routemap/`, needs
+(© OpenStreetMap contributors, ODbL — credited on the map). The buildings (the
+hall and the station included), trees and traffic are **illustrative**: placed
+along the real streets, but not the real buildings — the caption says so. The data is built offline (`tools/routemap/`, needs
 `pip install numpy pillow opencv-python-headless scikit-image sknw networkx`):
 
 ```bash
@@ -353,8 +370,13 @@ python tools/routemap/build.py                   # → public/map/davangere.json
 
 The screenshot itself is not stored (it showed a phone's status bar); `trace.py`'s
 constants (`CROP`, the zoom-14 / device-pixel-ratio-3 scale) belong to it, and the
-venue's coordinates in `wedding.ts` anchor the map. `build.py` is deterministic.
-The three files are ≈0.55 MB and are fetched only when the venue is near.
+venue's coordinates in `wedding.ts` anchor the map. `build.py` is deterministic:
+it also straightens the traced railway (the tracing zig-zagged and kinked at the
+station marker), lays out the hall's plot beside Shamanur Road and the station's
+platforms and train, gives each house its flags (tank, stair room, shop, roof
+finish) and paints the ground (soils, dry grass, road shoulders, ballast, wet
+lake banks, baked shadows).
+The three files are ≈0.6 MB and are fetched only when the venue is near.
 
 ## Content still needed from the family
 

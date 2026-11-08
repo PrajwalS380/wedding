@@ -154,7 +154,7 @@ export const en = {
     hideMap: 'Hide the map preview',
     mapNote: 'The map preview loads from Google only if you choose to show it.',
     mapTitle: 'Google Map showing {venue}, {city}',
-    artNote: 'Streets © OpenStreetMap contributors; the houses and trees are illustrative. For live directions, use “Get directions”.',
+    artNote: 'Streets © OpenStreetMap contributors; the buildings, trees and traffic are illustrative. For live directions, use “Get directions”.',
     routeFrom: 'From Davanagere railway station',
     routeStation: 'Railway station',
     routeSummary: '{km} km · about {min} min by car',
