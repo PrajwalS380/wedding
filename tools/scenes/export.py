@@ -1,0 +1,156 @@
+"""
+Exports the scene renders (tools/scenes/out/*.png) for the website:
+
+  * blends the night sky and the diya floor into one night picture per orientation
+  * writes WebP files in two widths to public/images/celebrations/
+  * regenerates the handmade-paper texture and its torn top edge
+  * writes src/data/sceneArt.generated.ts (sizes, crop focus and live-light points)
+
+Usage:  python tools/scenes/export.py      (after node tools/scenes/render-all.cjs)
+Needs:  numpy, pillow (with WebP support)
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(__file__).resolve().parent / "out"
+PUB = ROOT / "public" / "images" / "celebrations"
+TS = ROOT / "src" / "data" / "sceneArt.generated.ts"
+URL = "/images/celebrations"
+QUALITY = 78
+
+# scene -> orientation -> (source file, export widths, crop focus x, y)
+SCENES = {
+    "sunset": {"portrait": ("sunset-portrait", (1080, 720), (0.42, 0.5)), "landscape": ("sunset-landscape", (1920, 1280), (0.6, 0.5))},
+    "twilight": {"portrait": ("twilight-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("twilight-landscape", (1920, 1280), (0.5, 0.55))},
+    "night": {"portrait": ("night-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("night-landscape", (1920, 1280), (0.62, 0.5))},
+    "dawn": {"portrait": ("dawn-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("dawn-landscape", (1920, 1280), (0.58, 0.5))},
+    "sunrise": {"portrait": ("sunrise-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("sunrise-landscape", (1920, 1280), (0.72, 0.5))},
+    "daylight": {"portrait": ("daylight-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("daylight-landscape", (1200, 800), (0.5, 0.5))},
+}
+MAX_LIGHTS = 64
+
+
+def lights(name: str) -> list[dict]:
+    p = OUT / f"{name}.lights.json"
+    return json.loads(p.read_text()) if p.exists() else []
+
+
+def composite_night(orient: str, box_fn) -> None:
+    sky = np.asarray(Image.open(OUT / f"night-sky-{orient}.png").convert("RGB")).astype(np.float32)
+    strip_img = Image.open(OUT / f"night-diyas-{orient}.png").convert("RGB")
+    H, W = sky.shape[:2]
+    x0, y0, w, h = box_fn(W, H)
+    strip = np.asarray(strip_img.resize((w, h), Image.LANCZOS)).astype(np.float32)
+    yy = np.linspace(0, 1, h)[:, None]
+    xx = np.linspace(0, 1, w)[None, :]
+    m = np.clip(yy / 0.42, 0, 1) ** 1.4
+    if x0 > 0:
+        m = m * np.clip(xx / 0.3, 0, 1) ** 1.2
+    m = m[..., None]
+    region = sky[y0:y0 + h, x0:x0 + w]
+    sky[y0:y0 + h, x0:x0 + w] = region * (1 - m) + np.maximum(strip, region * 0.35) * m
+    Image.fromarray(np.clip(sky, 0, 255).astype("uint8")).save(OUT / f"night-{orient}.png")
+    out = lights(f"night-sky-{orient}")
+    for l in lights(f"night-diyas-{orient}"):
+        if l["y"] < 0.35:
+            continue
+        out.append({"x": round((x0 + l["x"] * w) / W, 4), "y": round((y0 + l["y"] * h) / H, 4), "r": round(l["r"] * w / W, 4), "kind": l["kind"], "seed": l["seed"]})
+    (OUT / f"night-{orient}.lights.json").write_text(json.dumps(out))
+
+
+def paper() -> None:
+    rs = np.random.RandomState(7)
+    W, H = 1200, 1700
+
+    def noise(scale):
+        small = rs.rand(max(2, H // scale), max(2, W // scale))
+        return np.asarray(Image.fromarray((small * 255).astype("uint8")).resize((W, H), Image.BICUBIC)).astype(np.float32) / 255.0
+
+    mott = 0.5 * noise(120) + 0.3 * noise(40) + 0.2 * noise(10)
+    img = np.array([246, 236, 214], np.float32)[None, None, :] * (0.94 + 0.08 * mott[..., None])
+    img[..., 2] *= 0.985
+    pil = Image.fromarray(np.clip(img, 0, 255).astype("uint8"))
+    d = ImageDraw.Draw(pil, "RGBA")
+    for _ in range(6000):  # cotton fibres
+        x, y = rs.rand() * W, rs.rand() * H
+        L, a = 5 + rs.rand() * 24, rs.rand() * np.pi
+        pts = [(x + np.cos(a) * t + np.sin(t * 0.7) * 1.4, y + np.sin(a) * t + np.cos(t * 0.5)) for t in np.linspace(0, L, 7)]
+        c = int(200 + rs.rand() * 40)
+        d.line(pts, fill=(c, int(c * 0.93), int(c * 0.8), int(40 + rs.rand() * 50)), width=1)
+    for _ in range(1100):  # flecks
+        x, y, r = rs.rand() * W, rs.rand() * H, 0.4 + rs.rand() * 1.3
+        c = int(120 + rs.rand() * 80)
+        d.ellipse([x - r, y - r, x + r, y + r], fill=(c, int(c * 0.85), int(c * 0.65), int(60 + rs.rand() * 90)))
+    pil = pil.filter(ImageFilter.GaussianBlur(0.35))
+    pil.save(PUB / "paper.webp", quality=QUALITY, method=6)
+    # torn top edge: a strip of the same paper with a deckled alpha
+    edge = pil.crop((0, 0, W, 64)).convert("RGBA")
+    alpha = Image.new("L", (W, 64), 255)
+    ad = ImageDraw.Draw(alpha)
+    yv, ys = 22.0, []
+    for x in range(W + 1):
+        yv += rs.randn() * 1.0
+        yv = 0.93 * yv + 0.07 * 22
+        ys.append(yv + 3 * np.sin(x / 31.0) + 2 * np.sin(x / 9.0))
+    ad.polygon([(0, 0)] + [(x, ys[x]) for x in range(W + 1)] + [(W, 0)], fill=0)
+    edge.putalpha(alpha.filter(ImageFilter.GaussianBlur(0.9)))
+    edge.save(PUB / "paper-edge.webp", quality=82, method=6)
+
+
+def fmt_lights(ls: list[dict]) -> str:
+    keep = sorted(ls, key=lambda l: (l["kind"] != "glow", l["seed"]))[:MAX_LIGHTS]
+    rows = [f"{{ x: {l['x']:.3f}, y: {l['y']:.3f}, r: {max(0.003, min(0.25, l['r'])):.4f}, kind: '{l['kind']}', seed: {l['seed']:.2f} }}" for l in keep if -0.02 <= l["x"] <= 1.02 and -0.02 <= l["y"] <= 1.02]
+    return "[" + ", ".join(rows) + "]"
+
+
+def main() -> None:
+    PUB.mkdir(parents=True, exist_ok=True)
+    for f in PUB.glob("*.webp"):
+        f.unlink()
+    composite_night("portrait", lambda W, H: (0, H - round(W * 0.598), W, round(W * 0.598)))
+    composite_night("landscape", lambda W, H: (W - round(W * 0.625), H - round(H * 0.444), round(W * 0.625), round(H * 0.444)))
+
+    entries, total = [], 0
+    for key, variants in SCENES.items():
+        parts = []
+        for orient, (src, widths, focus) in variants.items():
+            im = Image.open(OUT / f"{src}.png").convert("RGB")
+            files = []
+            for w in widths:
+                h = round(im.height * w / im.width)
+                name = f"{key}-{orient}-{w}.webp"
+                im.resize((w, h), Image.LANCZOS).save(PUB / name, quality=QUALITY, method=6)
+                total += (PUB / name).stat().st_size
+                files.append((name, w, h))
+            big = files[0]
+            src_set = ", ".join(f"{URL}/{n} {w}w" for n, w, _ in sorted(files, key=lambda f: f[1]))
+            parts.append(
+                f"    {orient}: {{\n      src: '{URL}/{files[-1][0]}',\n      srcSet: '{src_set}',\n      width: {big[1]},\n      height: {big[2]},\n"
+                f"      focus: [{focus[0]}, {focus[1]}],\n      lights: {fmt_lights(lights(src))},\n    }},"
+            )
+        entries.append(f"  {key}: {{\n" + "\n".join(parts) + "\n  },")
+
+    plate = Image.open(OUT / "thamboola.png").convert("RGBA")
+    pw = 760
+    ph = round(plate.height * pw / plate.width)
+    plate.resize((pw, ph), Image.LANCZOS).save(PUB / "thamboola.webp", quality=84, method=6)
+    paper()
+
+    TS.write_text(
+        "// Generated by tools/scenes/export.py — do not edit by hand.\n"
+        "import type { SceneArt, SceneKey } from './sceneArt'\n\n"
+        "export const SCENES: Record<SceneKey, SceneArt> = {\n" + "\n".join(entries) + "\n}\n\n"
+        f"export const THAMBOOLA = {{ src: '{URL}/thamboola.webp', width: {pw}, height: {ph} }}\n"
+        f"export const PAPER = {{ src: '{URL}/paper.webp', edge: '{URL}/paper-edge.webp', width: 1200, height: 1700 }}\n"
+    )
+    print(f"scenes: {total / 1024:.0f} KB total in {len(list(PUB.glob('*.webp')))} files")
+
+
+if __name__ == "__main__":
+    main()

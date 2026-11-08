@@ -166,7 +166,7 @@ export function Interlude({ art, day, clock }: { art: SceneArt; day: Celebration
       art={art}
       clock={clock}
       landscapeMin="min-h-[max(88svh,40rem)]"
-      overlay={<div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[45%] bg-[linear-gradient(0deg,rgba(4,6,14,.55),transparent)]" />}
+      overlay={<div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[38%] bg-[linear-gradient(0deg,rgba(4,6,14,.42),transparent)]" />}
     >
       <div className="flex flex-1 flex-col items-center justify-end px-[var(--gutter)] pb-[12%] text-center" data-reveal="fade">
         <p className="eyebrow text-gold-light [text-shadow:0_1px_8px_rgba(0,0,0,.7)]">{t(`days.${day.id}`)}</p>
