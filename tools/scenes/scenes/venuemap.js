@@ -4,7 +4,8 @@
 // Portrait (pin high in the frame, above the venue card) and landscape (pin left of centre).
 import { THREE, rng, makeNoise, canvasTex, makeRenderer, makeComposer } from '../lib/common.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { marigolds, scatteredPetals } from '../lib/flora.js'
+import { marigolds, scatteredPetals, jasmineStrand } from '../lib/flora.js'
+import { brassMaterial } from '../lib/materials.js'
 
 const MAP_W = 1.0, MAP_D = 0.7
 const PIN_UV = [0.56, 0.42] // where the venue is on the map (u across, v down the sheet)
@@ -80,6 +81,25 @@ function drawMap(ctx, w, h, r, N) {
   for (const fx of [0.25, 0.5, 0.75]) { const g = ctx.createLinearGradient(fx * w - 10, 0, fx * w + 10, 0); g.addColorStop(0, 'rgba(90,60,30,0)'); g.addColorStop(0.5, 'rgba(90,60,30,0.16)'); g.addColorStop(1, 'rgba(90,60,30,0)'); ctx.fillStyle = g; ctx.fillRect(fx * w - 10, 0, 20, h) }
   { const g = ctx.createLinearGradient(0, h / 2 - 10, 0, h / 2 + 10); g.addColorStop(0, 'rgba(90,60,30,0)'); g.addColorStop(0.5, 'rgba(90,60,30,0.16)'); g.addColorStop(1, 'rgba(90,60,30,0)'); ctx.fillStyle = g; ctx.fillRect(0, h / 2 - 10, w, 20) }
   for (let k = 0; k < 3; k++) { ctx.fillStyle = 'rgba(150,100,50,0.06)'; ctx.beginPath(); ctx.arc(r() * w, r() * h, 60 + r() * 90, 0, Math.PI * 2); ctx.fill() }
+  // the hall, drawn small beside the ring: a pillared front under a curved roof
+  ctx.save(); ctx.translate(ux * w + 74, vy * h - 66); ctx.strokeStyle = ink(0.75); ctx.lineWidth = 2.5
+  ctx.beginPath(); ctx.moveTo(-26, 0); ctx.quadraticCurveTo(0, -26, 26, 0); ctx.stroke()
+  ctx.strokeRect(-22, 0, 44, 26); for (const px of [-12, 0, 12]) { ctx.beginPath(); ctx.moveTo(px, 4); ctx.lineTo(px, 26); ctx.stroke() }
+  ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, -28); ctx.stroke(); ctx.restore()
+  // faint contour lines in the open land
+  ctx.strokeStyle = 'rgba(120,90,50,0.16)'; ctx.lineWidth = 1.5
+  for (let k = 0; k < 7; k++) { ctx.beginPath(); ctx.ellipse(w * 0.14, h * 0.18, 60 + k * 26, 36 + k * 16, 0.3, 0, Math.PI * 2); ctx.stroke() }
+  // foxing: small brown age spots, and the ink softened where it bled into the fibres
+  for (let k = 0; k < 140; k++) { ctx.fillStyle = `rgba(140,90,40,${0.04 + r() * 0.1})`; ctx.beginPath(); ctx.arc(r() * w, r() * h, 1 + r() * 5, 0, Math.PI * 2); ctx.fill() }
+  ctx.filter = 'blur(0.6px)'; ctx.drawImage(ctx.canvas, 0, 0); ctx.filter = 'none'
+}
+
+/** Paper relief: fibres and fine tooth, for a bump map. */
+function paperBump(ctx, w, h, r, N) {
+  const img = ctx.createImageData(w, h)
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = 128 + (N.n2(x / 2.2, y / 2.2) - 0.5) * 40 + (N.fbm(x / 30, y / 30, 3) - 0.5) * 30; const i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255 }
+  ctx.putImageData(img, 0, 0)
+  for (let k = 0; k < 9000; k++) { const x = r() * w, y = r() * h, a = r() * Math.PI, L = 4 + r() * 18; ctx.strokeStyle = r() > 0.5 ? 'rgba(200,200,200,0.35)' : 'rgba(70,70,70,0.3)'; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); ctx.stroke() }
 }
 
 /** The classic map-marker outline: a round head tapering to a point at (0,0); height 1. */
@@ -130,7 +150,11 @@ export default async function ({ W, H }) {
     }
     ctx.putImageData(img, 0, 0)
   }, { w: 2048, h: 1024 })
-  const table = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), new THREE.MeshStandardMaterial({ map: wood, roughness: 0.42, bumpMap: wood, bumpScale: 0.0008 }))
+  const pores = canvasTex(0, (ctx, w, h) => {
+    ctx.fillStyle = '#909090'; ctx.fillRect(0, 0, w, h)
+    for (let k = 0; k < 26000; k++) { const x = r() * w, y = r() * h; ctx.fillStyle = 'rgba(40,40,40,0.5)'; ctx.fillRect(x, y, 2 + r() * 7, 1) }
+  }, { w: 2048, h: 1024, srgb: false })
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), new THREE.MeshPhysicalMaterial({ map: wood, roughness: 0.5, bumpMap: pores, bumpScale: 0.35, clearcoat: 0.7, clearcoatRoughness: 0.22 }))
   table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table)
 
   /* ---------------- the map, folded in panels */
@@ -148,7 +172,8 @@ export default async function ({ W, H }) {
     mp.setZ(i, z + 0.0125) // the deepest valley fold still sits above the table
   }
   mg.computeVertexNormals()
-  const paper = new THREE.Mesh(mg, new THREE.MeshStandardMaterial({ map: mapTex, roughness: 0.85, side: THREE.DoubleSide }))
+  const paperRelief = canvasTex(0, (ctx, w, h) => paperBump(ctx, w, h, r, N), { w: 2048, h: 1434, srgb: false })
+  const paper = new THREE.Mesh(mg, new THREE.MeshStandardMaterial({ map: mapTex, roughness: 0.88, bumpMap: paperRelief, bumpScale: 0.3, side: THREE.DoubleSide }))
   paper.rotation.x = -Math.PI / 2; paper.castShadow = !q.get("nopcs"); paper.receiveShadow = !q.get("noprs")
   scene.add(paper)
 
@@ -157,9 +182,24 @@ export default async function ({ W, H }) {
   const geo = new THREE.ExtrudeGeometry(markerShape(), { depth: 0.11, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.045, bevelSegments: 8, curveSegments: 64 })
   geo.translate(0, 0, -0.055)
   geo.scale(pinH, pinH, pinH)
-  const brass = new THREE.MeshStandardMaterial({ color: 0xe0b158, metalness: 1, roughness: 0.2 })
+  const brass = brassMaterial({ seed: 21, color: 0xe0b158, roughness: 0.2, turning: false })
+  // the face: a beaded border following the outline and scrolls of filigree (uv = the shape's own units)
+  const face = canvasTex(0, (ctx, w, h) => {
+    ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, w, h)
+    const X = (x) => (x / 0.8 + 0.5) * w, Y = (y) => (1 - y / 1.05) * h
+    ctx.fillStyle = '#d8d8d8'
+    for (let k = 0; k < 64; k++) { const a = (k / 64) * Math.PI * 2; const x = Math.cos(a) * 0.27, y = 0.66 + Math.sin(a) * 0.27; if (y < 0.48 && Math.abs(x) > 0.18) continue; ctx.beginPath(); ctx.arc(X(x), Y(y), 5, 0, Math.PI * 2); ctx.fill() }
+    ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 3
+    for (const sgn of [-1, 1]) for (let k = 0; k < 3; k++) { // scrolls down each side toward the point
+      const cx = sgn * (0.12 - k * 0.035), cy = 0.38 - k * 0.1
+      ctx.beginPath(); for (let t = 0; t < 1; t += 0.02) { const a = t * Math.PI * 3.2, rr = 0.035 * (1 - t * 0.8); ctx.lineTo(X(cx + sgn * Math.cos(a) * rr), Y(cy + Math.sin(a) * rr)) } ctx.stroke()
+    }
+  }, { w: 512, h: 672, srgb: false })
+  face.repeat.set(1 / 0.8, 1 / 1.05); face.offset.set(0.5, 0)
+  const faceBrass = brass.clone(); faceBrass.bumpMap = face; faceBrass.bumpScale = +(q.get("fbs") || 1.0)
+  if (q.get("dbgface")) faceBrass.map = face
   const pin = new THREE.Group()
-  const body = new THREE.Mesh(geo, brass); body.castShadow = true; pin.add(body)
+  const body = new THREE.Mesh(geo, [faceBrass, brass]); body.castShadow = true; pin.add(body)
   const enamel = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * 0.46 * pinH, 0.32 * 0.46 * pinH, 0.07 * pinH, 64), new THREE.MeshPhysicalMaterial({ color: 0x6e1022, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 }))
   enamel.rotation.x = Math.PI / 2; enamel.position.y = 0.66 * pinH; pin.add(enamel)
   // a small gold lotus on the enamel
@@ -176,21 +216,9 @@ export default async function ({ W, H }) {
   scene.add(pin)
 
   /* ---------------- jasmine and petals across the map */
-  const bud = new THREE.SphereGeometry(1, 12, 8); bud.scale(0.0062, 0.0062, 0.017)
-  const jas = new THREE.InstancedMesh(bud, new THREE.MeshPhysicalMaterial({ color: 0xfbf8f0, roughness: 0.45, sheen: 0.6, sheenColor: 0xffffff }), 230)
   const m = new THREE.Matrix4()
-  const jPath = new THREE.CatmullRomCurve3([[-0.34, 0.2], [-0.22, 0.02], [-0.06, -0.12], [0.14, -0.2], [0.34, -0.18], [0.46, -0.06]].map(([x, z]) => new THREE.Vector3(pinX + x, 0.02, pinZ + z)))
-  for (let i = 0; i < 230; i++) {
-    const t = i / 230, p = jPath.getPointAt(t), tan = jPath.getTangentAt(t)
-    const side = i % 2 ? 1 : -1, a = Math.atan2(tan.x, tan.z)
-    const nrm = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a))
-    p.addScaledVector(nrm, side * 0.007)
-    p.y += 0.002 + r() * 0.003
-    m.compose(p, new THREE.Quaternion().setFromEuler(new THREE.Euler((r() - 0.5) * 0.9, a + side * (0.9 + r() * 0.5), side * (0.3 + r() * 0.4))), new THREE.Vector3(1, 1, 0.85 + r() * 0.3))
-    jas.setMatrixAt(i, m)
-  }
-  jas.castShadow = true; scene.add(jas)
-  const thread = new THREE.Mesh(new THREE.TubeGeometry(jPath, 200, 0.0012, 5), new THREE.MeshStandardMaterial({ color: 0x4a6a2a, roughness: 0.8 })); thread.castShadow = true; scene.add(thread)
+  const jPath = new THREE.CatmullRomCurve3([[-0.34, 0.2], [-0.22, 0.02], [-0.06, -0.12], [0.14, -0.2], [0.34, -0.18], [0.46, -0.06]].map(([x, z]) => new THREE.Vector3(pinX + x, 0.0145, pinZ + z)))
+  scene.add(jasmineStrand(jPath, { seed: 19, budLen: 0.022, spacing: 0.005, lift: 0.25 }))
   scene.add(marigolds([{ pos: new THREE.Vector3(pinX - 0.2, 0.04, pinZ + 0.08), size: 0.05 }, { pos: new THREE.Vector3(pinX + 0.27, 0.035, pinZ + 0.16), size: 0.042, yellow: true }, { pos: new THREE.Vector3(pinX + 0.36, 0.035, pinZ - 0.2), size: 0.04 }], { petals: 240, seed: 14 }))
   const spots = []
   for (let k = 0; k < 30; k++) { const a = r() * Math.PI * 2, rr = 0.12 + r() * 0.42; const p = new THREE.Vector3(pinX + Math.cos(a) * rr * 1.2, 0.0085, pinZ + Math.sin(a) * rr * 0.8 + 0.08); spots.push({ pos: p, size: 0.016 + r() * 0.008, color: k % 3 ? '#ff8a00' : '#a80f26' }) }
@@ -206,6 +234,7 @@ export default async function ({ W, H }) {
 
   const comp = makeComposer(renderer, scene, camera, W, H, {
     bloom: [0.12, 0.4, 2.0],
+    ao: q.get('noao') ? null : { radius: 0.03, thickness: 0.015, intensity: 0.85 },
     dof: q.get('nodof') ? null : { focus: camera.position.distanceTo(pin.position) + 0.02, aperture: +(q.get('ap') || 0.02), maxblur: 0.014 },
     grade: { vignette: 0.38, lift: [0.015, 0.01, 0.005], gain: [1.02, 1.0, 0.96], ca: 0.0006 },
   })

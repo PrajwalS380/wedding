@@ -5,6 +5,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js'
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 export { THREE, mergeGeometries }
@@ -176,13 +177,35 @@ const Streak = {
       c.rgb+=s/tot*tint*amount*6.0; gl_FragColor=c; }`,
 }
 
+/**
+ * Ground-truth ambient occlusion: the soft contact shadow where things touch or nest (a bowl on a plate, rice
+ * between rice). Glows, flames, smoke and other see-through sprites are left out of its depth/normal pass, so
+ * they never darken what is behind them.
+ */
+class ContactShadowPass extends GTAOPass {
+  _overrideVisibility() {
+    super._overrideVisibility()
+    const cache = this._visibilityCache
+    this.scene.traverse((o) => {
+      if (o.isMesh && o.visible && (o.userData.noAO || (o.material && o.material.transparent))) { o.visible = false; cache.push(o) }
+    })
+  }
+}
+
 export function makeComposer(renderer, scene, camera, W, H, opts = {}) {
-  const { bloom = [0.6, 0.55, 0.85], rays = null, dof = null, grade = {}, alpha = false, streak = null } = opts
+  const { bloom = [0.6, 0.55, 0.85], rays = null, dof = null, grade = {}, alpha = false, streak = null, ao = null } = opts
   const rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: 4 })
   const composer = new EffectComposer(renderer, rt)
   composer.setPixelRatio(1)
   composer.setSize(W, H)
   composer.addPass(new RenderPass(scene, camera))
+  if (ao) {
+    const p = new ContactShadowPass(scene, camera, W, H)
+    p.updateGtaoMaterial({ radius: ao.radius ?? 0.04, distanceExponent: ao.distanceExponent ?? 1.5, thickness: ao.thickness ?? 0.02, distanceFallOff: ao.falloff ?? 1, scale: ao.scale ?? 1.2, samples: ao.samples ?? 16 })
+    p.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: ao.denoise ?? 6, rings: 2, samples: 16 })
+    p.blendIntensity = ao.intensity ?? 1
+    composer.addPass(p)
+  }
   let add = null
   if (rays) {
     add = new ShaderPass(AddTex)

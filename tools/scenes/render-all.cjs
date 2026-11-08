@@ -6,17 +6,17 @@ const path = require('path')
 const fs = require('fs')
 const { chromium } = require('playwright')
 const OUT = path.join(__dirname, 'out')
-// [scene, width, height, file, query] — renders at 1.5× the largest export size, then downscaled.
+// [scene, width, height, file, query] — renders at 1.5–3× the largest export size, then downscaled (supersampling).
 // Kept in the workbench but no longer on the site: scenes/twilight, dawn, night-sky, night-diyas, sunrise, daylight.
 const JOBS = [
   ['sunset', 1620, 3506, 'sunset-portrait', 'o=portrait'],
   ['sunset', 2880, 1620, 'sunset-landscape', 'o=landscape'],
-  ['thamboola', 1560, 880, 'thamboola', ''],
+  ['thamboola', 2280, 1287, 'thamboola', ''],
   // the two ceremony arches (upright, the arch's own proportions) and the venue page's map
-  ['aarati', 1080, 1742, 'aarati', ''],
-  ['mangalya', 1080, 1742, 'mangalya', ''],
-  ['venuemap', 1620, 2025, 'venuemap-portrait', 'o=portrait'],
-  ['venuemap', 2400, 1500, 'venuemap-landscape', 'o=landscape'],
+  ['aarati', 1620, 2613, 'aarati', ''],
+  ['mangalya', 1620, 2613, 'mangalya', ''],
+  ['venuemap', 2160, 2700, 'venuemap-portrait', 'o=portrait'],
+  ['venuemap', 3200, 2000, 'venuemap-landscape', 'o=landscape'],
 ]
 ;(async () => {
   fs.mkdirSync(OUT, { recursive: true })

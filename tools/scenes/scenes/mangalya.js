@@ -4,7 +4,8 @@
 // rose petals, kumkum and haldi on green silk; the sacred fire of the homa burns out of focus behind.
 import { THREE, rng, makeNoise, canvasTex, makeRenderer, makeComposer, exportLights } from '../lib/common.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { marigolds, scatteredPetals, flameMaterial, haloMaterial, smokeMaterial, betelLeafGeo, leafTexture } from '../lib/flora.js'
+import { marigolds, scatteredPetals, flameMaterial, haloMaterial, smokeMaterial, betelLeafGeo, leafTexture, jasmineStrand, riceGeo, riceMaterial, powderMound } from '../lib/flora.js'
+import { goldMaterial, silverMaterial } from '../lib/materials.js'
 
 const lathe = (prof, seg = 96) => new THREE.LatheGeometry(prof.map(([a, b]) => new THREE.Vector2(a, b)), seg)
 const softBokeh = (color, strength) => new THREE.ShaderMaterial({
@@ -66,15 +67,16 @@ export default async function ({ W, H }) {
   cloth.rotation.x = -Math.PI / 2; cloth.receiveShadow = true; scene.add(cloth)
 
   /* ---------------- silver plate heaped with akshate */
-  const silver = new THREE.MeshStandardMaterial({ color: 0xe6e3dc, metalness: 1, roughness: 0.2 })
+  const silver = silverMaterial({ seed: 13, roughness: 0.2 })
   const plate = new THREE.Mesh(lathe([[0, 0], [0.18, 0], [0.205, 0.004], [0.22, 0.016], [0.227, 0.024], [0.225, 0.028], [0.216, 0.026], [0.202, 0.012], [0.18, 0.006], [0, 0.006]], 160), silver)
   plate.castShadow = true; plate.receiveShadow = true; scene.add(plate)
-  const rimBeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.004, 10, 8), silver, 140)
+  const rimBeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.004, 16, 12), silver, 140)
   const m = new THREE.Matrix4()
   for (let i = 0; i < 140; i++) { const a = (i / 140) * Math.PI * 2; m.makeTranslation(Math.cos(a) * 0.226, 0.028, Math.sin(a) * 0.226); rimBeads.setMatrixAt(i, m) }
   scene.add(rimBeads)
   // betel leaves fanned under the coconut
-  const betelMat = new THREE.MeshStandardMaterial({ map: leafTexture({ base: '#1a4a12', light: '#357a20', vein: 'rgba(190,230,140,0.45)', lateral: 0, palmate: true, seed: 11, w: 512, h: 512 }), roughness: 0.5, side: THREE.DoubleSide, envMapIntensity: 0.4 })
+  const betelTex = leafTexture({ base: '#1a4a12', light: '#357a20', vein: 'rgba(190,230,140,0.45)', lateral: 0, palmate: true, seed: 11, w: 1024, h: 1024 })
+  const betelMat = new THREE.MeshPhysicalMaterial({ map: betelTex, bumpMap: betelTex, bumpScale: 0.5, roughness: 0.5, clearcoat: 0.15, clearcoatRoughness: 0.4, side: THREE.DoubleSide, envMapIntensity: 0.25, color: 0xc8e0b8 })
   ;[[-0.7, 0.0], [0.7, 0.004], [2.3, 0.002], [-2.4, 0.006], [3.14, 0.003]].forEach(([rot, lift]) => {
     const g = betelLeafGeo({ cup: 0.05 }); g.scale(0.13, 0.13, 0.13)
     const leaf = new THREE.Mesh(g, betelMat)
@@ -83,8 +85,8 @@ export default async function ({ W, H }) {
     leaf.castShadow = true; leaf.receiveShadow = true; scene.add(leaf)
   })
   // the rice: turmeric-yellow, a gentle heap
-  const rice = new THREE.SphereGeometry(1, 8, 6); rice.scale(0.0017, 0.0015, 0.0044)
-  const grains = new THREE.InstancedMesh(rice, new THREE.MeshStandardMaterial({ roughness: 0.55 }), 4200)
+  const rice = riceGeo()
+  const grains = new THREE.InstancedMesh(rice, riceMaterial(), 4200)
   const col = new THREE.Color()
   let gi = 0
   for (let i = 0; i < 4200; i++) {
@@ -107,12 +109,12 @@ export default async function ({ W, H }) {
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (r() - 0.5) * 3, y + l); ctx.stroke()
     }
     // turmeric paste smeared on by hand over the front, fibre showing through, and a kumkum dot
-    for (const cx of [0, w]) {
-      for (let d = 0; d < 260; d++) {
-        const t = r(), sx = cx + (r() - 0.5) * w * 0.075 * (1 - Math.abs(t - 0.5)), sy = h * (0.36 + t * 0.26)
-        ctx.globalAlpha = 0.18 + r() * 0.3
-        ctx.fillStyle = ['#e2a417', '#d4920e', '#efb52a', '#c98a14'][Math.floor(r() * 4)]
-        ctx.beginPath(); ctx.ellipse(sx, sy, w * (0.006 + r() * 0.012), h * (0.004 + r() * 0.01), (r() - 0.5) * 0.6, 0, Math.PI * 2); ctx.fill()
+    for (const cx of [w / 2]) {
+      for (let d = 0; d < 420; d++) { // thin, streaky paste: the husk shows through
+        const t = r(), sx = cx + (r() - 0.5) * w * 0.07 * (1 - Math.abs(t - 0.5)), sy = h * (0.37 + t * 0.24)
+        ctx.globalAlpha = 0.07 + r() * 0.2
+        ctx.fillStyle = ['#cf9418', '#c2860e', '#dca526', '#b87a12'][Math.floor(r() * 4)]
+        ctx.beginPath(); ctx.ellipse(sx, sy, w * (0.003 + r() * 0.008), h * (0.006 + r() * 0.016), (r() - 0.5) * 0.3, 0, Math.PI * 2); ctx.fill()
       }
       for (let d = 0; d < 40; d++) { // kumkum pressed on with a fingertip: dense centre, grainy edge
         const a = r() * Math.PI * 2, rr = Math.sqrt(r()) * w * 0.011
@@ -121,10 +123,48 @@ export default async function ({ W, H }) {
       }
     }
     ctx.globalAlpha = 1
-  }, { w: 512, h: 512 })
+  }, { w: 1024, h: 1024 })
   const R = 0.066, SY = 1.2, cocoY = 0.04 + R * SY
-  const coconut = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 40), new THREE.MeshStandardMaterial({ map: cocoTex, bumpMap: cocoTex, bumpScale: 0.002, roughness: 0.9 }))
-  coconut.scale.set(1, SY, 1); coconut.position.set(0, cocoY, 0); coconut.rotation.y = Math.PI / 2 // the turmeric smear and kumkum dot face the camera
+  const cocoGeo = new THREE.SphereGeometry(R, 96, 64)
+  { // the husked nut's three faint ridges and a slightly pointed crown
+    const cp2 = cocoGeo.attributes.position
+    for (let i = 0; i < cp2.count; i++) {
+      const v3 = new THREE.Vector3().fromBufferAttribute(cp2, i)
+      const th = Math.atan2(v3.z, v3.x), ny = v3.y / R
+      const k = 1 + 0.035 * Math.pow(Math.max(0, Math.cos(3 * th)), 4) * (1 - ny * ny) + 0.06 * Math.max(0, ny - 0.6)
+      cp2.setXYZ(i, v3.x * k, v3.y * (1 + 0.04 * Math.max(0, ny - 0.5)), v3.z * k)
+    }
+    cocoGeo.computeVertexNormals()
+  }
+  const coconut = new THREE.Mesh(cocoGeo, new THREE.MeshStandardMaterial({ map: cocoTex, bumpMap: cocoTex, bumpScale: 1.0, roughness: 0.92 }))
+  coconut.scale.set(1, SY, 1); coconut.position.set(0, cocoY, 0); coconut.rotation.y = -Math.PI / 2 // the turmeric smear and kumkum dot face the camera
+  { // loose husk fibres lying along the nut, a few springing free; stained yellow where the turmeric is
+    const strand = new THREE.CylinderGeometry(0.00028, 0.00036, 1, 4, 4)
+    strand.translate(0, 0.5, 0)
+    const sp = strand.attributes.position
+    for (let i = 0; i < sp.count; i++) { const y = sp.getY(i); sp.setZ(i, sp.getZ(i) + 0.0012 * y * y) } // a gentle curl (absolute, not scaled with length)
+    strand.computeVertexNormals()
+    const n = 2600
+    const fib = new THREE.InstancedMesh(strand, new THREE.MeshStandardMaterial({ roughness: 1 }), n)
+    const fc = new THREE.Color()
+    for (let i = 0; i < n; i++) {
+      const a = r() * Math.PI * 2, phi = 0.15 + Math.acos(1 - 2 * r()) * 0.9
+      const sinp = Math.sin(phi), cosp = Math.cos(phi)
+      const p = new THREE.Vector3(Math.sin(a) * R * sinp * 1.005, cocoY + R * SY * cosp * 1.005, Math.cos(a) * R * sinp * 1.005)
+      const nrm = new THREE.Vector3(Math.sin(a) * sinp, cosp / SY, Math.cos(a) * sinp).normalize()
+      const merid = new THREE.Vector3(Math.sin(a) * cosp, -sinp * SY, Math.cos(a) * cosp).normalize()
+      const lift = r() < 0.06 ? 0.25 + r() * 0.35 : r() * 0.06
+      const dir = merid.clone().multiplyScalar(r() < 0.5 ? 1 : -1).addScaledVector(nrm, lift).addScaledVector(new THREE.Vector3(Math.cos(a), 0, -Math.sin(a)), (r() - 0.5) * 0.5).normalize()
+      const q2 = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir)
+      const L = 0.005 + r() * 0.011
+      m.compose(p, q2, new THREE.Vector3(1, L, 1)); fib.setMatrixAt(i, m)
+      const front = Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < 0.32 && cosp > -0.25 && cosp < 0.3
+      fc.set(['#6a3c1a', '#8a5428', '#a46a36', '#5a3216', '#b8804a'][Math.floor(r() * 5)])
+      if (front) fc.lerp(new THREE.Color('#c88e1a'), 0.55)
+      fib.setColorAt(i, fc)
+    }
+    fib.instanceColor.needsUpdate = true; fib.castShadow = true; scene.add(fib)
+  }
   coconut.castShadow = true; coconut.receiveShadow = true; scene.add(coconut)
   const fibreMat = new THREE.MeshStandardMaterial({ color: 0x8a5a2c, roughness: 1 })
   for (let i = 0; i < 80; i++) {
@@ -135,8 +175,21 @@ export default async function ({ W, H }) {
   }
 
   /* ---------------- the mangalasutra: black and gold beads, two domed gold discs */
-  const gold = new THREE.MeshStandardMaterial({ color: 0xf2c25a, metalness: 1, roughness: 0.16 })
-  const blackGlass = new THREE.MeshPhysicalMaterial({ color: 0x050505, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05 })
+  const gold = goldMaterial({ seed: 17 })
+  const emboss = canvasTex(0, (ctx, w, h) => { // uv: x round the disc, y from the centre out to the rim
+    ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, w, h)
+    for (let k = 0; k < 8; k++) { // lotus petals
+      const cx = (k + 0.5) * (w / 8)
+      const g2 = ctx.createRadialGradient(cx, h * 0.5, 2, cx, h * 0.5, w / 16)
+      g2.addColorStop(0, '#d8d8d8'); g2.addColorStop(1, '#808080')
+      ctx.fillStyle = g2; ctx.beginPath(); ctx.ellipse(cx, h * 0.52, w / 22, h * 0.17, 0, 0, Math.PI * 2); ctx.fill()
+      ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 2; ctx.stroke()
+    }
+    ctx.fillStyle = '#4a4a4a'; ctx.fillRect(0, h * 0.74, w, 3); ctx.fillRect(0, h * 0.3, w, 3)
+    for (let k = 0; k < 36; k++) { ctx.fillStyle = '#e0e0e0'; ctx.beginPath(); ctx.arc((k + 0.5) * (w / 36), h * 0.82, 5, 0, Math.PI * 2); ctx.fill() }
+  }, { w: 512, h: 256, srgb: false })
+  const discGold = goldMaterial({ seed: 19 }); discGold.bumpMap = emboss; discGold.bumpScale = 1.0
+  const blackGlass = new THREE.MeshPhysicalMaterial({ color: 0x050505, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05, ior: 1.6 })
   // a loop around the coconut's waist that dips at the front where the discs hang
   const surf = (a, drop) => {
     const yy = cocoY - 0.012 - drop
@@ -150,8 +203,9 @@ export default async function ({ W, H }) {
   const len = loop.getLength()
   const step = 0.0058
   const nBeads = Math.floor(len / step)
-  const blackB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0027, 14, 10), blackGlass, nBeads)
-  const goldB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0031, 14, 10), gold, nBeads)
+  const blackB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0027, 20, 14), blackGlass, nBeads)
+  const goldB = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0031, 20, 14), gold, nBeads)
+  const wire = new THREE.Mesh(new THREE.TubeGeometry(loop, 900, 0.0005, 6, true), gold); wire.castShadow = true; scene.add(wire)
   let nb = 0, ng = 0
   for (let i = 0; i < nBeads; i++) {
     const t = i / nBeads
@@ -170,9 +224,9 @@ export default async function ({ W, H }) {
   const discProf = [[0, 0.0032], [0.004, 0.0034], [0.0075, 0.0026], [0.0105, 0.0016], [0.0118, 0.0008], [0.0122, 0], [0.0112, -0.0004], [0, -0.0004]]
   ;[-1, 1].forEach((sgn) => {
     const g = new THREE.Group()
-    const disc = new THREE.Mesh(lathe(discProf, 64), gold); disc.rotation.x = Math.PI / 2; g.add(disc)
+    const disc = new THREE.Mesh(lathe(discProf, 96), discGold); disc.rotation.x = Math.PI / 2; g.add(disc)
     const boss = new THREE.Mesh(new THREE.SphereGeometry(0.0028, 20, 14), gold); boss.position.z = 0.0034; boss.scale.z = 0.6; g.add(boss)
-    for (let k = 0; k < 22; k++) { const a = (k / 22) * Math.PI * 2; const b = new THREE.Mesh(new THREE.SphereGeometry(0.0009, 8, 6), gold); b.position.set(Math.cos(a) * 0.0094, Math.sin(a) * 0.0094, 0.0018); g.add(b) }
+    for (let k = 0; k < 22; k++) { const a = (k / 22) * Math.PI * 2; const b = new THREE.Mesh(new THREE.SphereGeometry(0.0009, 12, 8), gold); b.position.set(Math.cos(a) * 0.0094, Math.sin(a) * 0.0094, 0.0018); g.add(b) }
     const bail = new THREE.Mesh(new THREE.TorusGeometry(0.0028, 0.0009, 8, 20), gold); bail.position.y = 0.0145; bail.rotation.y = Math.PI / 2; g.add(bail)
     g.scale.setScalar(1.3)
     g.position.set(sgn * 0.0165, front.y - 0.017, front.z + 0.004)
@@ -186,23 +240,12 @@ export default async function ({ W, H }) {
   /* ---------------- kumkum, haldi, flowers */
   const bowlGeo = lathe([[0, 0], [0.016, 0], [0.024, 0.005], [0.029, 0.016], [0.03, 0.019], [0.027, 0.018], [0.022, 0.01], [0, 0.008]], 64)
   ;[[-0.15, 0.08, '#9a0a18'], [0.155, 0.075, '#e3a00e']].forEach(([x, z, c]) => {
-    const bowl = new THREE.Mesh(bowlGeo, silver); bowl.position.set(x, 0.02, z); bowl.castShadow = true; scene.add(bowl)
-    const pg = new THREE.SphereGeometry(0.022, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2)
-    const pp = pg.attributes.position
-    for (let i = 0; i < pp.count; i++) pp.setY(i, pp.getY(i) * 0.55 + (N.n2(pp.getX(i) * 400, pp.getZ(i) * 400) - 0.5) * 0.0012)
-    pg.computeVertexNormals()
-    const powder = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ color: c, roughness: 1 })); powder.position.set(x, 0.0295, z); scene.add(powder)
+    const bowl = new THREE.Mesh(bowlGeo, silver); bowl.position.set(x, 0.02, z); bowl.castShadow = true; bowl.receiveShadow = true; scene.add(bowl)
+    const powder = powderMound({ radius: 0.0205, height: 0.012, color: c, seed: x > 0 ? 5 : 8 }); powder.position.set(x, 0.0275, z); scene.add(powder)
   })
-  const jasBud = new THREE.SphereGeometry(1, 12, 8); jasBud.scale(0.0046, 0.0046, 0.013)
-  const jas = new THREE.InstancedMesh(jasBud, new THREE.MeshPhysicalMaterial({ color: 0xfbf8f0, roughness: 0.45, sheen: 0.6, sheenColor: 0xffffff }), 360)
-  for (let i = 0; i < 360; i++) {
-    const t = i / 360, a = 1.3 + t * Math.PI * 1.25, side = i % 2 ? 1 : -1
-    const rad = 0.168 + side * 0.006 + (r() - 0.5) * 0.004
-    const y = 0.008 + 0.028 * Math.pow(Math.max(0, 1 - rad / 0.2), 0.7) + 0.004
-    m.compose(new THREE.Vector3(Math.cos(a) * rad, y, Math.sin(a) * rad), new THREE.Quaternion().setFromEuler(new THREE.Euler((r() - 0.5) * 0.9, -a + side * 0.9, side * 0.5)), new THREE.Vector3(1, 1, 1))
-    jas.setMatrixAt(i, m)
-  }
-  jas.castShadow = true; scene.add(jas)
+  const jPts = []
+  for (let i = 0; i <= 22; i++) { const a = 1.3 + (i / 22) * Math.PI * 1.25; const rad = 0.168 + 0.004 * Math.sin(i * 1.3); jPts.push(new THREE.Vector3(Math.cos(a) * rad, 0.008 + 0.028 * Math.pow(Math.max(0, 1 - rad / 0.2), 0.7) + 0.003, Math.sin(a) * rad)) }
+  scene.add(jasmineStrand(new THREE.CatmullRomCurve3(jPts), { seed: 12, lift: 0.3 }))
   scene.add(marigolds([
     { pos: new THREE.Vector3(-0.1, 0.035, -0.12), size: 0.04 },
     { pos: new THREE.Vector3(0.11, 0.035, -0.11), size: 0.038, yellow: true },
@@ -248,6 +291,7 @@ export default async function ({ W, H }) {
   exportLights(camera, W, H, lights)
   const comp = makeComposer(renderer, scene, camera, W, H, {
     bloom: q.get('nobloom') ? null : [+(q.get('bs') || 0.2), 0.45, +(q.get('bt') || 1.8)],
+    ao: q.get('noao') ? null : { radius: 0.016, thickness: 0.01, intensity: 0.9 },
     dof: q.get('nodof') ? null : { focus: dist, aperture: +(q.get('ap') || 0.03), maxblur: +(q.get('mb') || 0.028) },
     grade: { vignette: 0.4, lift: [0.02, 0.012, 0.008], gain: [1.03, 1.0, 0.96], ca: 0.0008 },
   })

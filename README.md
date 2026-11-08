@@ -316,6 +316,15 @@ python tools/scenes/export.py                    # → public/images/celebration
 ```
 
 Preview one scene in a browser with `http://localhost:5199/?s=sunset&w=1280&h=720&o=landscape`.
+
+Shared detail lives in `tools/scenes/lib/`: `flora.js` (marigold heads of ruffled,
+scale-like petals; jasmine strands of calyxed buds on a thread with the odd open
+flower; rice grains; heaped kumkum/haldi with loose grains; leaves, flames, smoke),
+`materials.js` (brass, gold and silver with turning marks, scratches and handled
+patches; plate engraving; silk weave) and `common.js` (renderer, bloom, depth of
+field, and contact shadows — ambient occlusion that skips flames and glows). Note
+that in this three.js version `bumpScale` is per-pixel: values around 0.1–1 are
+visible; tiny values like 0.001 do nothing.
 `tools/scenes/out/` is git-ignored; the exported WebP files (≈0.9 MB for all
 scenes) are what ships.
 

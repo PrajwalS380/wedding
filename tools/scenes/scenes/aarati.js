@@ -4,7 +4,8 @@
 // focus, the strings of lights of the evening reception. Upright (arch-shaped) frame.
 import { THREE, rng, makeNoise, canvasTex, makeRenderer, makeComposer, exportLights } from '../lib/common.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { marigolds, scatteredPetals, flameMaterial, haloMaterial, smokeMaterial } from '../lib/flora.js'
+import { marigolds, scatteredPetals, flameMaterial, haloMaterial, smokeMaterial, jasmineStrand, riceGeo, riceMaterial, powderMound } from '../lib/flora.js'
+import { brassMaterial, plateEngraving, silkWeave } from '../lib/materials.js'
 
 /** Out-of-focus light: a soft round disc, a little brighter at the rim (no polygon edges). */
 const softBokeh = (color, strength) => new THREE.ShaderMaterial({
@@ -27,7 +28,7 @@ export default async function ({ W, H }) {
   scene.background = new THREE.Color(0x0a0507)
   const pmrem = new THREE.PMREMGenerator(renderer)
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-  scene.environmentIntensity = 0.32
+  scene.environmentIntensity = 0.42
 
   const camera = new THREE.PerspectiveCamera(+(q.get('fov') || 30), W / H, 0.02, 40)
   const dist = +(q.get('d') || 1.3), el = THREE.MathUtils.degToRad(+(q.get('el') || 15))
@@ -62,6 +63,7 @@ export default async function ({ W, H }) {
     ctx.putImageData(img, 0, 0)
   }, { w: 1024, h: 1024, repeat: true })
   const zariMetal = canvasTex(0, (ctx, w, h) => { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#fff'; ctx.fillRect(0, h * 0.343, w, h * 0.04) }, { w: 64, h: 1024, srgb: false, repeat: true })
+  const weave = silkWeave({ seed: 4 }); weave.repeat.set(220, 220)
   const clothGeo = new THREE.PlaneGeometry(3, 3, 160, 160)
   clothGeo.translate(0, -0.85, 0) // far edge at z = -0.65
   const cp = clothGeo.attributes.position
@@ -74,14 +76,14 @@ export default async function ({ W, H }) {
   clothGeo.computeVertexNormals()
   silk.repeat.set(3, 1)
   zariMetal.repeat.set(1, 1)
-  const cloth = new THREE.Mesh(clothGeo, new THREE.MeshPhysicalMaterial({ map: silk, roughness: 0.55, sheen: 0.55, sheenColor: new THREE.Color(0xa8303c), sheenRoughness: 0.4, metalnessMap: zariMetal, metalness: 0.7 }))
+  const cloth = new THREE.Mesh(clothGeo, new THREE.MeshPhysicalMaterial({ map: silk, roughness: 0.55, sheen: 0.55, sheenColor: new THREE.Color(0xa8303c), sheenRoughness: 0.4, metalnessMap: zariMetal, metalness: 0.7, bumpMap: weave, bumpScale: 0.3 }))
   cloth.rotation.x = -Math.PI / 2
   cloth.receiveShadow = true
   scene.add(cloth)
 
   /* ---------------- brass plate */
-  const brass = new THREE.MeshStandardMaterial({ color: 0xd9a54a, metalness: 1, roughness: 0.26 })
-  const brassDark = new THREE.MeshStandardMaterial({ color: 0xb98633, metalness: 1, roughness: 0.34 })
+  const brass = brassMaterial({ seed: 2, roughness: 0.24 })
+  const brassDark = brassMaterial({ seed: 5, color: 0xb98633, roughness: 0.32 })
   const engr = canvasTex(0, (ctx, w, h) => {
     ctx.fillStyle = '#5a5a5a'; ctx.fillRect(0, 0, w, h)
     const cx = w / 2
@@ -92,9 +94,11 @@ export default async function ({ W, H }) {
   }, { w: 1024, h: 1024, srgb: false })
   const plate = new THREE.Mesh(lathe([[0, 0], [0.2, 0], [0.225, 0.004], [0.24, 0.016], [0.247, 0.024], [0.245, 0.028], [0.236, 0.026], [0.222, 0.012], [0.2, 0.006], [0, 0.006]], 160), brass)
   plate.castShadow = true; plate.receiveShadow = true; scene.add(plate)
-  const inner = new THREE.Mesh(new THREE.CircleGeometry(0.2, 128), new THREE.MeshStandardMaterial({ color: 0xd2a048, metalness: 1, roughness: 0.3, roughnessMap: engr, bumpMap: engr, bumpScale: 0.0006 }))
+  const engraving = plateEngraving()
+  const inner = new THREE.Mesh(new THREE.CircleGeometry(0.2, 160), brassMaterial({ seed: 9, color: 0xd2a048, roughness: 0.28 }))
+  inner.material.bumpMap = engraving; inner.material.bumpScale = 0.8
   inner.rotation.x = -Math.PI / 2; inner.position.y = 0.0065; inner.receiveShadow = true; scene.add(inner)
-  const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0045, 10, 8), brass, 150)
+  const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0045, 16, 12), brass, 150)
   const m = new THREE.Matrix4()
   for (let i = 0; i < 150; i++) { const a = (i / 150) * Math.PI * 2; m.makeTranslation(Math.cos(a) * 0.246, 0.028, Math.sin(a) * 0.246); beads.setMatrixAt(i, m) }
   beads.castShadow = true; scene.add(beads)
@@ -102,7 +106,7 @@ export default async function ({ W, H }) {
   /* ---------------- panchaarati: turned stand with a lotus tray of five lamps */
   const stand = new THREE.Group()
   const standProf = [[0, 0], [0.055, 0], [0.058, 0.004], [0.05, 0.01], [0.034, 0.016], [0.02, 0.026], [0.014, 0.04], [0.022, 0.048], [0.013, 0.056], [0.011, 0.085], [0.019, 0.092], [0.012, 0.1], [0.012, 0.118], [0.02, 0.124], [0.016, 0.13], [0.0, 0.13]]
-  const sGeo = lathe(standProf, 64); const sMesh = new THREE.Mesh(sGeo, brass); sMesh.castShadow = true; stand.add(sMesh)
+  const sGeo = lathe(standProf, 128); const sMesh = new THREE.Mesh(sGeo, brass); sMesh.castShadow = true; stand.add(sMesh)
   // lotus tray: eight petals around a shallow dish
   const tray = new THREE.Mesh(lathe([[0, 0], [0.03, 0], [0.052, 0.006], [0.07, 0.016], [0.074, 0.022], [0.068, 0.02], [0.05, 0.012], [0.0, 0.008]], 64), brass)
   tray.position.y = 0.128; tray.castShadow = true; stand.add(tray)
@@ -128,7 +132,9 @@ export default async function ({ W, H }) {
     const cup = new THREE.Mesh(cupGeo, brass); cup.position.set(x, 0.138 + lift, z); cup.rotation.y = Math.atan2(x, z); cup.castShadow = true; stand.add(cup)
     if (k === 0) { const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.01, 0.016, 16), brass); neck.position.set(0, 0.138, 0); stand.add(neck) }
     const oil = new THREE.Mesh(new THREE.CircleGeometry(0.015, 24), ghee); oil.rotation.x = -Math.PI / 2; oil.scale.y = 1.2; oil.position.set(x, 0.148 + lift, z); stand.add(oil)
-    const wick = new THREE.Mesh(new THREE.CylinderGeometry(0.0016, 0.0022, 0.012, 8), wickMat); wick.position.set(x, 0.153 + lift, z); stand.add(wick)
+    const wick = new THREE.Mesh(new THREE.CylinderGeometry(0.0018, 0.0026, 0.01, 10), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 1 })); wick.position.set(x, 0.151 + lift, z); stand.add(wick)
+    const char = new THREE.Mesh(new THREE.ConeGeometry(0.0018, 0.004, 10), wickMat); char.position.set(x, 0.1575 + lift, z); stand.add(char)
+    const ember = new THREE.Mesh(new THREE.SphereGeometry(0.0009, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff7a20 })); ember.position.set(x, 0.159 + lift, z); stand.add(ember)
     flames.push(new THREE.Vector3(x, 0.157 + lift, z))
   })
   scene.add(stand)
@@ -152,8 +158,8 @@ export default async function ({ W, H }) {
 
   /* ---------------- akshate, kumkum, haldi */
   const bowlGeo = lathe([[0, 0], [0.02, 0], [0.03, 0.006], [0.036, 0.02], [0.037, 0.024], [0.034, 0.023], [0.028, 0.012], [0, 0.01]], 64)
-  const rice = new THREE.SphereGeometry(1, 8, 6); rice.scale(0.0017, 0.0015, 0.0044)
-  const riceMat = new THREE.MeshStandardMaterial({ roughness: 0.55 })
+  const rice = riceGeo()
+  const riceMat = riceMaterial()
   const grains = new THREE.InstancedMesh(rice, riceMat, 1400)
   const col = new THREE.Color()
   let gi = 0
@@ -168,15 +174,12 @@ export default async function ({ W, H }) {
   const ak = new THREE.Mesh(bowlGeo, brass); ak.position.set(akX, 0.006, akZ); ak.scale.setScalar(1.15); ak.castShadow = true; scene.add(ak)
   for (let i = 0; i < 1100; i++) { const a = r() * Math.PI * 2, rr = Math.sqrt(r()) * 0.036; const hh = 0.026 * (1 - (rr / 0.036) ** 2) + 0.018; addGrain(new THREE.Vector3(akX + Math.cos(a) * rr, 0.006 + hh + r() * 0.002, akZ + Math.sin(a) * rr)) }
   for (let i = 0; i < 300; i++) { const a = r() * Math.PI * 2, rr = 0.06 + r() * 0.13; addGrain(new THREE.Vector3(Math.cos(a) * rr, 0.0085, Math.sin(a) * rr)) }
-  grains.count = gi; grains.instanceColor.needsUpdate = true; grains.castShadow = true; scene.add(grains)
+  grains.count = gi; grains.instanceColor.needsUpdate = true; grains.castShadow = true; grains.receiveShadow = true; scene.add(grains)
   ;[[0.105, 0.09, '#9a0a18'], [0.13, -0.02, '#e3a00e']].forEach(([x, z, c]) => {
     const bowl = new THREE.Mesh(bowlGeo, brass); bowl.position.set(x, 0.006, z); bowl.scale.setScalar(0.8); bowl.castShadow = true; scene.add(bowl)
-    const pg = new THREE.SphereGeometry(0.026, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2)
-    const pp = pg.attributes.position
-    for (let i = 0; i < pp.count; i++) pp.setY(i, pp.getY(i) * 0.55 + (N.n2(pp.getX(i) * 400, pp.getZ(i) * 400) - 0.5) * 0.0012)
-    pg.computeVertexNormals()
-    const powder = new THREE.Mesh(pg, new THREE.MeshStandardMaterial({ color: c, roughness: 1 }))
-    powder.position.set(x, 0.006 + 0.0115, z); powder.scale.setScalar(0.8); scene.add(powder)
+    bowl.receiveShadow = true
+    const powder = powderMound({ radius: 0.0235, height: 0.014, color: c, seed: x > 0.11 ? 4 : 7 })
+    powder.position.set(x, 0.006 + 0.0075, z); scene.add(powder)
   })
 
   /* ---------------- flowers */
@@ -186,15 +189,9 @@ export default async function ({ W, H }) {
     { pos: new THREE.Vector3(0.06, 0.028, -0.13), size: 0.042 },
     { pos: new THREE.Vector3(0.16, 0.028, 0.06), size: 0.036, yellow: true },
   ], { petals: 240, seed: 6, size: 1 }))
-  const jasBud = new THREE.SphereGeometry(1, 12, 8); jasBud.scale(0.0048, 0.0048, 0.0135)
-  const jas = new THREE.InstancedMesh(jasBud, new THREE.MeshPhysicalMaterial({ color: 0xfbf8f0, roughness: 0.45, sheen: 0.6, sheenColor: 0xffffff }), 300)
-  for (let i = 0; i < 300; i++) {
-    const t = i / 300, a = 2.0 + t * Math.PI * 1.3, side = i % 2 ? 1 : -1
-    const rad = 0.212 + side * 0.006 + (r() - 0.5) * 0.004
-    m.compose(new THREE.Vector3(Math.cos(a) * rad, 0.022 + 0.005 * r(), Math.sin(a) * rad), new THREE.Quaternion().setFromEuler(new THREE.Euler((r() - 0.5) * 0.9, -a + side * 0.9, side * 0.5)), new THREE.Vector3(1, 1, 1))
-    jas.setMatrixAt(i, m)
-  }
-  jas.castShadow = true; scene.add(jas)
+  const rimPts = []
+  for (let i = 0; i <= 24; i++) { const a = 2.0 + (i / 24) * Math.PI * 1.3; const rad = 0.211 + 0.004 * Math.sin(i * 1.7); rimPts.push(new THREE.Vector3(Math.cos(a) * rad, 0.0105, Math.sin(a) * rad)) }
+  scene.add(jasmineStrand(new THREE.CatmullRomCurve3(rimPts), { seed: 8, lift: 0.3 }))
   const spots = []
   for (let k = 0; k < 26; k++) { const a = r() * Math.PI * 2, rr = 0.07 + r() * 0.3; spots.push({ pos: new THREE.Vector3(Math.cos(a) * rr, rr > 0.25 ? 0.004 : 0.009, Math.sin(a) * rr * 0.9 + 0.03), size: 0.013 + r() * 0.007, color: k % 4 ? '#a80f26' : '#ff8a00' }) }
   scene.add(scatteredPetals(spots, { seed: 4 }))
@@ -252,6 +249,7 @@ export default async function ({ W, H }) {
 
   const comp = makeComposer(renderer, scene, camera, W, H, {
     bloom: q.get('nobloom') ? null : [+(q.get('bs') || 0.2), 0.4, +(q.get('bt') || 1.6)],
+    ao: q.get('noao') ? null : { radius: 0.02, thickness: 0.012, intensity: 0.9 },
     dof: q.get('nodof') ? null : { focus: dist, aperture: +(q.get('ap') || 0.006), maxblur: 0.012 },
     grade: { vignette: 0.42, lift: [0.02, 0.008, 0.012], gain: [1.03, 0.99, 0.95], ca: 0.0008 },
   })
