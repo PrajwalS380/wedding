@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { useGSAP } from '@gsap/react'
 import { ArrowRight, CalendarHeart } from 'lucide-react'
 import { wedding, type DayId } from '../../data/wedding'
@@ -13,9 +13,20 @@ import { CalendarDial } from '../ui/CalendarDial'
 import { useI18n } from '../../i18n/useI18n'
 import { SKY } from '../celebrations/styles'
 import { CalendarMenu } from '../celebrations/CalendarMenu'
-import { MandapMotif } from '../ui/Ornaments'
+import { CornerFlourish, MandapMotif } from '../ui/Ornaments'
 
 const pad = (n: number) => String(n).padStart(2, '0')
+
+/** One countdown unit: an enamelled plaque with a gold hairline, the number lit from above. */
+function Tile({ value, label, lead = false }: { value: string | number; label: string; lead?: boolean }) {
+  return (
+    <span className="relative flex flex-col items-center rounded-[4px] bg-[linear-gradient(180deg,#123d30,#0a271f_60%,#071c16)] px-1 pb-2 pt-2.5 shadow-[inset_0_0_0_1px_rgba(213,176,109,.45),inset_0_1px_0_rgba(255,240,200,.18),inset_0_-10px_16px_-10px_rgba(0,0,0,.6),0_10px_18px_-12px_rgba(0,0,0,.8)]">
+      <span className="pointer-events-none absolute inset-[3px] rounded-[2px] border border-gold/15" />
+      <span className={`font-display text-[clamp(2rem,1.5rem+2.4vw,2.8rem)] font-medium leading-none lining-nums tabular-nums ${lead ? 'text-gold-gradient' : 'text-ivory'}`}>{value}</span>
+      <span className="mt-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-gold/85 indic-boost">{label}</span>
+    </span>
+  )
+}
 
 function Countdown({ clock }: { clock: DayClock }) {
   const { t, lang } = useI18n()
@@ -27,31 +38,23 @@ function Countdown({ clock }: { clock: DayClock }) {
       <p className="sr-only">
         {clock.dateBased ? t('calendar.srCountdown', counts) : t('calendar.srCountdownTimed', { ...counts, time: formatClock(clock.day.startTime, lang) ?? '' })}
       </p>
-      <div className="flex items-end gap-4" aria-hidden="true">
-        <span className="font-display text-[clamp(4.4rem,3.2rem+5vw,7.2rem)] font-medium leading-[0.8] lining-nums tabular-nums text-ivory">{r.days}</span>
-        <span className="mb-1.5 flex flex-col">
-          <span className="font-display text-[1.6rem] leading-none text-gold-light">{r.days === 1 ? t('calendar.day') : t('calendar.days')}</span>
-          <span className="mt-1 text-label font-semibold uppercase tracking-[0.28em] text-gold/80">{t('calendar.toGo')}</span>
-        </span>
-      </div>
-      <div className="mt-4 flex items-center gap-3 text-ivory/85" aria-hidden="true">
-        {(
-          [
-            [r.hours, t('calendar.hours')],
-            [r.minutes, t('calendar.minutes')],
-            [r.seconds, t('calendar.seconds')],
-          ] as const
-        ).map(([v, label], i) => (
-          <span key={label} className="flex items-baseline gap-1.5">
-            {i > 0 && <span className="mr-1.5 text-gold/45">·</span>}
-            <span className="font-display text-[1.7rem] leading-none lining-nums tabular-nums">{pad(v)}</span>
-            <span className="text-label font-semibold uppercase tracking-[0.2em] text-gold/80">{label}</span>
-          </span>
-        ))}
+      <div className="grid grid-cols-4 gap-2 sm:gap-2.5" aria-hidden="true">
+        <Tile value={r.days} label={r.days === 1 ? t('calendar.day') : t('calendar.days')} lead />
+        <Tile value={pad(r.hours)} label={t('calendar.hours')} />
+        <Tile value={pad(r.minutes)} label={t('calendar.minutes')} />
+        <Tile value={pad(r.seconds)} label={t('calendar.seconds')} />
       </div>
     </div>
   )
 }
+
+/** Ticket notches: the two halves of the card are cut where they meet, like a pass with a tear line. */
+const notch = (edge: 'top' | 'bottom'): CSSProperties => {
+  const y = edge === 'top' ? '0' : '100%'
+  const m = `radial-gradient(circle at 0 ${y}, transparent 13px, #000 13.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% ${y}, transparent 13px, #000 13.5px) right / 51% 100% no-repeat`
+  return { WebkitMask: m, mask: m }
+}
+const cardFace = 'relative border-gold/45 bg-[linear-gradient(165deg,rgba(28,78,61,.82),rgba(10,38,30,.9)_55%,rgba(6,24,19,.94))]'
 
 export function LivingCalendar() {
   const section = useRef<HTMLElement>(null)
@@ -185,54 +188,77 @@ export function LivingCalendar() {
             id="calendar-panel"
             role="tabpanel"
             aria-labelledby={`calendar-tab-${selected}`}
-            className="relative mx-auto w-full max-w-[30rem] border-l-0 border-gold/30 lg:mx-0 lg:border-l lg:pl-12"
+            className="relative mx-auto w-full max-w-[30rem] lg:mx-0"
           >
-            <div key={selected + phase} className={ambientMotion ? 'animate-[caption-in_.8s_var(--ease-silk)_both]' : ''}>
-              <p className="eyebrow text-gold">{t(`days.${day.id}`)}</p>
-              <h3 className="mt-3 font-display text-[clamp(1.9rem,1.5rem+1.6vw,2.7rem)] leading-tight text-ivory">{formatDayLong(day, lang)}</h3>
-
-              <div className="mt-7">
-                {phase === 'after' ? (
-                  <p className="font-display text-[length:var(--step-2)] italic leading-snug text-gold-light">{t('calendar.postEvent')}</p>
-                ) : active.status === 'today' ? (
-                  <div>
-                    <p className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold/10 px-4 py-1.5 text-label font-semibold uppercase tracking-[0.26em] text-gold-light">
-                      <CalendarHeart className="h-4 w-4" aria-hidden="true" /> {t('calendar.today')}
-                    </p>
-                    <p className="mt-4 font-display text-[length:var(--step-2)] leading-snug text-ivory">{t('calendar.todayMessage')}</p>
-                    {!active.dateBased && active.remaining.totalMs > 0 && (
-                      <p className="mt-2 text-ivory/75">
-                        {t('calendar.beginsAt', { time: formatClock(day.startTime, lang) ?? '', hours: active.remaining.hours, minutes: active.remaining.minutes })}
-                      </p>
-                    )}
-                  </div>
-                ) : active.status === 'past' ? (
-                  <p className="font-display text-[length:var(--step-2)] italic leading-snug text-ivory/85">
-                    {t('calendar.pastDay')}
-                    {otherClock.status === 'today' ? ` ${t('calendar.continuesToday')}` : ''}
-                  </p>
-                ) : (
-                  <div>
-                    <Countdown clock={active} />
-                    <p className="mt-4 max-w-sm text-[0.84rem] leading-relaxed text-ivory/65">
-                      {active.dateBased
-                        ? t('calendar.dateBasedNote', { date: formatDayLong(day, lang) })
-                        : t('calendar.timedNote', { time: formatTimeWords(day.startTime, lang) ?? '' })}
-                    </p>
-                  </div>
-                )}
+            <div key={selected + phase} className={`[filter:drop-shadow(0_26px_30px_rgba(0,0,0,.45))] ${ambientMotion ? 'animate-[caption-in_.8s_var(--ease-silk)_both]' : ''}`}>
+              {/* a gold diamond set into the top edge */}
+              <div aria-hidden="true" className="relative z-10 h-0">
+                <span className="absolute left-1/2 top-0 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-[#fff3cf]/60 bg-[linear-gradient(135deg,#fbecc4,#b98a43_55%,#7a5524)] shadow-[0_0_12px_rgba(240,200,120,.55)]" />
               </div>
+              {/* the pass: day and date above the tear line */}
+              <div className={`${cardFace} rounded-t-[8px] border border-b-0 px-6 pb-6 pt-7 text-center lg:text-left`} style={notch('bottom')}>
+                <span aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-2 h-[calc(100%-0.5rem)] rounded-t-[5px] border border-b-0 border-gold/15" />
+                <CornerFlourish className="pointer-events-none absolute left-1.5 top-1.5 h-9 w-9 text-gold/55" />
+                <CornerFlourish className="pointer-events-none absolute right-1.5 top-1.5 h-9 w-9 rotate-90 text-gold/55" />
+                <p className="eyebrow flex items-center justify-center gap-3 text-gold lg:justify-start">
+                  <span className="h-px w-6 bg-gold/50" aria-hidden="true" />
+                  {t(`days.${day.id}`)}
+                  <span className="h-px w-6 bg-gold/50" aria-hidden="true" />
+                </p>
+                <h3 className="mt-3 font-display text-[clamp(1.8rem,1.45rem+1.5vw,2.5rem)] leading-tight text-ivory [text-shadow:0_2px_12px_rgba(0,0,0,.35)]">{formatDayLong(day, lang)}</h3>
+              </div>
+              {/* the tear line */}
+              <div aria-hidden="true" className="relative h-0">
+                <span className="absolute inset-x-[18px] top-0 border-t border-dashed border-gold/40" />
+              </div>
+              {/* the stub: countdown and actions */}
+              <div className={`${cardFace} rounded-b-[8px] border border-t-0 px-5 pb-5 pt-6`} style={notch('top')}>
+                <span aria-hidden="true" className="pointer-events-none absolute inset-x-2 bottom-2 h-[calc(100%-0.5rem)] rounded-b-[5px] border border-t-0 border-gold/15" />
+                <CornerFlourish className="pointer-events-none absolute bottom-1.5 left-1.5 h-9 w-9 -rotate-90 text-gold/55" />
+                <CornerFlourish className="pointer-events-none absolute bottom-1.5 right-1.5 h-9 w-9 rotate-180 text-gold/55" />
+                <div className="relative">
+                  {phase === 'after' ? (
+                    <p className="px-2 py-3 text-center font-display text-[length:var(--step-2)] italic leading-snug text-gold-light">{t('calendar.postEvent')}</p>
+                  ) : active.status === 'today' ? (
+                    <div className="px-2 py-1 text-center">
+                      <p className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold/10 px-4 py-1.5 text-label font-semibold uppercase tracking-[0.26em] text-gold-light">
+                        <CalendarHeart className="h-4 w-4" aria-hidden="true" /> {t('calendar.today')}
+                      </p>
+                      <p className="mt-4 font-display text-[length:var(--step-2)] leading-snug text-ivory">{t('calendar.todayMessage')}</p>
+                      {!active.dateBased && active.remaining.totalMs > 0 && (
+                        <p className="mt-2 text-ivory/75">
+                          {t('calendar.beginsAt', { time: formatClock(day.startTime, lang) ?? '', hours: active.remaining.hours, minutes: active.remaining.minutes })}
+                        </p>
+                      )}
+                    </div>
+                  ) : active.status === 'past' ? (
+                    <p className="px-2 py-3 text-center font-display text-[length:var(--step-2)] italic leading-snug text-ivory/85">
+                      {t('calendar.pastDay')}
+                      {otherClock.status === 'today' ? ` ${t('calendar.continuesToday')}` : ''}
+                    </p>
+                  ) : (
+                    <div>
+                      <Countdown clock={active} />
+                      <p className="mt-3 text-center text-[0.84rem] leading-relaxed text-ivory/70">
+                        {active.dateBased
+                          ? t('calendar.dateBasedNote', { date: formatDayLong(day, lang) })
+                          : t('calendar.timedNote', { time: formatTimeWords(day.startTime, lang) ?? '' })}
+                      </p>
+                    </div>
+                  )}
 
-              {/* what happens that day is told in the Celebrations; saving both dates lives here */}
-              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-gold/20 pt-6">
-                <CalendarMenu days={wedding.days} tone="dark" />
-                <button
-                  type="button"
-                  onClick={() => scrollToSection(day.id === 'day-1' ? 'aaratakshate' : 'muhurta', prefersReducedMotion)}
-                  className="inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.22em] text-gold-light underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
-                >
-                  {t('calendar.viewSchedule')} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </button>
+                  {/* what happens that day is told in the Celebrations; saving both dates lives here */}
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-gold/20 pt-4">
+                    <CalendarMenu days={wedding.days} tone="dark" />
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection(day.id === 'day-1' ? 'aaratakshate' : 'muhurta', prefersReducedMotion)}
+                      className="inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.22em] text-gold-light underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
+                    >
+                      {t('calendar.viewSchedule')} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

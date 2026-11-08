@@ -409,17 +409,20 @@ html.is-locked body {
   }
 }
 
-/* Living Wedding Calendar: a very slow turn of the engraving ring + a travelling sheen */
+/* Living Wedding Calendar: the engraving ring turns, the guilloché counter-turns, a sheen travels the bezel */
 @keyframes dial-turn {
   to {
     transform: rotate(360deg);
   }
 }
 .dial-turn {
-  animation: dial-turn 240s linear infinite;
+  animation: dial-turn 95s linear infinite;
+}
+.dial-counter {
+  animation: dial-turn 150s linear infinite reverse;
 }
 .dial-sheen {
-  animation: dial-turn 18s linear infinite;
+  animation: dial-turn 14s linear infinite;
 }
 
 @keyframes caption-in {
