@@ -154,11 +154,27 @@ export const en = {
     hideMap: 'Hide the map preview',
     mapNote: 'The map preview loads from Google only if you choose to show it.',
     mapTitle: 'Google Map showing {venue}, {city}',
-    artNote: 'Artistic 3D render — the map is decorative; use “Get directions” for the route.',
+    artNote: 'Streets © OpenStreetMap contributors; the houses and trees are illustrative. For live directions, use “Get directions”.',
+    routeFrom: 'From Davanagere railway station',
+    routeStation: 'Railway station',
+    routeSummary: '{km} km · about {min} min by car',
+    replayRoute: 'Replay the route',
+    mapAlt: 'A 3D map of Davangere showing the drive from the railway station along Hadadi Road, Vidhyanagar Road, BIET Road and Shamanur Road to Bapuji Samudhaya Bhavan — 6.1 km, about 8 minutes by car.',
     guestsTitle: 'For our guests',
     call: 'Call the family',
     callSr: 'Call',
     share: 'Share invitation',
+  },
+
+  /** Road and area names shown on the 3D map. */
+  places: {
+    hadadiRoad: 'Hadadi Road',
+    vidhyanagarRoad: 'Vidhyanagar Road',
+    bietRoad: 'BIET Road',
+    shamanurRoad: 'Shamanur Road',
+    vinobanagara: 'Vinobanagara',
+    kbExtension: 'K.B. Extension',
+    ktJambannaNagara: 'K.T. Jambanna Nagara',
   },
 
   share: {

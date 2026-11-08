@@ -8,6 +8,7 @@ import { dayTimeText as eventTime, displayPhone } from '../../lib/eventTime'
 import { shareContent } from '../../lib/shareContent'
 import { useI18n } from '../../i18n/useI18n'
 import { SceneStage } from './SceneStage'
+import { RouteMap } from '../routemap/RouteMap'
 import { useOrientation } from '../../hooks/useOrientation'
 import { actionClass, dawnGradient, duskGradient, sceneBackdrop, SKY } from './styles'
 
@@ -348,10 +349,15 @@ export function VenueChapter() {
   if (o === 'portrait') {
     return (
       <article id="venue" aria-labelledby="venue-title" className="relative isolate scroll-mt-0">
-        <div className="relative" style={{ aspectRatio: photo ? `${photo.width} / ${photo.height}` : '1 / 1' }}>
-          <div className={`scene-fade pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('12%', '34%')}>
-            {picture}
-          </div>
+        <div className="relative" style={{ aspectRatio: photo ? `${photo.width} / ${photo.height}` : '4 / 5' }}>
+          {photo ? (
+            <div className="scene-fade pointer-events-none absolute inset-0" style={fades('12%', '34%')}>
+              {picture}
+            </div>
+          ) : (
+            // the live 3D drive from the railway station; the rendered pin is its poster and fallback
+            <RouteMap fallback={picture} focus={[0.5, 0.44]} maskClass="scene-fade film-grain" maskStyle={fades('10%', '30%')} />
+          )}
         </div>
         <div className="relative z-10 -mt-[24%] px-[var(--gutter)] pb-4">
           <div className="mx-auto max-w-[30rem]">
@@ -365,9 +371,13 @@ export function VenueChapter() {
   return (
     <article id="venue" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(90svh,42rem)] lg:grid-cols-[minmax(0,1.15fr)_minmax(0,31rem)]">
       <div className="relative min-h-[56svh]">
-        <div className={`scene-fade scene-fade-right pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('14%', '14%')}>
-          {picture}
-        </div>
+        {photo ? (
+          <div className="scene-fade scene-fade-right pointer-events-none absolute inset-0" style={fades('14%', '14%')}>
+            {picture}
+          </div>
+        ) : (
+          <RouteMap fallback={picture} focus={[0.46, 0.5]} maskClass="scene-fade scene-fade-right film-grain" maskStyle={fades('10%', '10%')} />
+        )}
         <div className="absolute inset-x-6 bottom-2 lg:right-auto">{note}</div>
       </div>
       <div className="relative z-10 flex flex-col justify-center px-[var(--gutter)] py-12 lg:-ml-20 lg:pl-0 lg:pr-12">{cards}</div>

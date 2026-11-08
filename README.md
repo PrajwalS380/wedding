@@ -272,10 +272,10 @@ red silk: a five-wick lamp burning, akshate, kumkum and haldi, marigolds, with
 rice and petals in the air and the reception's strings of lights behind) and the
 **Vivaha Muhurta** (the mangalasutra draped on a turmeric-marked coconut on a
 silver plate of akshate, the sacred fire of the homa glowing behind). **Second**,
-after a short band of dawn: a brass pin standing on an old paper map (decorative —
-the route is the "Get directions" button) with the **venue** card over its foot,
-and the **guests'** card under the thamboola plate — the family's numbers as call
-tiles and a share button. Wide screens put the map left and the cards right.
+after a short band of dawn: a **live 3D map of Davangere** that plays the drive
+from the railway station to the hall (below), with the **venue** card over its
+foot, and the **guests'** card under the thamboola plate — the family's numbers as
+call tiles and a share button. Wide screens put the map left and the cards right.
 
 **Each fact has one place on the page** — nothing is repeated section after section:
 
@@ -284,7 +284,7 @@ tiles and a share button. Wide screens put the map left and the cards right.
 | Names and dates | Hero, the invitation letter, and the closing frame above the RSVP card |
 | Countdown and "Add to calendar" (both days) | The Living Calendar |
 | Each ceremony's name and time | Its arch in the Celebrations |
-| Address, map, directions, copy address | The venue chapter (the letter names the hall, as an invitation does) |
+| Address, the 3D route map, directions, copy address | The venue chapter (the letter names the hall, as an invitation does) |
 | Replies | The RSVP card |
 | Phone numbers, sharing | Guest services |
 
@@ -327,6 +327,34 @@ that in this three.js version `bumpScale` is per-pixel: values around 0.1–1 ar
 visible; tiny values like 0.001 do nothing.
 `tools/scenes/out/` is git-ignored; the exported WebP files (≈0.9 MB for all
 scenes) are what ships.
+
+### The 3D route map (venue)
+
+When the venue comes into view, a short film plays (`src/components/routemap/`,
+plain three.js, loaded only when the venue is near): a wide shot over the city,
+a dive down to the railway station, then a glowing route that draws itself
+along the real roads — Hadadi Road, Vidhyanagar Road, BIET Road, Shamanur Road,
+named in the caption as it goes (6.1 km, about 8 minutes) — the camera following
+it, until a brass pin drops on Bapuji Samudhaya Bhavan and the camera circles the
+hall. "Replay" plays it again. With reduced motion (or animations paused) it shows
+the finished map as a still; without WebGL, the rendered paper-map pin shows
+instead. "Get directions" stays the way to navigate.
+
+The streets, lake, parks, canals and railway were **traced from OpenStreetMap**
+(© OpenStreetMap contributors, ODbL — credited on the map). The houses and trees
+are **illustrative**: placed along the real streets, but not real buildings — the
+caption says so. The data is built offline (`tools/routemap/`, needs
+`pip install numpy pillow opencv-python-headless scikit-image sknw networkx`):
+
+```bash
+python tools/routemap/trace.py <screenshot.jpg>  # streets from an openstreetmap.org/directions screenshot
+python tools/routemap/build.py                   # → public/map/davangere.json, city.bin, ground.webp
+```
+
+The screenshot itself is not stored (it showed a phone's status bar); `trace.py`'s
+constants (`CROP`, the zoom-14 / device-pixel-ratio-3 scale) belong to it, and the
+venue's coordinates in `wedding.ts` anchor the map. `build.py` is deterministic.
+The three files are ≈0.55 MB and are fetched only when the venue is near.
 
 ## Content still needed from the family
 
