@@ -154,7 +154,7 @@ export const en = {
     hideMap: 'Hide the map preview',
     mapNote: 'The map preview loads from Google only if you choose to show it.',
     mapTitle: 'Google Map showing {venue}, {city}',
-    artNote: 'Artistic 3D render — not a photograph of the venue.',
+    artNote: 'Artistic 3D render — the map is decorative; use “Get directions” for the route.',
     guestsTitle: 'For our guests',
     call: 'Call the family',
     callSr: 'Call',

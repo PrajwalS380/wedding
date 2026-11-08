@@ -1,7 +1,6 @@
 """
 Exports the scene renders (tools/scenes/out/*.png) for the website:
 
-  * blends the night sky and the diya floor into one night picture per orientation
   * writes WebP files in two widths to public/images/celebrations/
   * regenerates the handmade-paper texture
   * writes src/data/sceneArt.generated.ts (sizes, crop focus, edge colours and live-light points)
@@ -27,9 +26,10 @@ QUALITY = 78
 # scene -> orientation -> (source file, export widths, crop focus x, y)
 SCENES = {
     "sunset": {"portrait": ("sunset-portrait", (1080, 720), (0.42, 0.5)), "landscape": ("sunset-landscape", (1920, 1280), (0.6, 0.5))},
-    "night": {"portrait": ("night-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("night-landscape", (1920, 1280), (0.62, 0.5))},
-    "sunrise": {"portrait": ("sunrise-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("sunrise-landscape", (1920, 1280), (0.72, 0.5))},
-    "daylight": {"portrait": ("daylight-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("daylight-landscape", (1200, 800), (0.5, 0.5))},
+    # the two ceremony arches use one upright picture whatever the screen
+    "aarati": {"portrait": ("aarati", (720, 480), (0.5, 0.5)), "landscape": ("aarati", (720, 480), (0.5, 0.5))},
+    "mangalya": {"portrait": ("mangalya", (720, 480), (0.5, 0.5)), "landscape": ("mangalya", (720, 480), (0.5, 0.5))},
+    "venuemap": {"portrait": ("venuemap-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("venuemap-landscape", (1600, 1080), (0.42, 0.5))},
 }
 MAX_LIGHTS = 64
 
@@ -45,29 +45,6 @@ def edge_colours(im: Image.Image) -> tuple[str, str]:
 def lights(name: str) -> list[dict]:
     p = OUT / f"{name}.lights.json"
     return json.loads(p.read_text()) if p.exists() else []
-
-
-def composite_night(orient: str, box_fn) -> None:
-    sky = np.asarray(Image.open(OUT / f"night-sky-{orient}.png").convert("RGB")).astype(np.float32)
-    strip_img = Image.open(OUT / f"night-diyas-{orient}.png").convert("RGB")
-    H, W = sky.shape[:2]
-    x0, y0, w, h = box_fn(W, H)
-    strip = np.asarray(strip_img.resize((w, h), Image.LANCZOS)).astype(np.float32)
-    yy = np.linspace(0, 1, h)[:, None]
-    xx = np.linspace(0, 1, w)[None, :]
-    m = np.clip(yy / 0.42, 0, 1) ** 1.4
-    if x0 > 0:
-        m = m * np.clip(xx / 0.3, 0, 1) ** 1.2
-    m = m[..., None]
-    region = sky[y0:y0 + h, x0:x0 + w]
-    sky[y0:y0 + h, x0:x0 + w] = region * (1 - m) + np.maximum(strip, region * 0.35) * m
-    Image.fromarray(np.clip(sky, 0, 255).astype("uint8")).save(OUT / f"night-{orient}.png")
-    out = lights(f"night-sky-{orient}")
-    for l in lights(f"night-diyas-{orient}"):
-        if l["y"] < 0.35:
-            continue
-        out.append({"x": round((x0 + l["x"] * w) / W, 4), "y": round((y0 + l["y"] * h) / H, 4), "r": round(l["r"] * w / W, 4), "kind": l["kind"], "seed": l["seed"]})
-    (OUT / f"night-{orient}.lights.json").write_text(json.dumps(out))
 
 
 def paper() -> None:
@@ -107,9 +84,6 @@ def main() -> None:
     PUB.mkdir(parents=True, exist_ok=True)
     for f in PUB.glob("*.webp"):
         f.unlink()
-    composite_night("portrait", lambda W, H: (0, H - round(W * 0.598), W, round(W * 0.598)))
-    composite_night("landscape", lambda W, H: (W - round(W * 0.625), H - round(H * 0.444), round(W * 0.625), round(H * 0.444)))
-
     entries, total = [], 0
     for key, variants in SCENES.items():
         parts = []
@@ -118,9 +92,10 @@ def main() -> None:
             files = []
             for w in widths:
                 h = round(im.height * w / im.width)
-                name = f"{key}-{orient}-{w}.webp"
-                im.resize((w, h), Image.LANCZOS).save(PUB / name, quality=QUALITY, method=6)
-                total += (PUB / name).stat().st_size
+                name = f"{src}-{w}.webp"
+                if not (PUB / name).exists():  # an art used for both orientations is written once
+                    im.resize((w, h), Image.LANCZOS).save(PUB / name, quality=QUALITY, method=6)
+                    total += (PUB / name).stat().st_size
                 files.append((name, w, h))
             big = files[0]
             top, bottom = edge_colours(im)

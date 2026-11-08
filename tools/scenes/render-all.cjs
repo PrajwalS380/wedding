@@ -7,19 +7,16 @@ const fs = require('fs')
 const { chromium } = require('playwright')
 const OUT = path.join(__dirname, 'out')
 // [scene, width, height, file, query] — renders at 1.5× the largest export size, then downscaled.
-// (scenes/twilight.js and scenes/dawn.js are kept in the workbench but are not used on the site.)
+// Kept in the workbench but no longer on the site: scenes/twilight, dawn, night-sky, night-diyas, sunrise, daylight.
 const JOBS = [
   ['sunset', 1620, 3506, 'sunset-portrait', 'o=portrait'],
   ['sunset', 2880, 1620, 'sunset-landscape', 'o=landscape'],
-  ['night-sky', 1620, 3506, 'night-sky-portrait', 'o=portrait'],
-  ['night-sky', 2880, 1620, 'night-sky-landscape', 'o=landscape'],
-  ['night-diyas', 1620, 969, 'night-diyas-portrait', 'o=portrait'],
-  ['night-diyas', 1800, 720, 'night-diyas-landscape', 'o=landscape&exp=0.75&li=0.2&bs=0.45'],
-  ['sunrise', 1620, 1952, 'sunrise-portrait', 'o=portrait'],
-  ['sunrise', 2880, 1620, 'sunrise-landscape', 'o=landscape'],
-  ['daylight', 1620, 1246, 'daylight-portrait', 'o=portrait'],
-  ['daylight', 1800, 1800, 'daylight-landscape', 'o=landscape'],
   ['thamboola', 1560, 880, 'thamboola', ''],
+  // the two ceremony arches (upright, the arch's own proportions) and the venue page's map
+  ['aarati', 1080, 1742, 'aarati', ''],
+  ['mangalya', 1080, 1742, 'mangalya', ''],
+  ['venuemap', 1620, 2025, 'venuemap-portrait', 'o=portrait'],
+  ['venuemap', 2400, 1500, 'venuemap-landscape', 'o=landscape'],
 ]
 ;(async () => {
   fs.mkdirSync(OUT, { recursive: true })

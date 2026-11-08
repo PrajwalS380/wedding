@@ -7,7 +7,6 @@ import { formatDayMonthShort, formatWeekday } from '../../lib/dates'
 import { dayTimeText as eventTime, displayPhone } from '../../lib/eventTime'
 import { shareContent } from '../../lib/shareContent'
 import { useI18n } from '../../i18n/useI18n'
-import { PetalField } from '../ui/Ambient'
 import { SceneStage } from './SceneStage'
 import { useOrientation } from '../../hooks/useOrientation'
 import { actionClass, dawnGradient, duskGradient, sceneBackdrop, SKY } from './styles'
@@ -92,44 +91,26 @@ function SceneChapter({
 
 /* ---------------------------------------------------------------- 1 · from dusk to dawn: both ceremonies */
 
-const maskStyle = (m: string) => ({ WebkitMaskImage: m, maskImage: m }) as CSSProperties
-
-/**
- * A temple-window arch with a gold double frame, holding one of the rendered
- * scenes. With `stack`, the top and the bottom of a tall picture are shown
- * together, blended through the sky between them (the night's strings of
- * lights and moon above, its lamps below).
- */
-function SceneArch({ art, focus, stack = false }: { art: SceneArt; focus: readonly [number, number]; stack?: boolean }) {
+/** A temple-window arch with a gold double frame, holding a scene rendered for it. */
+function SceneArch({ art }: { art: SceneArt }) {
   return (
     <div className="mx-auto w-full rounded-t-[999px] bg-[linear-gradient(180deg,#f3d99a,#b98a43_45%,#6e4a1c)] p-[3px] shadow-[0_22px_40px_-18px_rgba(0,0,0,.85),0_0_30px_-8px_rgba(240,180,90,.35)] landscape:h-[min(22rem,42svh)] landscape:w-auto" style={{ aspectRatio: '62 / 100' }}>
       <div className="relative h-full w-full overflow-hidden rounded-t-[999px] bg-night">
-        {stack ? (
-          <>
-            <div className="absolute inset-0" style={maskStyle('linear-gradient(180deg, #000 0, #000 46%, transparent 66%)')}>
-              <SceneStage art={art} variant="portrait" focus={[focus[0], 0]} />
-            </div>
-            <div className="absolute inset-0" style={maskStyle('linear-gradient(180deg, transparent 36%, #000 58%)')}>
-              <SceneStage art={art} variant="portrait" focus={[focus[0], 1]} />
-            </div>
-          </>
-        ) : (
-          <SceneStage art={art} variant="portrait" focus={focus} />
-        )}
+        <SceneStage art={art} variant="portrait" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-[5px] rounded-t-[999px] border border-[rgba(243,217,154,.45)]" />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-[linear-gradient(0deg,rgba(6,5,12,.45),transparent)]" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-1/5 bg-[linear-gradient(0deg,rgba(6,5,12,.35),transparent)]" />
       </div>
     </div>
   )
 }
 
 /** One ceremony: its scene in an arch, then the day, name and time. */
-function Ceremony({ id, day, art, focus, stack }: { id: string; day: CelebrationDay; art: SceneArt; focus: readonly [number, number]; stack?: boolean }) {
+function Ceremony({ id, day, art }: { id: string; day: CelebrationDay; art: SceneArt }) {
   const { t, lang } = useI18n()
   const ev = day.events[0]
   return (
     <article id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 text-center" data-reveal="up">
-      <SceneArch art={art} focus={focus} stack={stack} />
+      <SceneArch art={art} />
       <p className="eyebrow mt-4 text-gold-light [text-shadow:0_1px_6px_rgba(0,0,0,.8)]">
         {formatWeekday(day, 'short', lang)} · {formatDayMonthShort(day, lang)}
       </p>
@@ -147,7 +128,8 @@ function Ceremony({ id, day, art, focus, stack }: { id: string; day: Celebration
 /**
  * The section's one scene of its own: the title in the sunset sky over the
  * temple tank, and the two ceremonies side by side in arched windows on the
- * water — the Aaratakshate's night of lights and the Muhurta's kalasha at dawn.
+ * water — the Aaratakshate's aarati plate with its five flames and akshate in
+ * the air, and the Muhurta's mangalasutra on a coconut before the sacred fire.
  */
 export function CeremoniesChapter() {
   const { t } = useI18n()
@@ -189,8 +171,8 @@ export function CeremoniesChapter() {
           </h2>
         </header>
         <div className={`grid grid-cols-2 items-start ${portrait ? 'gap-4' : 'w-max gap-10'}`}>
-          <Ceremony id="aaratakshate" day={d1} art={SCENES.night} focus={[0.5, 0.5]} stack />
-          <Ceremony id="muhurta" day={d2} art={SCENES.sunrise} focus={[0.52, 0.5]} />
+          <Ceremony id="aaratakshate" day={d1} art={SCENES.aarati} />
+          <Ceremony id="muhurta" day={d2} art={SCENES.mangalya} />
         </div>
       </div>
     </SceneChapter>
@@ -216,7 +198,7 @@ function VenueBlock() {
     window.setTimeout(() => setCopyState('idle'), 3500)
   }
   return (
-    <div className="text-center lg:text-left" data-reveal="up">
+    <div className="text-center">
       <h3 id="venue-title" className="eyebrow !text-label font-bold text-burgundy">
         {t('celebrations.venueTitle')}
       </h3>
@@ -232,7 +214,7 @@ function VenueBlock() {
           <span className="font-semibold">{t('celebrations.asOnMaps')}</span> {venue.fullAddress}
         </p>
       )}
-      <div className="mt-4 flex flex-wrap justify-center gap-2.5 lg:justify-start">
+      <div className="mt-4 flex flex-wrap justify-center gap-2.5">
         <a href={venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={actionClass.lightFill}>
           <MapPin className="h-4 w-4" aria-hidden="true" /> {t('celebrations.getDirections')}
           <span className="sr-only"> {t('common.mapsNewTab')}</span>
@@ -273,91 +255,122 @@ function VenueBlock() {
   )
 }
 
-/** For our guests, in one card: the thamboola plate beside the family's numbers and a share button. */
+const card = 'relative rounded-[4px] bg-[rgba(255,251,242,.93)] shadow-[0_26px_50px_-30px_rgba(60,30,10,.6),0_0_0_1px_rgba(122,90,40,.28)]'
+const brassDisc =
+  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#3e2508] bg-[radial-gradient(circle_at_35%_28%,#fff3cf_0%,#f0cf86_22%,#c9963f_55%,#8d6324_82%,#6a4716_100%)] shadow-[inset_0_0_0_2px_rgba(255,240,200,.5),inset_0_0_0_3.5px_rgba(110,72,22,.55),0_3px_8px_-3px_rgba(70,40,5,.7)]'
+
+/** A thin brass double rule just inside a card. */
+function CardRule() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-[2px] border border-brass/35">
+      <div className="absolute inset-1 rounded-[1px] border border-brass/15" />
+    </div>
+  )
+}
+
+/** For our guests: the thamboola plate resting on the card's top edge, the family's numbers as call tiles, and sharing. */
 function GuestServices() {
   const { t, lang } = useI18n()
   const [shareStatus, setShareStatus] = useState<ShareResult | null>(null)
   const share = async () => setShareStatus(await shareInvitation(shareContent(t, lang, wedding.share.siteUrl)))
   return (
-    <div id="guest-services" className="mt-7 scroll-mt-6" data-reveal="up">
-      <div className="flex items-center gap-4 rounded-[4px] bg-[rgba(255,252,244,.5)] p-4 text-left shadow-[0_0_0_1px_rgba(122,90,40,.28),0_6px_14px_-10px_rgba(80,50,20,.45)]">
-        <img src={THAMBOOLA.src} width={THAMBOOLA.width} height={THAMBOOLA.height} alt="" loading="lazy" decoding="async" className="h-auto w-[min(10rem,38%)] shrink-0" />
-        <div className="min-w-0">
-          <h3 className="eyebrow !text-label font-bold text-burgundy">{t('celebrations.guestsTitle')}</h3>
-          <p className="mt-2 flex items-center gap-1.5 font-display text-[1.1rem] font-semibold leading-tight text-ink">
-            <Phone className="h-3.5 w-3.5 text-brass-deep" aria-hidden="true" />
-            {t('celebrations.call')}
-          </p>
+    <div id="guest-services" className="relative mt-8 scroll-mt-6 text-center" data-reveal="up">
+      <img
+        src={THAMBOOLA.src}
+        width={THAMBOOLA.width}
+        height={THAMBOOLA.height}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="relative z-10 mx-auto -mb-12 h-auto w-[min(15rem,68%)] drop-shadow-[0_14px_14px_rgba(60,30,10,.3)]"
+      />
+      <div className={`${card} px-5 pb-5 pt-14`}>
+        <CardRule />
+        <h3 className="eyebrow !text-label font-bold text-burgundy">{t('celebrations.guestsTitle')}</h3>
+        <p className="mt-3 font-display text-[1.15rem] font-semibold text-ink">{t('celebrations.call')}</p>
+        <div className="relative mt-2 grid grid-cols-2 gap-2.5">
           {wedding.contact.phones.map((p) => (
-            <a key={p} href={`tel:+${p}`} className="block min-h-7 whitespace-nowrap text-[0.95rem] font-semibold leading-7 text-maroon underline-offset-4 hover:underline">
-              <span className="sr-only">{t('celebrations.callSr')} </span>
-              {displayPhone(p)}
+            <a
+              key={p}
+              href={`tel:+${p}`}
+              className="flex min-h-[4.6rem] flex-col items-center justify-center gap-1.5 rounded-[3px] border border-brass/35 bg-[rgba(255,255,255,.45)] px-1 py-2 text-maroon transition-colors hover:bg-[rgba(255,255,255,.8)]"
+            >
+              <span className={brassDisc} aria-hidden="true">
+                <Phone className="h-4 w-4" />
+              </span>
+              <span className="whitespace-nowrap text-[0.86rem] font-semibold tracking-wide">
+                <span className="sr-only">{t('celebrations.callSr')} </span>
+                {displayPhone(p)}
+              </span>
             </a>
           ))}
-          <button
-            type="button"
-            onClick={share}
-            className="mt-1 inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.18em] text-maroon underline-offset-[6px] hover:underline"
-          >
-            <Share2 className="h-4 w-4" aria-hidden="true" /> {t('celebrations.share')}
-          </button>
-          <p role="status" aria-live="polite" className="text-caption text-ink-soft empty:hidden">
-            {shareStatus && shareStatus !== 'cancelled' ? t(`share.${shareStatus}`) : ''}
-          </p>
         </div>
+        <button type="button" onClick={share} className={`${actionClass.light} relative mt-2.5 w-full`}>
+          <Share2 className="h-4 w-4" aria-hidden="true" /> {t('celebrations.share')}
+        </button>
+        <p role="status" aria-live="polite" className="mt-1 text-caption text-ink-soft empty:hidden">
+          {shareStatus && shareStatus !== 'cancelled' ? t(`share.${shareStatus}`) : ''}
+        </p>
       </div>
     </div>
   )
 }
 
+/**
+ * The venue: a brass pin standing on an old paper map (a decorative render —
+ * the route itself is one tap away), with the hall's details on a card over
+ * the foot of the picture, and the guests' card below. Wide screens put the
+ * map on the left and the cards on the right.
+ */
 export function VenueChapter() {
   const { t } = useI18n()
   const o = useOrientation()
-  const art = SCENES.daylight
-  // A real photograph of the hall, once the family supplies one, replaces the rendered entrance.
+  const art = SCENES.venuemap
+  // A real photograph of the hall, once the family supplies one, replaces the rendered map.
   const photo = wedding.venue.photo
   const picture = photo ? (
     <img src={photo.src} width={photo.width} height={photo.height} alt={photo.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
   ) : (
-    <>
-      <SceneStage art={art} focus={o === 'portrait' ? [0.5, 0.45] : undefined} />
-      <PetalField count={o === 'portrait' ? 5 : 6} kinds={['marigold', 'jasmine', 'marigold']} seed={41} intensity={0.7} />
-    </>
+    <SceneStage art={art} />
   )
-  // the note sits where the picture has already faded into the paper
-  const caption = !photo && <p className="absolute bottom-1 right-[var(--gutter)] z-[2] text-[0.7rem] italic text-ink-soft/85 lg:left-8 lg:right-auto">{t('celebrations.artNote')}</p>
-  // a wide band on phones, so the venue's details start within the same screen
-  const portraitRatio = '16 / 10'
-  const body = (
+  const note = !photo && <p className="text-center text-[0.72rem] italic leading-snug text-ink-soft/85">{t('celebrations.artNote')}</p>
+  const cards = (
     <>
-      <VenueBlock />
+      <div className={`${card} px-6 pb-5 pt-7`} data-reveal="up">
+        <CardRule />
+        <div className="relative">
+          <VenueBlock />
+        </div>
+      </div>
       <GuestServices />
     </>
   )
   if (o === 'portrait') {
     return (
       <article id="venue" aria-labelledby="venue-title" className="relative isolate scroll-mt-0">
-        <div className="relative" style={{ aspectRatio: portraitRatio }}>
-          <div className={`scene-fade pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('16%', '22%')}>
+        <div className="relative" style={{ aspectRatio: photo ? `${photo.width} / ${photo.height}` : '1 / 1' }}>
+          <div className={`scene-fade pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('12%', '34%')}>
             {picture}
           </div>
-          {caption}
         </div>
-        <div className="relative z-10 px-[var(--gutter)] pb-4 pt-3">
-          <div className="mx-auto max-w-[32rem]">{body}</div>
+        <div className="relative z-10 -mt-[24%] px-[var(--gutter)] pb-4">
+          <div className="mx-auto max-w-[30rem]">
+            {cards}
+            <div className="mt-4">{note}</div>
+          </div>
         </div>
       </article>
     )
   }
   return (
-    <article id="venue" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(86svh,40rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)]">
-      <div className="relative min-h-[60svh]">
-        <div className={`scene-fade scene-fade-right pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('16%', '16%')}>
+    <article id="venue" aria-labelledby="venue-title" className="relative isolate grid min-h-[max(90svh,42rem)] lg:grid-cols-[minmax(0,1.15fr)_minmax(0,31rem)]">
+      <div className="relative min-h-[56svh]">
+        <div className={`scene-fade scene-fade-right pointer-events-none absolute inset-0 ${photo ? '' : 'film-grain'}`} style={fades('14%', '14%')}>
           {picture}
         </div>
-        {caption}
+        <div className="absolute inset-x-6 bottom-2 lg:right-auto">{note}</div>
       </div>
-      <div className="relative z-10 flex flex-col justify-center px-[var(--gutter)] py-12 lg:px-12">{body}</div>
+      <div className="relative z-10 flex flex-col justify-center px-[var(--gutter)] py-12 lg:-ml-20 lg:pl-0 lg:pr-12">{cards}</div>
     </article>
   )
 }

@@ -266,13 +266,16 @@ docs/ASSETS.md                asset provenance and what to replace later
 ## The Celebrations section and its scenes
 
 The section is two screens. **First:** the title in the sunset sky over a temple
-tank, and both ceremonies side by side in arched temple windows on the water —
-the **Aaratakshate** (the night's strings of lights, moon and lamps; the top and
-bottom of the tall render are blended in the arch) and the **Vivaha Muhurta**
-(the kalasha in morning light), each with its day, name and time. **Second**,
-after a short band of dawn: the **venue** (a decorated entrance as a wide band)
-with directions, and one card for guests — the thamboola plate beside the
-family's numbers and a share button.
+tank, and both ceremonies side by side in arched temple windows on the water,
+each with its day, name and time — the **Aaratakshate** (a brass aarati plate on
+red silk: a five-wick lamp burning, akshate, kumkum and haldi, marigolds, with
+rice and petals in the air and the reception's strings of lights behind) and the
+**Vivaha Muhurta** (the mangalasutra draped on a turmeric-marked coconut on a
+silver plate of akshate, the sacred fire of the homa glowing behind). **Second**,
+after a short band of dawn: a brass pin standing on an old paper map (decorative —
+the route is the "Get directions" button) with the **venue** card over its foot,
+and the **guests'** card under the thamboola plate — the family's numbers as call
+tiles and a share button. Wide screens put the map left and the cards right.
 
 **Each fact has one place on the page** — nothing is repeated section after section:
 

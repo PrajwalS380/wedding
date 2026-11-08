@@ -156,7 +156,7 @@ export const wedding = {
     /** Keyless Google Maps embed, loaded only after the guest asks for it. */
     mapEmbedUrl:
       'https://www.google.com/maps?q=Bapuji+Samudhaya+Bhavan%2C+Shamanur+Road%2C+Siddaveerappa+Layout%2C+Shamanur%2C+Davangere%2C+Karnataka+577004&output=embed',
-    /** Set to a real, family-supplied venue photograph to show it in the Venue chapter instead of the rendered entrance. */
+    /** Set to a real, family-supplied venue photograph to show it in the Venue chapter instead of the rendered map. */
     photo: null as null | { src: string; width: number; height: number; alt: string },
   },
 
