@@ -94,7 +94,7 @@ export function scrollToSection(id: string, reduceMotion: boolean): void {
   navigationHoldUntil = performance.now() + 2500
   el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
   // Move focus for keyboard and screen-reader users without a second jump.
-  const heading = el.querySelector<HTMLElement>('h1, h2')
+  const heading = el.querySelector<HTMLElement>('h1, h2, h3')
   const target = heading ?? el
   if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
   target.focus({ preventScroll: true })

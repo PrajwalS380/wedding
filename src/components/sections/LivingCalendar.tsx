@@ -4,7 +4,8 @@ import { ArrowRight, CalendarHeart } from 'lucide-react'
 import { localized, wedding, type DayId } from '../../data/wedding'
 import { dayOfMonth, formatClock, formatDayLong, formatWeekday, getTimeline, ordinalSuffix, parseIsoDate } from '../../lib/dates'
 import { defaultDayId, getDayClock, getPhase, type DayClock } from '../../lib/weddingClock'
-import { openCompass } from '../../lib/compass'
+import { scrollToSection } from '../../lib/browser'
+import { eventTimeText } from '../../lib/eventTime'
 import { useNow, currentTime } from '../../hooks/useNow'
 import { useInView } from '../../hooks/useInView'
 import { useMotion } from '../../hooks/motion'
@@ -224,11 +225,11 @@ export function LivingCalendar() {
                 {day.events.length ? (
                   <ul className="space-y-3">
                     {day.events.map((ev) => (
-                      <li key={ev.name.en} className="flex gap-4">
-                        <span className="w-28 shrink-0 text-[0.82rem] text-gold-light">
-                          {[formatClock(ev.startTime, lang), formatClock(ev.endTime, lang)].filter(Boolean).join(' – ') || t('common.timeToBeAnnounced')}
+                      <li key={ev.name.en}>
+                        <span className="block font-display text-[1.3rem] leading-tight text-ivory">{localized(ev.name, lang)}</span>
+                        <span className="mt-0.5 block text-[0.88rem] text-gold-light">
+                          {eventTimeText(ev, t, lang)} <span className="text-gold/70">{wedding.timezoneLabel}</span>
                         </span>
-                        <span className="font-display text-[1.15rem] text-ivory">{localized(ev.name, lang)}</span>
                       </li>
                     ))}
                   </ul>
@@ -243,7 +244,7 @@ export function LivingCalendar() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => openCompass('east')}
+                  onClick={() => scrollToSection(day.id === 'day-1' ? 'aaratakshate' : 'muhurta', prefersReducedMotion)}
                   className="mt-3 inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.22em] text-gold-light underline-offset-[6px] transition-colors hover:text-ivory hover:underline"
                 >
                   {t('calendar.viewSchedule')} <ArrowRight className="h-4 w-4" aria-hidden="true" />

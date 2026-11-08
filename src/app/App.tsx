@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { MotionProvider } from '../hooks/motion'
 import { safeSessionGet, safeSessionSet } from '../lib/browser'
-import { HASH_TO_DIRECTION } from '../lib/compass'
+import { resolveHash } from '../lib/celebrations'
 import { useI18n } from '../i18n/useI18n'
 import { WeddingNavigation } from '../components/navigation/WeddingNavigation'
 import { CinematicIntro } from '../components/sections/CinematicIntro'
 import { WeddingHero } from '../components/sections/WeddingHero'
 import { InvitationScroll } from '../components/sections/InvitationScroll'
 import { LivingCalendar } from '../components/sections/LivingCalendar'
-import { WeddingCompass } from '../components/sections/WeddingCompass'
+import { Celebrations } from '../components/sections/Celebrations'
 import { RSVPSection } from '../components/sections/RSVPSection'
 import { WeddingFooter } from '../components/sections/WeddingFooter'
 
@@ -37,8 +37,8 @@ export default function App() {
       cleanup()
       const hash = decodeURIComponent(window.location.hash.slice(1))
       if (!hash || hash === 'home') return
-      // Compass aliases (#venue, #schedule, …) land on the Compass, which opens the direction itself.
-      const el = document.getElementById(HASH_TO_DIRECTION[hash] ? 'compass' : hash)
+      // Chapter aliases (#schedule, and the retired #compass-… links) land on their chapter.
+      const el = document.getElementById(resolveHash(hash))
       if (!el) return
       let userScrolled = false
       const markUser = () => (userScrolled = true)
@@ -91,7 +91,7 @@ export default function App() {
           <WeddingHero introActive={introOpen} />
           <InvitationScroll />
           <LivingCalendar />
-          <WeddingCompass />
+          <Celebrations />
           <RSVPSection />
         </main>
         {!stillMode && <WeddingFooter />}

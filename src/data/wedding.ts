@@ -5,7 +5,9 @@
  * confirmed is `null` (or an empty list), and the UI renders a tasteful
  * "to be announced" state instead of inventing a value.
  *
- * CONFIRMED: the celebrations take place on 15 and 16 November 2026.
+ * CONFIRMED (from the family's printed invitation): the Aaratakshate (reception)
+ * on Sunday 15 November 2026 from 7:30 pm, and the Vivaha Muhurta on Monday
+ * 16 November 2026 from 9:20 to 10:30 am, India Standard Time.
  *
  * Wording shown to guests (in English, Kannada and Hindi) lives in
  * src/i18n/dictionaries — this file holds the facts.
@@ -66,12 +68,11 @@ export interface RsvpConfig {
   respondBy: string | null
 }
 
-/** Only verified contact details — all null until the family provides them. */
+/** Only verified contact details (from the family's printed invitation). */
 export interface ContactConfig {
-  name: string | null
-  phone: string | null
+  /** Mobile numbers, international format, digits only (e.g. '919035615991'). */
+  phones: string[]
   email: string | null
-  whatsapp: string | null
 }
 
 const COUPLE = {
@@ -108,18 +109,32 @@ export const wedding = {
     {
       id: 'day-1',
       date: '2026-11-15',
-      startTime: null, // set 'HH:mm' once the family confirms
+      startTime: '19:30', // Aaratakshate "from 7:30 pm" — no end time is given, so none is invented
       endTime: null,
-      events: [],
+      events: [
+        {
+          name: { en: 'Aaratakshate', kn: 'ಆರತಕ್ಷತೆ', hi: 'आरतक्षते' },
+          startTime: '19:30',
+          endTime: null,
+          description: { en: 'The evening reception', kn: 'ಸಂಜೆಯ ಸ್ವಾಗತ ಸಮಾರಂಭ', hi: 'शाम का स्वागत समारोह' },
+        },
+      ],
       dressCode: null,
       note: null,
     },
     {
       id: 'day-2',
       date: '2026-11-16',
-      startTime: null,
-      endTime: null,
-      events: [],
+      startTime: '09:20', // Vivaha Muhurta 9:20 – 10:30 am
+      endTime: '10:30',
+      events: [
+        {
+          name: { en: 'Vivaha Muhurta', kn: 'ವಿವಾಹ ಮುಹೂರ್ತ', hi: 'विवाह मुहूर्त' },
+          startTime: '09:20',
+          endTime: '10:30',
+          description: { en: 'The wedding', kn: 'ಶುಭ ವಿವಾಹ', hi: 'शुभ विवाह' },
+        },
+      ],
       dressCode: null,
       note: null,
     },
@@ -151,10 +166,8 @@ export const wedding = {
   } satisfies RsvpConfig as RsvpConfig,
 
   contact: {
-    name: null,
-    phone: null,
+    phones: ['919035615991', '919591420987'],
     email: null,
-    whatsapp: null,
   } satisfies ContactConfig as ContactConfig,
 
   /** Add-to-calendar export: all-day entries while timings are unconfirmed. */
@@ -175,4 +188,4 @@ export type Wedding = typeof wedding
 export const rsvpIsLive = (): boolean => /^\d{8,15}$/.test(wedding.rsvp.whatsappNumber)
 
 /** True when at least one verified contact detail exists. */
-export const hasContact = (): boolean => Boolean(wedding.contact.phone || wedding.contact.email || wedding.contact.whatsapp)
+export const hasContact = (): boolean => wedding.contact.phones.length > 0 || Boolean(wedding.contact.email)

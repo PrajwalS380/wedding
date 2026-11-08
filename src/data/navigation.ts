@@ -2,7 +2,7 @@ export const NAV_ITEMS = [
   { id: 'home', labelKey: 'nav.home' },
   { id: 'invitation', labelKey: 'nav.invitation' },
   { id: 'calendar', labelKey: 'nav.calendar' },
-  { id: 'compass', labelKey: 'nav.compass' },
+  { id: 'celebrations', labelKey: 'nav.celebrations' },
   { id: 'rsvp', labelKey: 'nav.rsvp' },
 ] as const
 

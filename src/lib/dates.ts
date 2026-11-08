@@ -117,6 +117,13 @@ interface LocaleDates {
   pm: string
   /** Order of the clock label: "10:30 am" vs "ಪೂರ್ವಾಹ್ನ 10:30". */
   periodFirst: boolean
+  /**
+   * Everyday words for the part of the day, used in running text the way the
+   * family's card writes it ("ಸಂಜೆ 7:30", "सुबह 9:20 बजे"). English keeps am / pm.
+   */
+  dayParts: { morning: string; afternoon: string; evening: string; night: string } | null
+  /** Word after the clock time in running text (Hindi "बजे"). */
+  oClock: string
 }
 
 const englishOrdinal = (n: number) => {
@@ -136,6 +143,8 @@ const LOCALE_DATES: Record<Lang, LocaleDates> = {
     am: 'am',
     pm: 'pm',
     periodFirst: false,
+    dayParts: null,
+    oClock: '',
   },
   kn: {
     weekdays: ['ಭಾನುವಾರ', 'ಸೋಮವಾರ', 'ಮಂಗಳವಾರ', 'ಬುಧವಾರ', 'ಗುರುವಾರ', 'ಶುಕ್ರವಾರ', 'ಶನಿವಾರ'],
@@ -147,6 +156,8 @@ const LOCALE_DATES: Record<Lang, LocaleDates> = {
     am: 'ಪೂರ್ವಾಹ್ನ',
     pm: 'ಅಪರಾಹ್ನ',
     periodFirst: true,
+    dayParts: { morning: 'ಬೆಳಗ್ಗೆ', afternoon: 'ಮಧ್ಯಾಹ್ನ', evening: 'ಸಂಜೆ', night: 'ರಾತ್ರಿ' },
+    oClock: '',
   },
   hi: {
     weekdays: ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'],
@@ -158,6 +169,8 @@ const LOCALE_DATES: Record<Lang, LocaleDates> = {
     am: 'पूर्वाह्न',
     pm: 'अपराह्न',
     periodFirst: true,
+    dayParts: { morning: 'सुबह', afternoon: 'दोपहर', evening: 'शाम', night: 'रात' },
+    oClock: 'बजे',
   },
 }
 
@@ -215,6 +228,45 @@ export function formatClock(time: string | null, lang: Lang = 'en'): string | nu
   const clock = `${h12}:${String(t.minute).padStart(2, '0')}`
   const period = t.hour < 12 ? L.am : L.pm
   return `${L.periodFirst ? `${period} ${clock}` : `${clock} ${period}`} ${wedding.timezoneLabel}`
+}
+
+const dayPartOf = (hour: number): 'morning' | 'afternoon' | 'evening' | 'night' =>
+  hour < 4 ? 'night' : hour < 12 ? 'morning' : hour < 16 ? 'afternoon' : hour < 20 ? 'evening' : 'night'
+
+/**
+ * A clock time for running text, without the timezone label:
+ * "7:30 pm" · "ಸಂಜೆ 7:30" · "शाम 7:30 बजे".
+ */
+export function formatTimeWords(time: string | null, lang: Lang = 'en'): string | null {
+  const t = parseTime(time)
+  if (!t) return null
+  const L = LOCALE_DATES[lang]
+  const clock = `${((t.hour + 11) % 12) + 1}:${String(t.minute).padStart(2, '0')}`
+  if (!L.dayParts) return `${clock} ${t.hour < 12 ? L.am : L.pm}`
+  return [L.dayParts[dayPartOf(t.hour)], clock, L.oClock].filter(Boolean).join(' ')
+}
+
+/**
+ * Start and end of a time range, worded so the range reads naturally with the
+ * language's connector (see `celebrations.timeRange`):
+ * en "9:20" + "10:30 am" · kn "ಬೆಳಗ್ಗೆ 9:20" + "10:30" · hi "सुबह 9:20" + "10:30 बजे".
+ */
+export function formatTimeRangeWords(start: string | null, end: string | null, lang: Lang = 'en'): { start: string; end: string } | null {
+  const a = parseTime(start)
+  const b = parseTime(end)
+  if (!a || !b) return null
+  const L = LOCALE_DATES[lang]
+  const clock = (t: { hour: number; minute: number }) => `${((t.hour + 11) % 12) + 1}:${String(t.minute).padStart(2, '0')}`
+  if (!L.dayParts) {
+    const same = a.hour < 12 === b.hour < 12
+    return { start: same ? clock(a) : `${clock(a)} ${a.hour < 12 ? L.am : L.pm}`, end: `${clock(b)} ${b.hour < 12 ? L.am : L.pm}` }
+  }
+  const pa = dayPartOf(a.hour)
+  const pb = dayPartOf(b.hour)
+  return {
+    start: `${L.dayParts[pa]} ${clock(a)}`,
+    end: [pa === pb ? '' : L.dayParts[pb], clock(b), L.oClock].filter(Boolean).join(' '),
+  }
 }
 
 /** The word joining two dates or names in a language ("&", "ಮತ್ತು", "और"). */
