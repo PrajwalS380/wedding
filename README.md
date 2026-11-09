@@ -216,6 +216,9 @@ src/
     navigation/               desktop bar + accessible mobile menu
     sections/                 CinematicIntro, WeddingHero, InvitationScroll, LivingCalendar,
                               Celebrations, RSVPSection, WeddingFooter
+    invitation/               the letter's printed pieces (thorana, date tiles, name medallion,
+                              foil gradient, petal shower, motes) and its paper (deckle, paisley)
+    routemap/                 the venue's 3D route map of Davangere (three.js, loaded near the venue)
     celebrations/             Chapters (ceremonies over the sunset, venue + guest
                               services), SceneStage (cover-fitted render + parallax), LiveLights,
                               CalendarMenu (used by the Living Calendar)
@@ -230,6 +233,7 @@ src/
                               celebrations (chapter ids + deep-link aliases), eventTime (localized
                               times, phone formatting), browser helpers
   data/sceneArt*.ts           scene image sizes, crop focus and light positions (generated)
+  data/scrollArt.generated.ts where the invitation scroll's rendered parts sit in their pictures
   styles/index.css            design tokens & utilities
 public/                       optimised images (incl. images/celebrations), icons, manifest, OG image
 source-images/originals/      the family's untouched photographs (local only — git-ignored)
@@ -262,6 +266,41 @@ docs/ASSETS.md                asset provenance and what to replace later
   while on screen; every chapter is a labelled `article` with real headings, the
   scene images are decorative (`alt=""`), and the "Add to calendar" menu closes on
   Escape and returns focus.
+
+## The invitation scroll
+
+The scroll is assembled from **rendered parts** (`tools/scenes/scenes/scroll.js`,
+three.js, straight-on and orthographic so the layers line up exactly): a rolled
+length of parchment on a brass rod with turned finials; the tied scroll; the
+maroon silk ribbon with woven gold borders; the bow with forked tails and two
+marigolds tucked in; and the red wax seal embossed with the couple's monogram.
+The letter itself is real HTML on a seamless parchment texture with torn
+(deckled) edges, printed like a wedding card: a marigold-and-mango-leaf thorana,
+paisley borders and a gold rule; the names in gold-foil calligraphy on their own
+card with a medallion between them; the two days on arched tiles over a ribbon
+banner; the hall on an arched card; the message with an illuminated first
+letter (English); the wax seal as the sign-off. Headings are set in Cinzel
+(engraved capitals), the names in Pinyon Script, the rest in Cormorant Garamond;
+Kannada and Hindi fall through to their own faces.
+
+Opening it is choreographed with GSAP (`components/sections/InvitationScroll.tsx`):
+the seal brightens, cracks and falls in two halves with crumbs of wax, the bow
+slips away, the rolls part and the scroll unrolls — the page follows the roll
+down — each part of the letter settling into the paper as the roll passes it,
+gold foil catching the light, then petals fall. Rolling it up reverses it and
+ties it again. While tied, candlelight flickers on it, motes drift and a glint
+crosses the seal. With reduced motion the letter is simply open (and rolls up
+and opens instantly).
+
+To change the scroll's parts (with the workbench running, as for the scenes):
+
+```bash
+node tools/scenes/render-scroll.cjs        # → tools/scenes/out/scroll-*.png (+ positions)
+python tools/scenes/export_scroll.py       # → public/images/invitation/*.webp + parchment tile
+                                           #   + src/data/scrollArt.generated.ts
+```
+
+The parts are under 200 KB in all.
 
 ## The Celebrations section and its scenes
 

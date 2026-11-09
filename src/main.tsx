@@ -8,6 +8,8 @@ import '@fontsource/cormorant-garamond/400-italic.css'
 import '@fontsource/cormorant-garamond/500-italic.css'
 import '@fontsource-variable/manrope'
 import '@fontsource/pinyon-script'
+import '@fontsource/cinzel/500.css'
+import '@fontsource/cinzel/600.css'
 import './styles/indic-fonts.css'
 import './styles/index.css'
 

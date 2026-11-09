@@ -28,6 +28,8 @@
   --font-display: 'Cormorant Garamond', 'Wedding Kannada Serif', 'Wedding Devanagari Serif', 'Cormorant Fallback', 'Cormorant', Georgia, 'Times New Roman', serif;
   --font-sans: 'Manrope Variable', 'Wedding Kannada Sans', 'Wedding Devanagari Sans', 'Manrope Fallback', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-script: 'Pinyon Script', 'Wedding Kannada Serif', 'Wedding Devanagari Serif', 'Pinyon Fallback', 'Snell Roundhand', 'Brush Script MT', cursive;
+  /* engraved Roman capitals for the invitation's headings; Indic letters fall through to the Indic serif */
+  --font-inscription: 'Cinzel', 'Wedding Kannada Serif', 'Wedding Devanagari Serif', 'Cormorant Garamond', Georgia, serif;
 
   /* Small-text scale — every label, CTA and note routes through these, so
      nothing renders below 11px (tags) / 12px (labels) on any screen. */
@@ -402,12 +404,6 @@ html.is-locked body {
   }
 }
 
-/* paper on a descending roll appears to turn */
-@keyframes roll-turn {
-  to {
-    background-position: 0 14px, 0 0;
-  }
-}
 
 /* Living Wedding Calendar: the engraving ring turns, the guilloché counter-turns, a sheen travels the bezel */
 @keyframes dial-turn {
@@ -583,4 +579,203 @@ html[data-motion='off'] .ambient * {
 }
 html[data-motion='off'] {
   scroll-behavior: auto;
+}
+
+/* ------------------------------------------------------------------
+   The invitation scroll (components/invitation): rendered rolls, ribbon
+   and seal over a parchment letter laid out in printed cards.
+------------------------------------------------------------------- */
+.inv-box {
+  container-type: inline-size;
+}
+.inv-stage {
+  /* one unit = half the paper's width over 1.3 — the renders' own unit (the frame is 2.6 units wide) */
+  --u: calc(100cqw / 2.6);
+}
+
+/* the letter: seamless parchment, warmer and darker towards the edges, torn deckle on both sides */
+.inv-sheet {
+  background-color: #f1e3c5;
+  background-image:
+    radial-gradient(120% 40% at 50% 0%, rgba(255, 246, 222, 0.7), transparent 70%),
+    radial-gradient(90% 30% at 50% 100%, rgba(160, 112, 58, 0.16), transparent 70%),
+    linear-gradient(90deg, rgba(150, 104, 52, 0.18), transparent 9%, transparent 91%, rgba(150, 104, 52, 0.18)),
+    url('/images/invitation/parchment.webp');
+  background-size: auto, auto, auto, 384px 384px;
+  box-shadow: inset 0 0 60px rgba(120, 78, 36, 0.22);
+  -webkit-mask: var(--deckle-l) left top / 14px 220px repeat-y, var(--deckle-r) right top / 14px 220px repeat-y,
+    linear-gradient(#000, #000) center / calc(100% - 26px) 100% no-repeat;
+  mask: var(--deckle-l) left top / 14px 220px repeat-y, var(--deckle-r) right top / 14px 220px repeat-y,
+    linear-gradient(#000, #000) center / calc(100% - 26px) 100% no-repeat;
+}
+/* where the letter was rolled: faint bands of curl every turn of the roll */
+.inv-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg, transparent 0, rgba(120, 82, 40, 0.05) calc(var(--u) * 0.6), transparent calc(var(--u) * 0.63));
+  mix-blend-mode: multiply;
+}
+
+/* gold foil: a metal gradient clipped to the letters, pressed slightly into the paper; it catches the light once */
+.foil {
+  background-image: linear-gradient(100deg, #6e4a1c 0%, #a87a34 18%, #d9b467 27%, #f3dc9a 31%, #b98a3e 38%, #7a5422 52%, #a77b35 66%, #e6c57c 74%, #f6e3a8 77%, #a57732 86%, #6e4a1c 100%);
+  background-size: 260% 100%;
+  background-position: 0% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 250, 236, 0.6)) drop-shadow(0 -0.5px 0 rgba(70, 44, 16, 0.35));
+}
+[data-in] .foil,
+.foil[data-in],
+[data-in].foil-shine,
+[data-in] .foil-shine {
+  animation: foil-shine 2.6s var(--ease-silk) 0.35s both;
+}
+@keyframes foil-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+/* SVG ornaments in foil */
+.foil-svg [stroke='currentColor'],
+.foil-svg path:not([fill]),
+.foil-svg ellipse:not([fill]) {
+  stroke: url(#inv-foil);
+}
+.foil-svg [fill='currentColor'] {
+  fill: url(#inv-foil);
+}
+
+/* engraved capitals */
+.inv-caps {
+  font-family: var(--font-inscription);
+  text-transform: uppercase;
+}
+.indic .inv-caps {
+  text-transform: none;
+  letter-spacing: normal !important;
+}
+
+/* the printed cards on the letter */
+.inv-card {
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(255, 252, 244, 0.9), rgba(250, 242, 224, 0.6) 60%, rgba(240, 226, 196, 0.55)),
+    url('/images/invitation/parchment.webp') 0 0 / 300px 300px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 14px 26px -18px rgba(74, 44, 16, 0.55),
+    0 3px 6px -3px rgba(74, 44, 16, 0.3);
+}
+/* a double gold rule inset in a card */
+.inv-frame {
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  border: 1px solid rgba(169, 132, 75, 0.75);
+  box-shadow: inset 0 0 0 3px rgba(255, 250, 238, 0.6), inset 0 0 0 4px rgba(169, 132, 75, 0.4);
+}
+/* a temple-arch top */
+.inv-arch {
+  border-top-left-radius: 50% clamp(2.2rem, 18cqw, 3.4rem);
+  border-top-right-radius: 50% clamp(2.2rem, 18cqw, 3.4rem);
+}
+/* a ribbon banner with notched ends */
+.inv-ribbon {
+  position: relative;
+  background: linear-gradient(180deg, #8a2236, #6a1426 55%, #551020);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%);
+  box-shadow: inset 0 1px 0 rgba(255, 200, 200, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+.inv-ribbon::before,
+.inv-ribbon::after {
+  content: '';
+  position: absolute;
+  inset-inline: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 196, 120, 0.85), transparent);
+}
+.inv-ribbon::before {
+  top: 3px;
+}
+.inv-ribbon::after {
+  bottom: 3px;
+}
+/* flanking hairlines with a diamond, for small headings */
+.inv-flank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+.inv-flank::before,
+.inv-flank::after {
+  content: '';
+  height: 1px;
+  width: clamp(1.4rem, 9cqw, 3rem);
+  background: linear-gradient(90deg, transparent, rgba(169, 132, 75, 0.9));
+  -webkit-mask: radial-gradient(circle at 100% 50%, #000 2.5px, transparent 3px), linear-gradient(#000, #000);
+}
+.inv-flank::after {
+  transform: scaleX(-1);
+}
+/* an illuminated first letter (Latin script only) */
+.inv-dropcap::first-letter {
+  float: left;
+  font-family: var(--font-inscription);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 3.3em;
+  line-height: 0.82;
+  margin: 0.06em 0.14em 0 0;
+  color: #8a6326;
+  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.8), 0 0 14px rgba(214, 170, 92, 0.35);
+}
+
+/* revealed as the paper unrolls past it: ink settling into the page */
+.inv-sheet [data-inv] {
+  opacity: 0;
+  transform: translateY(10px);
+  filter: blur(4px);
+  transition:
+    opacity 0.9s var(--ease-silk),
+    transform 0.9s var(--ease-silk),
+    filter 0.9s var(--ease-silk);
+}
+.inv-sheet [data-inv][data-in],
+.inv-sheet.is-open [data-inv] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* candlelight on the tied scroll, and the glint that travels the seal */
+@keyframes candle-flicker {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  12% { opacity: 1; transform: scale(1.03); }
+  27% { opacity: 0.78; transform: scale(0.98); }
+  41% { opacity: 0.95; transform: scale(1.02); }
+  58% { opacity: 0.72; transform: scale(0.97); }
+  76% { opacity: 0.98; transform: scale(1.025); }
+}
+@keyframes seal-glint {
+  0%, 62% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+/* a roll turning as the paper runs off it */
+@keyframes roll-spin {
+  to { background-position: 0 calc(var(--u) * 0.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inv-sheet [data-inv] {
+    transition: none;
+  }
+  .foil {
+    animation: none !important;
+  }
 }
