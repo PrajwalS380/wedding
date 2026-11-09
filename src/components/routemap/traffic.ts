@@ -4,6 +4,7 @@
  */
 import * as THREE from 'three'
 import { Path, rng, type XZ } from './geo'
+import { glowPoints } from './lights'
 import { patch, type Shared } from './shaders'
 
 type Kind = { len: number; w: number; h: number; cab?: [number, number, number]; colors: string[]; cabColor?: string; speed: [number, number]; share: number }
@@ -53,6 +54,11 @@ export function buildTraffic(roads: { c: number; p: XZ[] }[], shared: Shared, ne
     up = new THREE.Vector3(0, 1, 0),
     hide = new THREE.Matrix4().makeScale(0, 0, 0)
   const at = [0, 0, 0, 0]
+  // headlights ahead, tail-lights behind
+  const lightCol = new Float32Array(count * 6)
+  for (let i = 0; i < count; i++) lightCol.set([1, 0.9, 0.7, 1, 0.1, 0.06], i * 6)
+  const lights = glowPoints(new Float32Array(count * 6), lightCol, { size: 1.1, min: 1, max: 9, intensity: 1 })
+  const lp = lights.positions
   const place = () => {
     cars.forEach((c, i) => {
       const { path, c: cls } = lanes[c.lane]
@@ -67,15 +73,19 @@ export function buildTraffic(roads: { c: number; p: XZ[] }[], shared: Shared, ne
       body.setMatrixAt(i, m4.compose(p.set(x, 0.55, z), q, sc.set(k.len, k.h, k.w)))
       if (k.cab) cab.setMatrixAt(i, m4.compose(p.set(x - dx * 0.25, 0.55 + k.h, z - dz * 0.25), q, sc.set(...k.cab)))
       else cab.setMatrixAt(i, hide)
+      const half = k.len / 2 + 0.1
+      lp.set([x + dx * half, 1.2, z + dz * half, x - dx * half, 1.2, z - dz * half], i * 6)
     })
     body.instanceMatrix.needsUpdate = cab.instanceMatrix.needsUpdate = true
+    lights.points.geometry.attributes.position.needsUpdate = true
   }
   place()
   const group = new THREE.Group()
-  group.add(body, cab)
+  group.add(body, cab, lights.points)
   return {
     group,
-    disposables: [box, mat],
+    lights,
+    disposables: [box, mat, lights],
     /** move everything on by dt seconds */
     step(dt: number) {
       for (const c of cars) {

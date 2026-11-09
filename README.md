@@ -311,10 +311,11 @@ red silk: a five-wick lamp burning, akshate, kumkum and haldi, marigolds, with
 rice and petals in the air and the reception's strings of lights behind) and the
 **Vivaha Muhurta** (the mangalasutra draped on a turmeric-marked coconut on a
 silver plate of akshate, the sacred fire of the homa glowing behind). **Second**,
-after a short band of dawn: a **live 3D map of Davangere** that plays the drive
-from the railway station to the hall (below), with the **venue** card over its
-foot, and the **guests'** card under the thamboola plate — the family's numbers as
-call tiles and a share button. Wide screens put the map left and the cards right.
+as the sunset's embers sink into a deep blue night: a **live 3D map of
+Davangere** at night that plays the drive from the railway station to the hall
+(below), with the **venue** card over its foot, and the **guests'** card under the
+thamboola plate — the family's numbers as call tiles and a share button — both
+dark glass cards edged in gold. Wide screens put the map left and the cards right.
 
 **Each fact has one place on the page** — nothing is repeated section after section:
 
@@ -335,8 +336,9 @@ in a hard edge. Each picture fades at its top and bottom (`.scene-fade`) into a
 backdrop that runs from the colour of the part above to the colour of the part
 below; neighbouring parts meet in the shared colours in `SKY`
 (`src/components/celebrations/styles.ts`) — night green → dusk → the sunset
-scene → embers, a short dawn gradient onto the handmade paper of the venue and
-guests, and a dusk gradient back into the night green of the RSVP. The
+scene → embers, a short band into the deep blue night (`midnight`) of the venue's
+map and cards, and a band from that blue back into the night green of the RSVP —
+the page is dark from the hero to the footer. The
 calendar above and the RSVP card and footer below fade into the same colours.
 
 The scenes are **artistic 3D renders made for this site** (captioned as such where
@@ -370,7 +372,11 @@ scenes) are what ships.
 ### The 3D route map (venue)
 
 When the venue comes into view, a short film plays (`src/components/routemap/`,
-plain three.js, loaded only when the venue is near): a wide shot high over the
+plain three.js, loaded only when the venue is near). It is night — a low moon,
+most windows lit (warm bulbs and the white of tube lights), shops open, sodium
+street lamps pooling light on the roads, headlights and tail-lights moving, the
+station's platform lamps and a lit train, the hall blazing with wedding lights —
+in the same deep blue the page fades it into. The film: a wide shot high over the
 city through scattered cloud, a dive down to the railway station, then a glowing
 route that draws itself along the real roads — Hadadi Road, Vidhyanagar Road,
 BIET Road, Shamanur Road, named in the caption as it goes (6.1 km, about 8
@@ -378,15 +384,17 @@ minutes) — the camera following it, until a brass pin drops over Bapuji
 Samudhaya Bhavan, its wedding lights glow up and the camera circles the hall.
 "Replay" plays it again. With reduced motion (or animations paused) it shows the
 finished map as a still; without WebGL, the rendered paper-map pin shows
-instead. "Get directions" stays the way to navigate.
+instead, dimmed to the night. "Get directions" stays the way to navigate.
 
 What's in the city, one module each: `city.ts` (houses — rows of windows under
-sunshade slabs with some panes catching the low sun, parapets, stair rooms with
+sunshade slabs, most of them lit, parapets, stair rooms with
 the water tank on top, shopfronts with shutters and sign boards on main roads,
 weathering), `streets.ts` (asphalt with lane markings and a planted median on
-the widest roads, pale patchy lanes, the double-line railway with sleepers and
-rails, canals), `nature.ts` (neem, coconut palms and gulmohar in flower; the
-lake as moving water mirroring the evening sky, with water hyacinth),
+the widest roads, pale patchy lanes, street lamps and the pools of light under
+them, the double-line railway with sleepers and rails, canals), `nature.ts`
+(neem, coconut palms and gulmohar in flower; the lake as moving water mirroring
+the night sky, with water hyacinth), `lights.ts` (glowing points: lamps,
+headlights),
 `landmarks.ts` (the hall dressed for the wedding — cascades of lights, a
 marigold arch, a shamiana, guests' cars — and the station's platforms,
 canopies, footbridge, overhead wires and a train), `traffic.ts` (autos, cars,

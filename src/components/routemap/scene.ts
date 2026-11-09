@@ -63,7 +63,8 @@ export interface RouteMapController {
   dispose: () => void
 }
 
-const HAZE = new THREE.Color('#eadcc2')
+/** the night haze — the same deep blue the page fades the map into */
+const HAZE = new THREE.Color('#141a30')
 const T_INTRO = 2.6
 const T_DRIVE = 9
 const T_ARRIVE = 3.4
@@ -91,7 +92,7 @@ export async function createRouteMap(canvas: HTMLCanvasElement, base: string, ev
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75))
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1.04
+  renderer.toneMappingExposure = 1.1
   renderer.setClearColor(0x000000, 0)
 
   const scene = new THREE.Scene()
@@ -101,13 +102,14 @@ export async function createRouteMap(canvas: HTMLCanvasElement, base: string, ev
   const track = <T extends { dispose: () => void }>(o: T) => (disposables.push(o), o)
   const all = (list: { dispose: () => void }[]) => disposables.push(...list)
 
-  // light: a low late-afternoon sun from the west-south-west, warm sky, earthy bounce
+  // light: night — a low moon in the west-south-west (where the baked shadows fall from), a deep blue sky
+  // overhead and the town's own warm glow from below; the lamps, windows and the hall do the rest
   const az = THREE.MathUtils.degToRad(data.sun.azimuth)
   const el = THREE.MathUtils.degToRad(data.sun.elevation)
   const sunDir = new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el))
-  const sun = new THREE.DirectionalLight(0xffd3a0, 2.6)
-  sun.position.copy(sunDir).multiplyScalar(1000)
-  scene.add(sun, new THREE.HemisphereLight(0xffeedd, 0x7e6248, 1.05))
+  const moon = new THREE.DirectionalLight(0xaebbe0, 0.85)
+  moon.position.copy(sunDir).multiplyScalar(1000)
+  scene.add(moon, new THREE.HemisphereLight(0x3e4a6e, 0x3a2418, 0.75))
 
   const pmrem = track(new THREE.PMREMGenerator(renderer))
   const metalEnv = track(pmrem.fromScene(new RoomEnvironment(), 0.04).texture)
@@ -144,7 +146,7 @@ export async function createRouteMap(canvas: HTMLCanvasElement, base: string, ev
   scene.add(ground)
 
   const view = new DataView(bin)
-  const streets = buildStreets(data.roads, data.rail, data.canals, data.stationYard.sizes.track, shared)
+  const streets = buildStreets(data.roads, data.rail, data.canals, data.stationYard.sizes.track, shared, [x0, z0, x1, z1])
   const city = buildCity(view, data.colors, shared)
   const trees = buildTrees(view, city.treesAt, shared)
   const waterNormal = track(waterNormalTexture())
@@ -152,6 +154,7 @@ export async function createRouteMap(canvas: HTMLCanvasElement, base: string, ev
   const hall = buildHall(data.hall, shared, metalEnv)
   const railway = buildStation(data.stationYard, shared)
   const traffic = buildTraffic(data.roads, shared, [data.station, [0, 0]])
+  const glows = [streets.lamps, traffic.lights, railway.lamps]
   for (const part of [streets, city, trees, lakes, hall, railway, traffic]) {
     scene.add(part.group)
     all(part.disposables)
@@ -463,7 +466,7 @@ export async function createRouteMap(canvas: HTMLCanvasElement, base: string, ev
       r.scale.setScalar(26 + rt * 70)
       ;(r.material as THREE.MeshBasicMaterial).opacity = ta > 0.95 ? Math.max(0, 0.6 * (1 - rt / 2.8)) : 0
     })
-    hall.setGlow(0.35 + 0.65 * ease(clamp01((ta - 0.9) / 1.6)))
+    hall.setGlow(0.6 + 0.4 * ease(clamp01((ta - 0.9) / 1.6)))
 
     camPos.copy(shot.pos)
     camera.position.copy(shot.pos)
@@ -473,6 +476,10 @@ export async function createRouteMap(canvas: HTMLCanvasElement, base: string, ev
     const dist = shot.pos.distanceTo(shot.look)
     fog.near = dist * 1.05
     fog.far = dist * 4.6
+    for (const g of glows) {
+      g.uniforms.uFogNear.value = fog.near
+      g.uniforms.uFogFar.value = fog.far
+    }
     pin.rotation.y = Math.atan2(camPos.x - hc.x, camPos.z - hc.z) // the pin's face turns to the camera
     renderer.render(scene, camera)
   }
@@ -499,7 +506,9 @@ export async function createRouteMap(canvas: HTMLCanvasElement, base: string, ev
     camera.fov = 46 - 10 * clamp01((w / h - 0.85) / 0.6)
     // shift the lens so the subject sits at the focus point
     camera.setViewOffset(w, h, (0.5 - fx) * w, (0.5 - fy) * h, w, h)
-    hall.bulbs.uniforms.uScale.value = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2))
+    const scale = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2))
+    hall.bulbs.uniforms.uScale.value = scale
+    for (const g of glows) g.uniforms.uScale.value = scale
     if (still || !active) frame(performance.now())
   }
   resize()

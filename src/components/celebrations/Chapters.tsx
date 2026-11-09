@@ -10,7 +10,7 @@ import { useI18n } from '../../i18n/useI18n'
 import { SceneStage } from './SceneStage'
 import { RouteMap } from '../routemap/RouteMap'
 import { useOrientation } from '../../hooks/useOrientation'
-import { actionClass, dawnGradient, duskGradient, sceneBackdrop, SKY } from './styles'
+import { actionClass, nightfallGradient, nightGreenGradient, sceneBackdrop, SKY } from './styles'
 
 /* ---------------------------------------------------------------- helpers */
 
@@ -182,9 +182,9 @@ export function CeremoniesChapter() {
 
 /* ---------------------------------------------------------------- dawn: night turning to morning */
 
-/** A short band of sky between the evening scene and the morning paper: no page of its own, just the light changing. */
-export function DawnBand() {
-  return <div aria-hidden="true" className="h-[clamp(5.5rem,13svh,8rem)]" style={{ background: dawnGradient('transparent') }} />
+/** A short band of sky between the sunset and the venue's night: no page of its own, just the light going. */
+export function NightfallBand() {
+  return <div aria-hidden="true" className="h-[clamp(5.5rem,13svh,8rem)]" style={{ background: nightfallGradient }} />
 }
 
 /* ---------------------------------------------------------------- 4 · daylight: venue & guests */
@@ -200,18 +200,18 @@ function VenueBlock() {
   }
   return (
     <div className="text-center">
-      <h3 id="venue-title" className="eyebrow !text-label font-bold text-burgundy">
+      <h3 id="venue-title" className="eyebrow !text-label font-bold text-gold">
         {t('celebrations.venueTitle')}
       </h3>
-      <p className="mt-3 font-display text-[clamp(1.9rem,1.7rem+1vw,2.5rem)] font-semibold leading-[1.05] text-maroon">{t('venue.name')}</p>
-      <address className="mt-2 text-[0.92rem] not-italic leading-relaxed text-ink-soft">
+      <p className="mt-3 font-display text-[clamp(1.9rem,1.7rem+1vw,2.5rem)] font-semibold leading-[1.05] text-ivory">{t('venue.name')}</p>
+      <address className="mt-2 text-[0.92rem] not-italic leading-relaxed text-ivory/70">
         <span className="sr-only">{t('celebrations.address')} </span>
         {t('venue.line1')}, {t('venue.line2')}
         <br />
         {t('venue.line3')}
       </address>
       {lang !== 'en' && (
-        <p lang="en" className="mt-2 text-caption text-ink-soft/90">
+        <p lang="en" className="mt-2 text-caption text-ivory/65">
           <span className="font-semibold">{t('celebrations.asOnMaps')}</span> {venue.fullAddress}
         </p>
       )}
@@ -220,12 +220,12 @@ function VenueBlock() {
           <MapPin className="h-4 w-4" aria-hidden="true" /> {t('celebrations.getDirections')}
           <span className="sr-only"> {t('common.mapsNewTab')}</span>
         </a>
-        <button type="button" onClick={copy} className={actionClass.light}>
+        <button type="button" onClick={copy} className={actionClass.dark}>
           {copyState === 'copied' ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
           {copyState === 'copied' ? t('celebrations.addressCopied') : t('celebrations.copyAddress')}
         </button>
       </div>
-      <p role="status" aria-live="polite" className="mt-1 min-h-4 text-caption text-burgundy">
+      <p role="status" aria-live="polite" className="mt-1 min-h-4 text-caption text-gold-light">
         {copyState === 'copied' && t('celebrations.copiedNote')}
         {copyState === 'failed' && t('celebrations.copyFailed')}
       </p>
@@ -234,14 +234,14 @@ function VenueBlock() {
         onClick={() => setShowMap((v) => !v)}
         aria-expanded={showMap}
         aria-controls="celebrations-map"
-        className="inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.2em] text-maroon underline-offset-[6px] hover:underline"
+        className="inline-flex min-h-11 items-center gap-2 text-label font-semibold uppercase tracking-[0.2em] text-gold-light underline-offset-[6px] hover:text-ivory hover:underline"
       >
         <MapPin className="h-4 w-4" aria-hidden="true" />
         {showMap ? t('celebrations.hideMap') : t('celebrations.showMap')}
       </button>
-      <p className="text-caption text-ink-soft/85">{t('celebrations.mapNote')}</p>
+      <p className="text-caption text-ivory/55">{t('celebrations.mapNote')}</p>
       {showMap && (
-        <div id="celebrations-map" className="mt-3 overflow-hidden rounded-[3px] shadow-[0_0_0_1px_rgba(122,90,40,.35)]">
+        <div id="celebrations-map" className="mt-3 overflow-hidden rounded-[3px] shadow-[0_0_0_1px_rgba(213,176,109,.35)]">
           <iframe
             title={t('celebrations.mapTitle', { venue: t('venue.name'), city: t('venue.city') })}
             src={venue.mapEmbedUrl}
@@ -256,15 +256,15 @@ function VenueBlock() {
   )
 }
 
-const card = 'relative rounded-[4px] bg-[rgba(255,251,242,.93)] shadow-[0_26px_50px_-30px_rgba(60,30,10,.6),0_0_0_1px_rgba(122,90,40,.28)]'
+const card = 'relative rounded-[4px] bg-[linear-gradient(180deg,rgba(26,22,40,.9),rgba(14,13,26,.94))] shadow-[0_30px_60px_-30px_rgba(0,0,0,.95),0_0_0_1px_rgba(213,176,109,.3),inset_0_1px_0_rgba(255,236,200,.06)] backdrop-blur-md'
 const brassDisc =
   'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#3e2508] bg-[radial-gradient(circle_at_35%_28%,#fff3cf_0%,#f0cf86_22%,#c9963f_55%,#8d6324_82%,#6a4716_100%)] shadow-[inset_0_0_0_2px_rgba(255,240,200,.5),inset_0_0_0_3.5px_rgba(110,72,22,.55),0_3px_8px_-3px_rgba(70,40,5,.7)]'
 
 /** A thin brass double rule just inside a card. */
 function CardRule() {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-[2px] border border-brass/35">
-      <div className="absolute inset-1 rounded-[1px] border border-brass/15" />
+    <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-[2px] border border-gold/30">
+      <div className="absolute inset-1 rounded-[1px] border border-gold/12" />
     </div>
   )
 }
@@ -287,14 +287,14 @@ function GuestServices() {
       />
       <div className={`${card} px-5 pb-5 pt-14`}>
         <CardRule />
-        <h3 className="eyebrow !text-label font-bold text-burgundy">{t('celebrations.guestsTitle')}</h3>
-        <p className="mt-3 font-display text-[1.15rem] font-semibold text-ink">{t('celebrations.call')}</p>
+        <h3 className="eyebrow !text-label font-bold text-gold">{t('celebrations.guestsTitle')}</h3>
+        <p className="mt-3 font-display text-[1.15rem] font-semibold text-ivory">{t('celebrations.call')}</p>
         <div className="relative mt-2 grid grid-cols-2 gap-2.5">
           {wedding.contact.phones.map((p) => (
             <a
               key={p}
               href={`tel:+${p}`}
-              className="flex min-h-[4.6rem] flex-col items-center justify-center gap-1.5 rounded-[3px] border border-brass/35 bg-[rgba(255,255,255,.45)] px-1 py-2 text-maroon transition-colors hover:bg-[rgba(255,255,255,.8)]"
+              className="flex min-h-[4.6rem] flex-col items-center justify-center gap-1.5 rounded-[3px] border border-gold/30 bg-[rgba(255,255,255,.04)] px-1 py-2 text-gold-light transition-colors hover:bg-[rgba(255,255,255,.09)] hover:text-ivory"
             >
               <span className={brassDisc} aria-hidden="true">
                 <Phone className="h-4 w-4" />
@@ -306,10 +306,10 @@ function GuestServices() {
             </a>
           ))}
         </div>
-        <button type="button" onClick={share} className={`${actionClass.light} relative mt-2.5 w-full`}>
+        <button type="button" onClick={share} className={`${actionClass.dark} relative mt-2.5 w-full`}>
           <Share2 className="h-4 w-4" aria-hidden="true" /> {t('celebrations.share')}
         </button>
-        <p role="status" aria-live="polite" className="mt-1 text-caption text-ink-soft empty:hidden">
+        <p role="status" aria-live="polite" className="mt-1 text-caption text-ivory/70 empty:hidden">
           {shareStatus && shareStatus !== 'cancelled' ? t(`share.${shareStatus}`) : ''}
         </p>
       </div>
@@ -334,7 +334,14 @@ export function VenueChapter() {
   ) : (
     <SceneStage art={art} />
   )
-  const note = !photo && <p className="text-center text-[0.72rem] italic leading-snug text-ink-soft/85">{t('celebrations.artNote')}</p>
+  // while the night map loads (or where WebGL is missing) the rendered pin on its map stands in, dimmed to the night
+  const nightPicture = (
+    <div className="absolute inset-0 [filter:brightness(.5)_saturate(.75)_contrast(1.05)]">
+      {picture}
+      <div className="absolute inset-0 bg-[#1a2450] opacity-55 mix-blend-multiply" />
+    </div>
+  )
+  const note = !photo && <p className="text-center text-[0.72rem] italic leading-snug text-ivory/55">{t('celebrations.artNote')}</p>
   const cards = (
     <>
       <div className={`${card} px-6 pb-5 pt-7`} data-reveal="up">
@@ -356,7 +363,7 @@ export function VenueChapter() {
             </div>
           ) : (
             // the live 3D drive from the railway station; the rendered pin is its poster and fallback
-            <RouteMap fallback={picture} focus={[0.5, 0.44]} maskClass="scene-fade film-grain" maskStyle={fades('10%', '30%')} />
+            <RouteMap fallback={nightPicture} focus={[0.5, 0.44]} maskClass="scene-fade film-grain" maskStyle={fades('10%', '30%')} />
           )}
         </div>
         <div className="relative z-10 -mt-[24%] px-[var(--gutter)] pb-4">
@@ -376,7 +383,7 @@ export function VenueChapter() {
             {picture}
           </div>
         ) : (
-          <RouteMap fallback={picture} focus={[0.46, 0.5]} maskClass="scene-fade scene-fade-right film-grain" maskStyle={fades('10%', '10%')} />
+          <RouteMap fallback={nightPicture} focus={[0.46, 0.5]} maskClass="scene-fade scene-fade-right film-grain" maskStyle={fades('10%', '10%')} />
         )}
         <div className="absolute inset-x-6 bottom-2 lg:right-auto">{note}</div>
       </div>
@@ -385,7 +392,7 @@ export function VenueChapter() {
   )
 }
 
-/** The end of the day: the paper warms and darkens into the night of the RSVP below. */
-export function DuskBand() {
-  return <div aria-hidden="true" className="h-[clamp(8rem,22svh,13rem)]" style={{ background: duskGradient }} />
+/** The venue's deep blue night turning into the night green of the RSVP below. */
+export function NightBand() {
+  return <div aria-hidden="true" className="h-[clamp(6rem,16svh,10rem)]" style={{ background: nightGreenGradient }} />
 }

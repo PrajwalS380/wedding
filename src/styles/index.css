@@ -545,18 +545,6 @@ html.is-locked body {
     mask-composite: intersect;
   }
 }
-.paper-sheet {
-  --focus-ring: var(--color-burgundy);
-  color: var(--color-ink);
-  background-color: #f4e7cb;
-  background-image: url('/images/celebrations/paper.webp');
-  background-size: 100% auto;
-  background-repeat: repeat-y;
-}
-.paper-card {
-  box-shadow: 0 30px 60px -28px rgba(30, 14, 4, 0.75), 0 0 0 1px rgba(122, 90, 40, 0.22);
-}
-
 .ambient {
   animation-play-state: running;
 }

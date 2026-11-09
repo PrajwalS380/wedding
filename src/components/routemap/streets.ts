@@ -5,12 +5,13 @@
  * canals' still green water. Markings fade where streets meet; everything fades at the traced area's edge.
  */
 import * as THREE from 'three'
-import { ribbonGeometry, type XZ } from './geo'
+import { Path, ribbonGeometry, type XZ } from './geo'
+import { glowPoints } from './lights'
 import { patch, type Shared } from './shaders'
 
 const VERT_HEAD = /* glsl */ `attribute float aLen; varying vec2 vRoad; varying float vLen;`
 const VERT = /* glsl */ `vRoad = uv; vLen = aLen;`
-const FRAG_HEAD = /* glsl */ `varying vec2 vRoad; varying float vLen; uniform float uHalf; uniform float uClass;`
+const FRAG_HEAD = /* glsl */ `varying vec2 vRoad; varying float vLen; uniform float uHalf; uniform float uClass; uniform float uPeriod; uniform vec3 uLamp; uniform float uPool;`
 
 const ROAD = /* glsl */ `
 float across = vRoad.y * uHalf;                       // metres from the centre line
@@ -37,6 +38,13 @@ float median = (1. - smoothstep(.9, .9 + px, abs(across))) * step(3.5, uClass);
 vec3 med = mix(vec3(.8, .78, .72), vec3(.32, .44, .2) * (.8 + .4 * n2), 1. - smoothstep(.5, .5 + px, abs(across)));
 c = mix(c, med, median);
 diffuseColor.rgb = c;
+// pools of lamplight, one under each street lamp (alternate sides, as placed by buildStreets)
+float lk = floor(vRoad.x / uPeriod);
+float lAlong = vRoad.x - (lk + .5) * uPeriod;
+float lSide = mod(lk, 2.) < .5 ? 1. : -1.;
+float lOff = across - lSide * (uHalf - .6);
+float pool = exp(-(lAlong * lAlong + lOff * lOff * 1.5) / (2. * uPool * uPool));
+totalEmissiveRadiance += uLamp * pool * (.82 + .3 * n1);
 `
 
 const RAIL = /* glsl */ `
@@ -62,7 +70,15 @@ diffuseColor.rgb = mix(vec3(.24, .36, .32), vec3(.34, .46, .4), n) * mix(.8, 1.,
 
 export const ROADS: Record<1 | 2 | 3 | 4, { half: number }> = { 1: { half: 3.25 }, 2: { half: 5.5 }, 3: { half: 7 }, 4: { half: 9.5 } }
 
-export function buildStreets(roads: { c: 1 | 2 | 3 | 4; p: XZ[] }[], rail: XZ[], canals: XZ[][], track: number, shared: Shared) {
+/** Street lamps by road class: spacing (m), the light they pool on the road, the lamp's own colour, height. */
+const LAMPS: Record<1 | 2 | 3 | 4, { period: number; pool: [number, number, number]; radius: number; lamp: [number, number, number]; y: number }> = {
+  1: { period: 58, pool: [0.3, 0.24, 0.16], radius: 6.5, lamp: [1, 0.86, 0.66], y: 5.5 }, // lanes: a few warm-white lamps
+  2: { period: 32, pool: [0.62, 0.36, 0.13], radius: 8, lamp: [1, 0.62, 0.26], y: 7 }, // sodium orange on the main roads
+  3: { period: 30, pool: [0.66, 0.38, 0.14], radius: 8.5, lamp: [1, 0.62, 0.26], y: 8 },
+  4: { period: 28, pool: [0.7, 0.4, 0.15], radius: 9, lamp: [1, 0.64, 0.28], y: 9 },
+}
+
+export function buildStreets(roads: { c: 1 | 2 | 3 | 4; p: XZ[] }[], rail: XZ[], canals: XZ[][], track: number, shared: Shared, bounds: [number, number, number, number]) {
   const group = new THREE.Group()
   const disposables: { dispose: () => void }[] = []
   const surface = (key: string, color: string, half: number, cls: number, offset: number) => {
@@ -74,7 +90,7 @@ export function buildStreets(roads: { c: 1 | 2 | 3 | 4; p: XZ[] }[], rail: XZ[],
       vertexBody: VERT,
       fragmentHead: FRAG_HEAD,
       color,
-      uniforms: { uHalf: { value: half }, uClass: { value: cls } },
+      uniforms: { uHalf: { value: half }, uClass: { value: cls }, uPeriod: { value: LAMPS[cls as 1]?.period ?? 40 }, uLamp: { value: new THREE.Color(...(LAMPS[cls as 1]?.pool ?? [0, 0, 0])) }, uPool: { value: LAMPS[cls as 1]?.radius ?? 7 } },
     })
     disposables.push(m)
     return m
@@ -111,5 +127,28 @@ export function buildStreets(roads: { c: 1 | 2 | 3 | 4; p: XZ[] }[], rail: XZ[],
     disposables.push(g)
     group.add(m)
   }
-  return { group, disposables }
+  // the lamps themselves, where the pools are: alternate sides, one per period along every street
+  const pos: number[] = [],
+    col: number[] = []
+  const at = [0, 0, 0, 0]
+  const [bx0, bz0, bx1, bz1] = bounds
+  for (const r of roads) {
+    const L = LAMPS[r.c]
+    const path = new Path(r.p)
+    for (let k = 0; (k + 0.5) * L.period < path.length; k++) {
+      path.sample((k + 0.5) * L.period, at)
+      const side = k % 2 ? -1 : 1
+      const off = side * (ROADS[r.c].half - 0.6)
+      const x = at[0] - at[3] * off,
+        z = at[1] + at[2] * off
+      const edge = Math.min(1, Math.max(0, Math.min(x - bx0, bx1 - x, z - bz0, bz1 - z) / 240))
+      if (edge < 0.1) continue
+      pos.push(x, L.y, z)
+      col.push(...L.lamp.map((v) => v * edge))
+    }
+  }
+  const lamps = glowPoints(new Float32Array(pos), new Float32Array(col), { size: 1.6, min: 1.3, max: 16, intensity: 1.1 })
+  disposables.push(lamps)
+  group.add(lamps.points)
+  return { group, disposables, lamps }
 }

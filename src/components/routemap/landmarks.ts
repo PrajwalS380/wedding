@@ -12,6 +12,7 @@ import * as THREE from 'three'
 import { block, blockGeometry, houseMaterial, PLAIN } from './city'
 import { rng, type XZ } from './geo'
 import { patch, type Shared } from './shaders'
+import { glowPoints } from './lights'
 import { coachTexture, glowTexture, stripeTexture } from './textures'
 
 export interface HallData {
@@ -373,7 +374,7 @@ export function buildHall(h: HallData, shared: Shared, metalEnv: THREE.Texture) 
     height: HH,
     setGlow(on: number) {
       bulbs.uniforms.uOn.value = on
-      poolMat.opacity = 0.32 * Math.max(0, on - 0.3)
+      poolMat.opacity = 0.5 * Math.max(0, on - 0.2)
     },
   }
 }
@@ -407,13 +408,24 @@ export function buildStation(st: StationData, shared: Shared) {
   box(IL, 1, IW, ilx, 0, ilz, concrete)
   box(IL, 0.02, 0.3, ilx, 1, ilz + IW / 2 - 0.3, yellow)
   box(IL, 0.02, 0.3, ilx, 1, ilz - IW / 2 + 0.3, yellow)
+  const lampPos: number[] = [],
+    lampCol: number[] = []
   const roofSpan = (a: number, b: number, z: number, w: number) => {
     box(b - a, 0.35, w, (a + b) / 2, 5.4, z, canopy)
     for (let x = a + 4; x < b - 2; x += 12) box(0.3, 4.4, 0.3, x, 1, z, steel)
+    // tube lights under the canopy
+    for (let x = a + 6; x < b - 2; x += 9) {
+      lampPos.push(x, 5.1, z)
+      lampCol.push(0.85, 0.93, 1)
+    }
   }
   roofSpan(-150, -10, plz + 0.6, 7) // a gap where the route leaves the platform
   roofSpan(10, 130, plz + 0.6, 7)
   roofSpan(ilx - 100, ilx + 100, ilz, 6)
+
+  const platformLamps = glowPoints(new Float32Array(lampPos), new Float32Array(lampCol), { size: 1.3, min: 1.2, max: 12, intensity: 1.1 })
+  disposables.push(platformLamps)
+  g.add(platformLamps.points)
 
   // the footbridge over the tracks
   const fob = lam('#9aa39c')
@@ -471,10 +483,12 @@ export function buildStation(st: StationData, shared: Shared) {
   // the train at the island platform, in world coordinates
   const train = new THREE.Group()
   const coachTex = coachTexture(false),
-    locoTex = coachTexture(true)
-  const coachMat = patch(new THREE.MeshLambertMaterial({ map: coachTex }), shared, { key: 'coach', clouds: true })
-  const locoMat = patch(new THREE.MeshLambertMaterial({ map: locoTex }), shared, { key: 'loco', clouds: true })
-  disposables.push(coachTex, locoTex, coachMat, locoMat)
+    locoTex = coachTexture(true),
+    coachGlow = coachTexture(false, true),
+    locoGlow = coachTexture(true, true)
+  const coachMat = patch(new THREE.MeshLambertMaterial({ map: coachTex, emissiveMap: coachGlow, emissive: '#ffffff', emissiveIntensity: 0.95 }), shared, { key: 'coach', clouds: true })
+  const locoMat = patch(new THREE.MeshLambertMaterial({ map: locoTex, emissiveMap: locoGlow, emissive: '#ffffff', emissiveIntensity: 0.95 }), shared, { key: 'loco', clouds: true })
+  disposables.push(coachTex, locoTex, coachGlow, locoGlow, coachMat, locoMat)
   const n = st.train.length
   const bodies = new THREE.InstancedMesh(unit, coachMat, n - 1)
   const loco = new THREE.InstancedMesh(unit, locoMat, 1)
@@ -495,5 +509,5 @@ export function buildStation(st: StationData, shared: Shared) {
   })
   train.add(bodies, loco, roofs, frames)
 
-  return { group: g, train, disposables }
+  return { group: g, train, disposables, lamps: platformLamps }
 }

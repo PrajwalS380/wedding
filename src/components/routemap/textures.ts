@@ -84,7 +84,7 @@ export function waterNormalTexture() {
   return dataTexture(N, px)
 }
 
-/** A late-afternoon sky to reflect: pale blue overhead, warm haze at the horizon, the sun's glow. */
+/** A night sky to reflect: deep blue overhead, the town's faint warm glow at the horizon, the moon's halo. */
 export function skyTexture(sunDir: THREE.Vector3) {
   const W = 256,
     H = 128
@@ -93,9 +93,9 @@ export function skyTexture(sunDir: THREE.Vector3) {
   c.height = H
   const ctx = c.getContext('2d')!
   const img = ctx.createImageData(W, H)
-  const zen = [150, 182, 206],
-    hor = [246, 214, 168],
-    gnd = [150, 128, 104]
+  const zen = [10, 16, 40],
+    hor = [58, 50, 66],
+    gnd = [14, 12, 16]
   const d = new THREE.Vector3()
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
@@ -104,8 +104,8 @@ export function skyTexture(sunDir: THREE.Vector3) {
       d.set(Math.cos(az) * Math.cos(el), Math.sin(el), Math.sin(az) * Math.cos(el))
       const t = el > 0 ? Math.pow(el / (Math.PI / 2), 0.55) : 0
       let col = el > 0 ? hor.map((h, i) => h + (zen[i] - h) * t) : gnd.map((g, i) => g + (hor[i] - g) * Math.exp(el * 8))
-      const glow = Math.exp((d.dot(sunDir) - 1) * 9) * 1.3 + Math.exp((d.dot(sunDir) - 1) * 80) * 2.5
-      col = col.map((v, i) => v + [255, 200, 140][i] * glow)
+      const glow = Math.exp((d.dot(sunDir) - 1) * 14) * 0.35 + Math.exp((d.dot(sunDir) - 1) * 400) * 3
+      col = col.map((v, i) => v + [190, 205, 255][i] * glow)
       img.data.set([...col.map((v) => Math.min(255, v)), 255], (y * W + x) * 4)
     }
   ctx.putImageData(img, 0, 0)
@@ -160,16 +160,27 @@ export function puffTexture(seed: number) {
   return t
 }
 
-/** The side of a passenger coach (or the locomotive): livery, a band, a row of windows, doors at the ends. */
-export function coachTexture(loco: boolean) {
+/** The side of a passenger coach (or the locomotive): livery, a band, a row of windows, doors at the ends.
+ * With `glow`, only the windows — lit — on black, for the coach's emissive map at night. */
+export function coachTexture(loco: boolean, glow = false) {
   const W = 512,
     H = 64
   const c = document.createElement('canvas')
   c.width = W
   c.height = H
   const ctx = c.getContext('2d')!
-  ctx.fillStyle = loco ? '#b8432c' : '#2c4c84'
+  ctx.fillStyle = glow ? '#000' : loco ? '#b8432c' : '#2c4c84'
   ctx.fillRect(0, 0, W, H)
+  if (glow) {
+    ctx.fillStyle = '#ffd9a0'
+    if (loco) {
+      ctx.fillRect(6, H * 0.18, 34, H * 0.3)
+      ctx.fillRect(W - 40, H * 0.18, 34, H * 0.3)
+    } else for (let x = 40; x < W - 40; x += 22) if ((x * 7) % 5 !== 1) ctx.fillRect(x, H * 0.22, 15, H * 0.3)
+    const t = new THREE.CanvasTexture(c)
+    t.colorSpace = THREE.SRGBColorSpace
+    return t
+  }
   ctx.fillStyle = loco ? '#efe2c4' : '#d9d6cc'
   ctx.fillRect(0, H * 0.62, W, H * 0.08)
   if (loco) {

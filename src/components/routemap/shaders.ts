@@ -36,7 +36,7 @@ uniform vec3 uSun;
 ${GLSL_NOISE}
 float cloudLight(vec2 xz) {
   float c = texture2D(uClouds, xz / 1900. + uTime * vec2(.0042, .0018)).r;
-  return mix(1., .4, smoothstep(.52, .76, c));
+  return mix(1., .62, smoothstep(.52, .76, c)); // clouds passing over the moon
 }
 float edgeFade(vec2 xz) {
   float e = min(min(xz.x - uBounds.x, uBounds.z - xz.x), min(xz.y - uBounds.y, uBounds.w - xz.y));

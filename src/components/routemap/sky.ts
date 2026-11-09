@@ -21,14 +21,14 @@ export function buildClouds(from: THREE.Vector3, to: THREE.Vector3) {
     p.addScaledVector(side, (r() < 0.5 ? -1 : 1) * (350 + r() * 900)) // off to the sides, framing the view
     p.x += (r() - 0.5) * 500
     p.z += (r() - 0.5) * 500
-    const m = new THREE.SpriteMaterial({ map: textures[i % 3], transparent: true, depthWrite: false, fog: false, opacity: 0, rotation: r() * 6.28, color: '#fff3e2' })
+    const m = new THREE.SpriteMaterial({ map: textures[i % 3], transparent: true, depthWrite: false, fog: false, opacity: 0, rotation: r() * 6.28, color: '#7d8bb0' })
     const s = new THREE.Sprite(m)
     s.position.copy(p)
     const size = 380 + r() * 520
     s.scale.set(size * 1.6, size, 1)
     s.renderOrder = 9
     group.add(s)
-    puffs.push({ s, base: 0.3 + r() * 0.3 })
+    puffs.push({ s, base: 0.22 + r() * 0.22 })
   }
   return {
     group,

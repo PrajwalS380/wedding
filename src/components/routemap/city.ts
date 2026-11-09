@@ -72,16 +72,16 @@ if (vObjN.y > .5) {
   float hw = .5 + .26 * fract(vSeed * 7.31);
   float win = (1. - smoothstep(hw, hw + px, abs(cx))) * smoothstep(.95, .95 + px, fy) * (1. - smoothstep(2.2, 2.2 + px, fy));
   win *= step(y, top - .3) * (1. - plain) * mix(step(.38, r), 1., front);   // fewer on the sides and back
-  // panes: dark glass behind grilles; some catch the low sun
-  vec3 glass = mix(vec3(.12, .14, .17), vec3(.25, .26, .28), r);
-  vec3 vdir = normalize(vWorld - cameraPosition);
-  float glint = pow(max(0., dot(reflect(vdir, normalize(vWorldN)), uSun)), 8.) * step(.5, fract(r * 13.7));
-  glass += vec3(1., .74, .45) * glint * 2.4;
+  // panes at night: most lit — warm bulbs or the white of tube lights — the rest dark glass
+  float lit = step(fract(r * 7.13), .58);
+  vec3 lamp = fract(r * 3.7) < .42 ? vec3(.82, .9, 1.) : mix(vec3(1., .7, .38), vec3(1., .84, .58), fract(r * 11.3));
+  vec3 glass = mix(vec3(.04, .05, .07), lamp * .5, lit);
   // the sunshade slab over each row of windows, and the roof slab's edge
   float chajja = smoothstep(2.3, 2.3 + px, fy) * (1. - smoothstep(2.62, 2.62 + px, fy)) * step(y, top) * (1. - plain);
   float band = smoothstep(top - .18, top - .18 + px, y) * (1. - smoothstep(top + .02, top + .02 + px, y)) * (1. - plain);
   col = wall * (1. - .3 * chajja) * (1. - .32 * band);
   col = mix(col, glass, win);
+  totalEmissiveRadiance += lamp * lit * win * detail * (1.3 + .4 * fract(r * 5.1));
   // a stair room: its door, on the side facing the street
   float door = plain * front * (1. - smoothstep(.5, .5 + px, abs(along))) * (1. - smoothstep(2.1, 2.1 + px, y));
   col = mix(col, vec3(.3, .21, .14), door);
@@ -91,13 +91,17 @@ if (vObjN.y > .5) {
     float bx = fract((along + faceW * .5) / bayW) * bayW;
     float br = rmHash(vec2(floor((along + faceW * .5) / bayW), 7.) + vSeed * 13.);
     vec3 shutter = vec3(.55, .56, .57) * (.92 + .08 * step(.5, fract(y * 2.5)));
-    vec3 inside = mix(vec3(.32, .2, .1), vec3(1., .76, .44), .5 + .3 * fract(br * 7.));
-    vec3 shopC = br > .45 ? inside : shutter;
+    vec3 inside = mix(vec3(1., .74, .42), vec3(.9, .95, 1.), step(.7, fract(br * 7.)));
+    vec3 shopC = br > .45 ? inside * .5 : shutter;
+    float open = step(.45, br) * step(y, 2.55);
     shopC = mix(shopC, wall * .72, 1. - smoothstep(.16, .16 + px, min(bx, bayW - bx)));
     float si = floor(fract(vSeed * 3.7) * 4.);
     vec3 board = si < .5 ? vec3(.72, .16, .14) : si < 1.5 ? vec3(.12, .3, .58) : si < 2.5 ? vec3(.94, .74, .12) : vec3(.1, .46, .26);
     board *= .88 + .2 * rmNoise(vec2(along * 1.7, y * 3.));
     col = y > 2.55 ? board : shopC;
+    // open shops spill light; the boards are lit from within
+    float bayIn = smoothstep(.16, .16 + px, min(bx, bayW - bx));
+    totalEmissiveRadiance += inside * open * bayIn * 1.15 + board * step(2.55, y) * .55;
   }
   // weathering: damp streaks from the roof down, dust and grime at the plinth
   float streak = rmNoise(vec2(along * .9 + vSeed * 9., y * .1)) * smoothstep(top - 4.5, top, y);
@@ -107,6 +111,8 @@ if (vObjN.y > .5) {
   // far away the pattern averages out
   vec3 avg = wall * mix(.86, .74, shop * front) * plinth;
   col = mix(avg, col, detail);
+  // far away, the lit windows add up to a faint warm glow on every wall
+  totalEmissiveRadiance += vec3(1., .76, .46) * (1. - detail) * (1. - plain) * step(y, top) * .11;
 }
 diffuseColor.rgb = col;
 `

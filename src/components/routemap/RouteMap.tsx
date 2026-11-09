@@ -151,7 +151,7 @@ export function RouteMap({
         {ready && (
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
             {AREAS.map((a, i) => (
-              <span key={a} ref={(el) => void (labels.current[`area-${i}`] = el)} className="absolute left-0 top-0 whitespace-nowrap text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-ink-soft/70 [text-shadow:0_0_6px_rgba(250,244,230,.9)]">
+              <span key={a} ref={(el) => void (labels.current[`area-${i}`] = el)} className="absolute left-0 top-0 whitespace-nowrap text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-ivory/70 [text-shadow:0_0_8px_rgba(0,0,0,.95),0_0_2px_rgba(0,0,0,.9)]">
                 {place(a)}
               </span>
             ))}

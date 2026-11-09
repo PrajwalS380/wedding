@@ -14,15 +14,17 @@ export const SKY = {
   night: '#061914',
   /** calendar → sunset */
   dusk: '#0a1424',
-  /** the sunset scene → the band of dawn before the venue */
+  /** the sunset scene → the night over the venue */
   embers: '#1c0c12',
+  /** the venue's night: the map's haze and the ground of the venue and guests' cards */
+  midnight: '#0c1020',
 } as const
 
-/** Night giving way to morning: deep plum, rose, peach, ending in the colour `to`. */
-export const dawnGradient = (to: string) => `linear-gradient(180deg, ${SKY.embers} 0%, #34162c 24%, #74354a 50%, #bf6b66 74%, #e0a079 90%, ${to} 100%)`
+/** The last of the sunset's embers sinking into the deep blue night over the venue. */
+export const nightfallGradient = `linear-gradient(180deg, ${SKY.embers} 0%, #180e1b 30%, #120f1f 62%, ${SKY.midnight} 100%)`
 
-/** The day closing back into the night green of the RSVP (starts transparent, over paper). */
-export const duskGradient = `linear-gradient(180deg, transparent 0%, #ead0aa 16%, #cf9a7c 36%, #8a4e5c 58%, #34192c 80%, ${SKY.night} 100%)`
+/** The venue's night deepening into the night green of the RSVP. */
+export const nightGreenGradient = `linear-gradient(180deg, ${SKY.midnight} 0%, #0b1320 38%, #08171b 72%, ${SKY.night} 100%)`
 
 /** Mixes two #rrggbb colours (t = 0 gives a, 1 gives b). */
 export function mix(a: string, b: string, t: number) {

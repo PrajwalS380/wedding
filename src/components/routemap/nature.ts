@@ -153,7 +153,7 @@ export function buildLakes(lakes: XZ[][], shared: Shared, env: THREE.Texture, no
   normal.repeat.set(1 / 55, 1 / 55)
   const water = patch(
     new THREE.MeshStandardMaterial({
-      color: '#2f5b5b',
+      color: '#1a3038',
       roughness: 0.1,
       metalness: 0,
       envMap: env,

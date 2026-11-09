@@ -1,12 +1,14 @@
 import { useRef } from 'react'
 import { useReveal } from '../../hooks/useReveal'
-import { CeremoniesChapter, DawnBand, DuskBand, VenueChapter } from '../celebrations/Chapters'
+import { CeremoniesChapter, NightBand, NightfallBand, VenueChapter } from '../celebrations/Chapters'
+import { SKY } from '../celebrations/styles'
 
 /**
  * "From dusk to dawn" in two screens: the sunset over the temple tank with
  * both ceremonies in arched windows (the Aaratakshate's night of lights and
- * the Muhurta's kalasha), then — after a short band of dawn — the venue and
- * the guests' card on handmade paper, closing into the evening of the RSVP.
+ * the Muhurta's kalasha), then — as the embers sink into night — the venue's
+ * moonlit 3D map with its card and the guests' card, deepening into the night
+ * green of the RSVP.
  * Every scene dissolves into the next; there are no hard edges.
  *
  * Each fact has one home on the page: dates, the countdown and "add to
@@ -21,11 +23,11 @@ export function Celebrations() {
   return (
     <section ref={section} id="celebrations" aria-labelledby="celebrations-title" className="relative isolate bg-night">
       <CeremoniesChapter />
-      {/* morning: one sheet of handmade paper behind the venue, the guests' card and the dusk */}
-      <div className="paper-sheet relative">
-        <DawnBand />
+      {/* night over the venue: one deep blue behind the map, the venue's card and the guests' card */}
+      <div className="relative" style={{ backgroundColor: SKY.midnight }}>
+        <NightfallBand />
         <VenueChapter />
-        <DuskBand />
+        <NightBand />
       </div>
     </section>
   )
