@@ -17,6 +17,9 @@ const JOBS = [
   ['mangalya', 1620, 2613, 'mangalya', ''],
   ['venuemap', 2160, 2700, 'venuemap-portrait', 'o=portrait'],
   ['venuemap', 3200, 2000, 'venuemap-landscape', 'o=landscape'],
+  // the RSVP's closing frame: the doorway dressed for the wedding
+  ['doorway', 1620, 2700, 'doorway-portrait', 'o=portrait'],
+  ['doorway', 2880, 1620, 'doorway-landscape', 'o=landscape'],
 ]
 ;(async () => {
   fs.mkdirSync(OUT, { recursive: true })

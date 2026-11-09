@@ -767,3 +767,108 @@ html[data-motion='off'] {
     animation: none !important;
   }
 }
+
+/* ------------------------------------------------------------------
+   The RSVP: the closing names in gold over the doorway, the reply card
+   on the invitation's parchment.
+------------------------------------------------------------------- */
+/* gold foil that glows against the night (the parchment `.foil` is pressed into paper instead) */
+.foil-night {
+  background-image: linear-gradient(100deg, #b98a3e 0%, #e8c77e 18%, #fff0c2 26%, #f0d08a 33%, #c49647 48%, #e3bf74 62%, #fff3cf 70%, #d6ae62 80%, #a77a33 100%);
+  background-size: 250% 100%;
+  background-position: 0% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 18px rgba(240, 180, 90, 0.18));
+  animation: foil-glint 9s ease-in-out 1.2s infinite;
+}
+@keyframes foil-glint {
+  0%,
+  55% {
+    background-position: 100% 0;
+  }
+  80%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+html[data-motion='off'] .foil-night {
+  animation-play-state: paused;
+}
+
+/* the reply card: the invitation's parchment, deckled at the sides */
+.rsvp-card {
+  --focus-ring: var(--color-burgundy);
+  color: var(--color-ink);
+  background-color: #f1e3c5;
+  background-image:
+    radial-gradient(120% 50% at 50% 0%, rgba(255, 246, 222, 0.75), transparent 70%),
+    radial-gradient(100% 40% at 50% 100%, rgba(160, 112, 58, 0.18), transparent 70%),
+    linear-gradient(90deg, rgba(150, 104, 52, 0.16), transparent 8%, transparent 92%, rgba(150, 104, 52, 0.16)),
+    url('/images/invitation/parchment.webp');
+  background-size: auto, auto, auto, 384px 384px;
+  box-shadow: inset 0 0 60px rgba(120, 78, 36, 0.24);
+  -webkit-mask: var(--deckle-l) left top / 14px 220px repeat-y, var(--deckle-r) right top / 14px 220px repeat-y,
+    linear-gradient(#000, #000) center / calc(100% - 26px) 100% no-repeat;
+  mask: var(--deckle-l) left top / 14px 220px repeat-y, var(--deckle-r) right top / 14px 220px repeat-y,
+    linear-gradient(#000, #000) center / calc(100% - 26px) 100% no-repeat;
+}
+/* writing on the line of a printed card */
+.line-field {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.25rem 0.4rem;
+  border: 0;
+  border-bottom: 1.5px solid rgba(169, 132, 75, 0.75);
+  background: linear-gradient(180deg, transparent 60%, rgba(255, 250, 238, 0.45));
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  font-style: italic;
+  color: var(--color-ink);
+  outline: none;
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    background-color 0.25s;
+}
+.line-field::placeholder {
+  color: rgba(105, 72, 50, 0.45);
+}
+.line-field:focus {
+  border-bottom-color: var(--color-burgundy);
+  box-shadow: 0 2px 0 -0.5px var(--color-burgundy), 0 10px 18px -14px rgba(125, 37, 53, 0.55);
+  background-color: rgba(255, 250, 238, 0.35);
+}
+.line-field[aria-invalid='true'] {
+  border-bottom-color: var(--color-rose);
+}
+/* the seal pressed onto the card once the reply is ready */
+@keyframes seal-press {
+  0% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1.7) rotate(-24deg);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(0) scale(0.92) rotate(-8deg);
+  }
+  75% {
+    transform: scale(1.04) rotate(-6deg);
+  }
+  100% {
+    transform: scale(1) rotate(-6deg);
+  }
+}
+@keyframes seal-ring {
+  from {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}

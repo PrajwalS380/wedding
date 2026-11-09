@@ -30,6 +30,7 @@ SCENES = {
     "aarati": {"portrait": ("aarati", (720, 480), (0.5, 0.5)), "landscape": ("aarati", (720, 480), (0.5, 0.5))},
     "mangalya": {"portrait": ("mangalya", (720, 480), (0.5, 0.5)), "landscape": ("mangalya", (720, 480), (0.5, 0.5))},
     "venuemap": {"portrait": ("venuemap-portrait", (1080, 720), (0.5, 0.5)), "landscape": ("venuemap-landscape", (1600, 1080), (0.42, 0.5))},
+    "doorway": {"portrait": ("doorway-portrait", (1080, 720), (0.5, 0.45)), "landscape": ("doorway-landscape", (1920, 1280), (0.5, 0.45))},
 }
 MAX_LIGHTS = 64
 

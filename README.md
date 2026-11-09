@@ -109,6 +109,18 @@ The recipient is `RSVP_WHATSAPP_NUMBER` in `src/data/site.ts` (international
 format, digits only, e.g. `919591420987`); the message text is built in
 `src/lib/rsvp.ts`.
 
+**How it looks:** the section opens on a rendered doorway dressed for the wedding
+(`tools/scenes/scenes/doorway.js` — a carved teak doorway in a night-dark wall,
+garlanded in banded marigolds with roses, a jasmine border, mango leaves, strands
+of marigold and jasmine with little bells, brass bells at the crown, an outline of
+warm bulbs, two tall brass lamps burning, a rangoli on the polished floor); its
+flames flicker and bulbs twinkle live, and the couple's names stand inside it in
+gold that glints now and then. The reply card below is on the invitation's
+parchment with torn edges, the family's wax seal at its head: engraved capitals,
+the name written on a line, "joyfully accepts" / "regretfully declines" as two
+cards (a lit diya, a flower), a maroon button with a gold edge. When the WhatsApp
+message is ready, the seal is pressed onto the card and petals fall.
+
 ---
 
 ## Languages (English · ಕನ್ನಡ · हिन्दी)
@@ -372,7 +384,10 @@ scenes) are what ships.
 ### The 3D route map (venue)
 
 When the venue comes into view, a short film plays (`src/components/routemap/`,
-plain three.js, loaded only when the venue is near). It is night — a low moon,
+plain three.js). The map is built in an idle moment once the guest has scrolled
+past the opening (where the mandap's own 3D is then paused) — or when the venue is
+near, whichever comes first; never with Data Saver on — so it is ready and the
+film starts the instant the venue scrolls into view. It is night — a low moon,
 most windows lit (warm bulbs and the white of tube lights), shops open, sodium
 street lamps pooling light on the roads, headlights and tail-lights moving, the
 station's platform lamps and a lit train, the hall blazing with wedding lights —

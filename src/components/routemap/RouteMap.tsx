@@ -42,19 +42,42 @@ export function RouteMap({
   const canvas = useRef<HTMLCanvasElement>(null)
   const ctl = useRef<RouteMapController | null>(null)
   const labels = useRef<Record<string, HTMLSpanElement | null>>({})
-  const near = useInView(wrap, { rootMargin: '700px', once: true })
-  const visible = useInView(wrap, { rootMargin: '-15% 0px' })
+  // Get ready well before the guest arrives: once they have scrolled past the opening (where the mandap's own
+  // 3D is then paused) build the map in an idle moment, so the film can start the instant the venue is in view.
+  const near = useInView(wrap, { rootMargin: '1800px 0px', once: true })
+  const [warm, setWarm] = useState(false)
+  useEffect(() => {
+    if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return
+    const w = window as Window & { requestIdleCallback?: Window['requestIdleCallback'] }
+    let idle = 0,
+      timer = 0
+    const check = () => {
+      if (window.scrollY < window.innerHeight * 0.85) return
+      window.removeEventListener('scroll', check)
+      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setWarm(true), { timeout: 2500 })
+      else timer = window.setTimeout(() => setWarm(true), 300)
+    }
+    window.addEventListener('scroll', check, { passive: true })
+    check()
+    return () => {
+      window.removeEventListener('scroll', check)
+      if (idle) window.cancelIdleCallback(idle)
+      window.clearTimeout(timer)
+    }
+  }, [])
+  // the film starts as soon as the map is coming into view
+  const visible = useInView(wrap, { rootMargin: '0px 0px -8% 0px' })
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'failed'>('idle')
   const [step, setStep] = useState<RouteStep | null>(null)
   const [phase, setPhase] = useState<Phase>('intro')
   const started = useRef(false)
   const place = (name: string) => (PLACE_KEYS[name] ? t(PLACE_KEYS[name]) : name)
 
-  // load the scene once the venue is near
+  // load the scene once the guest is on their way (or the venue is near)
   const loading = useRef(false)
   const unmounted = useRef(false)
   useEffect(() => {
-    if (!near || loading.current || !canvas.current) return
+    if (!(near || warm) || loading.current || !canvas.current) return
     loading.current = true
     setStatus('loading')
     import('./scene')
@@ -69,7 +92,7 @@ export function RouteMap({
         if (!unmounted.current) setStatus('failed')
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the framing is fixed for the page's layout
-  }, [near])
+  }, [near, warm])
 
   useEffect(() => {
     unmounted.current = false
@@ -141,8 +164,8 @@ export function RouteMap({
   return (
     <div ref={wrap} className="absolute inset-0">
       <div className={`absolute inset-0 ${maskClass}`} style={maskStyle}>
-        <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? 'opacity-0' : 'opacity-100'}`}>{fallback}</div>
-        <canvas ref={canvas} aria-hidden="true" className={`absolute inset-0 h-full w-full transition-opacity duration-1000 ${ready ? 'opacity-100' : 'opacity-0'}`} />
+        <div className={`absolute inset-0 transition-opacity duration-500 ${ready ? 'opacity-0' : 'opacity-100'}`}>{fallback}</div>
+        <canvas ref={canvas} aria-hidden="true" className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${ready ? 'opacity-100' : 'opacity-0'}`} />
         {/* a shallow depth of field: the far city softens, like a long lens */}
         <div
           aria-hidden="true"

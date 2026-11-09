@@ -34,6 +34,6 @@ export interface SceneArt {
   landscape: SceneVariant
 }
 
-export type SceneKey = 'sunset' | 'aarati' | 'mangalya' | 'venuemap'
+export type SceneKey = 'sunset' | 'aarati' | 'mangalya' | 'venuemap' | 'doorway'
 
 export { SCENES, THAMBOOLA } from './sceneArt.generated'
